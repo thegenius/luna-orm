@@ -6,25 +6,29 @@ license-file = "LICENSE"
 description = "ORM based on sqlx"
 homepage = "https://github.com/thegenius/luna-orm"
 
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-
 [dependencies]
 luna-orm-trait = { path = "luna-orm-trait", version = "0.1.0" }
 luna-orm-macro = { path = "luna-orm-macro", version = "0.1.0" }
+sqlx = {workspace = true}
 
-async-trait = {version = "0.1.74"}
-serde = {version = "1.0", features = ["derive"]}
+[dev-dependencies]
+async-trait = {workspace = true}
+serde = {workspace = true}
+path-absolutize = "3.1.1"
+tokio = {version = "1.34.0", features = ["full"]}
 serde_json = "1.0"
 serde_yaml = "0.9.27"
-sqlx = {version = "0.7.2", features = ["runtime-tokio", "sqlite", "macros", "any"]}
-
-tokio = {version = "1.34.0", features = ["full"]}
-path-absolutize = "3.1.1"
+sqlx = {version = "0.7.2", features = ["runtime-tokio", "mysql",  "sqlite", "macros", "any"]}
 
 [workspace]
 members = [
+  ".",
   "luna-orm-trait", 
   "luna-orm-macro"
 ]
+
+[workspace.dependencies]
+async-trait = {version = "0.1.74"}
+serde = {version = "1.0", features = ["derive"]}
+sqlx = {version = "0.7.2", features = ["any"]}
+
