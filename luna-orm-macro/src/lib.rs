@@ -347,7 +347,7 @@ fn check_has_attr(attrs: &Vec<Attribute>, name: &str) -> bool {
     return false;
 }
 
-fn extract_table_name(ident: &Ident, attrs: &Vec<Attribute>) -> String {
+fn extract_table_name(_ident: &Ident, attrs: &Vec<Attribute>) -> String {
     let mut name = stringify!(#ident).to_string();
     name = extract_val_from_attrs(attrs, "TableName").unwrap_or(name);
     return name;
@@ -417,7 +417,7 @@ pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
 
     let fields = extract_fields(&data).unwrap();
 
-    let fields_name = extract_fields_name(&fields);
+    let _fields_name = extract_fields_name(&fields);
     let primary_fields = extract_annotated_fields(&fields, "PrimaryKey");
     if primary_fields.len() == 0 {
         panic!("Entity must has at least one PrimaryKey!")
