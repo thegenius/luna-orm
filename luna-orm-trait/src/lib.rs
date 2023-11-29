@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use sqlx::any::AnyArguments;
 use sqlx::any::AnyRow;
-use sqlx::Any;
-use sqlx::AnyExecutor;
+
+
 use sqlx::AnyPool;
 
 use serde::{Deserialize, Serialize};
@@ -353,7 +353,7 @@ pub trait GenericDaoMapper {
         return Ok(result.rows_affected() > 0);
     }
 
-    async fn remove(&self, primary: Self::P) -> Result<Self::E, SqlxError> {
+    async fn remove(&self, _primary: Self::P) -> Result<Self::E, SqlxError> {
         todo!()
     }
     async fn try_delete(&self, primary: Self::P) -> Result<bool, SqlxError> {
