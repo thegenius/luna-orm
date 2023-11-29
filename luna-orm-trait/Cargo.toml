@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 license-file = "LICENSE"
 description = "ORM based on sqlx"
-homepage = "https://github.com/thegenius/FastORM"
+homepage = "https://github.com/thegenius/luna-orm"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
