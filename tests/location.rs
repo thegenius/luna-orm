@@ -91,7 +91,7 @@ pub async fn test_location() {
     assert_eq!(result.is_ok(), true);
     let ClassLocation {
         student_name,
-        class_name,
+        class_name: _,
     } = result.unwrap();
     assert_eq!(
         student_name,

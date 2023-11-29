@@ -2,15 +2,15 @@ use crate::error::LunaOrmError;
 use crate::mapper::{GenericDaoMapper, GenericDaoMapperImpl};
 use crate::transaction::Transaction;
 use crate::LunaOrmResult;
-use async_trait::async_trait;
+
 use luna_orm_trait::*;
 use path_absolutize::*;
 use sqlx::any::AnyConnectOptions;
-use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqliteRow};
-use sqlx::AnyConnection;
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePool};
+
 use sqlx::AnyPool;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 use std::str::FromStr;
 
 pub enum DatabaseType {
@@ -38,16 +38,16 @@ impl Database {
         let workspace = Path::new(workspace_dir);
         let workspace_absolute = workspace
             .absolutize()
-            .map_err(|e| LunaOrmError::DatabaseInitFail("workdir absolute fail".to_string()))?;
+            .map_err(|_e| LunaOrmError::DatabaseInitFail("workdir absolute fail".to_string()))?;
 
         fs::create_dir_all(&workspace_absolute)
-            .map_err(|e| LunaOrmError::DatabaseInitFail("create dir fail".to_string()))?;
+            .map_err(|_e| LunaOrmError::DatabaseInitFail("create dir fail".to_string()))?;
         let db_file_path = workspace_absolute.join(db_file);
         {
             let options = SqliteConnectOptions::new()
                 .filename(db_file_path.clone())
                 .create_if_missing(true);
-            let _ = SqlitePool::connect_with(options).await.map_err(|e| {
+            let _ = SqlitePool::connect_with(options).await.map_err(|_e| {
                 LunaOrmError::DatabaseInitFail("create is missing fail".to_string())
             })?;
         }
@@ -57,7 +57,7 @@ impl Database {
         let any_options = AnyConnectOptions::from_str(&url).unwrap();
         let any_pool = AnyPool::connect_with(any_options)
             .await
-            .map_err(|e| LunaOrmError::DatabaseInitFail("init pool fail".to_string()))?;
+            .map_err(|_e| LunaOrmError::DatabaseInitFail("init pool fail".to_string()))?;
         return Ok(any_pool);
     }
 

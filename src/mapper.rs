@@ -5,10 +5,10 @@ use luna_orm_trait::{
     Entity, Location, Mutation, PageInfo, PagedList, Primary, SelectedEntity, Selection,
 };
 use sqlx::Any;
-use sqlx::AnyExecutor;
-use sqlx::Database;
+
+
 use sqlx::Executor;
-use sqlx::{any::AnyRow, Row};
+use sqlx::{any::AnyRow};
 
 #[async_trait]
 pub trait GenericDaoMapper {
@@ -134,7 +134,7 @@ pub trait GenericDaoMapper {
         return Ok(result.rows_affected() > 0);
     }
 
-    async fn remove<'e, EX, P, E>(executor: EX, primary: P) -> Result<E, SqlxError>
+    async fn remove<'e, EX, P, E>(_executor: EX, _primary: P) -> Result<E, SqlxError>
     where
         EX: 'e + Executor<'e, Database = Any>,
         P: Primary + Send,
