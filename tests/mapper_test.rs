@@ -1,26 +1,14 @@
-
-/*
-use luna_orm_macro::{Entity, Location, Mutation, Primary, SelectedEntity, Selection};
-use luna_orm_trait::merge_any_arguments;
-use luna_orm_trait::GenericDaoMapper;
-use luna_orm_trait::{
-    CmpOperator, Entity, Location, LocationExpr, Mutation, Primary, SelectedEntity, Selection,
-};
-*/
 use luna_orm::prelude::*;
 use path_absolutize::*;
 use sqlx::any::AnyConnectOptions;
 
-
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool};
-use sqlx::Connection;
 
-
-use sqlx::{AnyPool};
+use sqlx::AnyPool;
 
 use std::fs;
 
-use std::path::{Path};
+use std::path::Path;
 use std::str::FromStr;
 
 #[derive(Selection, Default, Clone)]

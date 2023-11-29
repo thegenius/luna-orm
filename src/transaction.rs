@@ -1,16 +1,8 @@
 use crate::error::LunaOrmError;
 use crate::mapper::{GenericDaoMapper, GenericDaoMapperImpl};
 
-
 use luna_orm_trait::SqlxError;
-use luna_orm_trait::{
-    Entity, Location, Mutation, PagedList, Primary, SelectedEntity, Selection,
-};
-
-use sqlx::TransactionManager;
-
-
-
+use luna_orm_trait::{Entity, Location, Mutation, PagedList, Primary, SelectedEntity, Selection};
 
 pub struct Transaction<'a> {
     transaction: sqlx::Transaction<'a, sqlx::Any>,
@@ -31,8 +23,13 @@ impl<'a> Transaction<'a> {
         return Ok(self.transaction.rollback().await?);
     }
 
+    pub async fn query(&mut self, sql: &str) -> Result<usize, LunaOrmError> {
+        let result = sqlx::query(sql).execute(&mut *self.transaction).await?;
+        return Ok(result.rows_affected() as usize);
+    }
+
     #[inline]
-    pub async fn select<'e, EX, P, S, SE>(
+    pub async fn select<'e, P, S, SE>(
         &mut self,
         primary: P,
         selection: S,

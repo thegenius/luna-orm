@@ -1,7 +1,7 @@
+#![allow(dead_code)]
 use async_trait::async_trait;
 use sqlx::any::AnyArguments;
 use sqlx::any::AnyRow;
-
 
 use sqlx::AnyPool;
 

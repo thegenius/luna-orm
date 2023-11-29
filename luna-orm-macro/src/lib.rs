@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use proc_macro::{self, TokenStream};
 use quote::quote;
 use quote::quote_spanned;

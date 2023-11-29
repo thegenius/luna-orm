@@ -6,11 +6,11 @@ use crate::LunaOrmResult;
 use luna_orm_trait::*;
 use path_absolutize::*;
 use sqlx::any::AnyConnectOptions;
-use sqlx::sqlite::{SqliteConnectOptions, SqlitePool};
+use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePool, SqliteSynchronous};
 
 use sqlx::AnyPool;
 use std::fs;
-use std::path::{Path};
+use std::path::Path;
 use std::str::FromStr;
 
 pub enum DatabaseType {
@@ -20,8 +20,8 @@ pub enum DatabaseType {
 }
 
 pub struct SqliteLocalConfig {
-    work_dir: String,
-    db_file: String,
+    pub work_dir: String,
+    pub db_file: String,
 }
 
 pub enum DatabaseConfig {
@@ -46,6 +46,8 @@ impl Database {
         {
             let options = SqliteConnectOptions::new()
                 .filename(db_file_path.clone())
+                .synchronous(SqliteSynchronous::Full)
+                .journal_mode(SqliteJournalMode::Wal)
                 .create_if_missing(true);
             let _ = SqlitePool::connect_with(options).await.map_err(|_e| {
                 LunaOrmError::DatabaseInitFail("create is missing fail".to_string())
@@ -84,6 +86,11 @@ impl Database {
 }
 
 impl Database {
+    pub async fn query(&self, sql: &str) -> Result<usize, LunaOrmError> {
+        let result = sqlx::query(sql).execute(&self.pool).await?;
+        return Ok(result.rows_affected() as usize);
+    }
+
     #[inline]
     pub async fn select<'e, P, S, SE>(
         &self,
