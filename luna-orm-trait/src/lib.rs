@@ -8,8 +8,6 @@ use sqlx::AnyPool;
 use serde::{Deserialize, Serialize};
 
 mod location;
-mod transaction;
-mod v2;
 
 pub type SqlxError = sqlx::Error;
 

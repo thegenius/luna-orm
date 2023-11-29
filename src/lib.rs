@@ -1,3 +1,12 @@
+#![allow(dead_code)]
+
+mod database;
+mod error;
+mod mapper;
+mod transaction;
+
+pub type LunaOrmResult<T> = std::result::Result<T, error::LunaOrmError>;
+
 pub mod prelude {
     pub use luna_orm_macro::*;
     pub use luna_orm_trait::*;

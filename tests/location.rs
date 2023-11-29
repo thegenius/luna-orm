@@ -10,9 +10,6 @@ use luna_orm_trait::Selection;
 use luna_orm::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use sqlx::any::AnyArguments;
-use sqlx::Arguments;
-use sqlx::{any::AnyRow, Row};
 
 #[derive(Selection, Serialize, Deserialize, Clone, Debug)]
 pub struct UserSelection {

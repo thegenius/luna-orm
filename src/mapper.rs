@@ -1,7 +1,9 @@
-use crate::merge_any_arguments;
-use crate::SqlxError;
-use crate::{Entity, Location, Mutation, PageInfo, PagedList, Primary, SelectedEntity, Selection};
 use async_trait::async_trait;
+use luna_orm_trait::merge_any_arguments;
+use luna_orm_trait::SqlxError;
+use luna_orm_trait::{
+    Entity, Location, Mutation, PageInfo, PagedList, Primary, SelectedEntity, Selection,
+};
 use sqlx::Any;
 use sqlx::AnyExecutor;
 use sqlx::Database;
@@ -140,7 +142,7 @@ pub trait GenericDaoMapper {
     {
         todo!()
     }
-    async fn delete<'e, EX, P>(&self, executor: EX, primary: P) -> Result<bool, SqlxError>
+    async fn delete<'e, EX, P>(executor: EX, primary: P) -> Result<bool, SqlxError>
     where
         EX: 'e + Executor<'e, Database = Any>,
         P: Primary + Send,
@@ -253,3 +255,6 @@ pub trait GenericDaoMapper {
         return Ok(result.rows_affected() as usize);
     }
 }
+
+pub struct GenericDaoMapperImpl {}
+impl GenericDaoMapper for GenericDaoMapperImpl {}
