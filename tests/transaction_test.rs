@@ -56,9 +56,25 @@ async fn build_db() -> Database {
     return db;
 }
 
+async fn clear_db(db: &Database) {
+    db.query("DELETE FROM `article`").await.unwrap();
+}
+
 #[tokio::test]
 pub async fn test_transaction() -> LunaOrmResult<()> {
     let db = build_db().await;
+
+    inner_test_transaction(&db).await?;
+    clear_db(&db).await;
+    test_transaction_commit(&db).await?;
+    clear_db(&db).await;
+    test_transaction_rollback(&db).await?;
+    clear_db(&db).await;
+    test_transaction_rollback2(&db).await?;
+    return Ok(());
+}
+
+async fn inner_test_transaction(db: &Database) -> LunaOrmResult<()> {
     let mut trx = db.transaction().await?;
 
     let entity = HelloEntity {
@@ -83,13 +99,9 @@ pub async fn test_transaction() -> LunaOrmResult<()> {
         content: Some("test".to_string()),
     };
     assert_eq!(result, Some(selected_entity));
-
-    return Ok(());
+    Ok(())
 }
-
-#[tokio::test]
-pub async fn test_transaction_rollback() -> LunaOrmResult<()> {
-    let db = build_db().await;
+async fn test_transaction_rollback(db: &Database) -> LunaOrmResult<()> {
     let mut trx = db.transaction().await?;
 
     let entity = HelloEntity {
@@ -138,9 +150,7 @@ async fn expect_commit_transaction<'a>(mut trx: Transaction<'a>) -> LunaOrmResul
     return Ok(());
 }
 
-#[tokio::test]
-pub async fn test_transaction_rollback2() -> LunaOrmResult<()> {
-    let db = build_db().await;
+pub async fn test_transaction_rollback2(db: &Database) -> LunaOrmResult<()> {
     let mut trx = db.transaction().await?;
     let _ = expect_rollback_transaction(trx).await;
 
@@ -155,9 +165,7 @@ pub async fn test_transaction_rollback2() -> LunaOrmResult<()> {
     return Ok(());
 }
 
-#[tokio::test]
-pub async fn test_transaction_commit() -> LunaOrmResult<()> {
-    let db = build_db().await;
+pub async fn test_transaction_commit(db: &Database) -> LunaOrmResult<()> {
     let mut trx = db.transaction().await?;
     let _ = expect_commit_transaction(trx).await;
 
