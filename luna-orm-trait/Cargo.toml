@@ -1,6 +1,6 @@
 [package]
 name = "luna-orm-trait"
-version = "0.2.0"
+version = {workspace = true }
 edition = "2021"
 license-file = "LICENSE"
 description = "ORM based on sqlx"
@@ -12,3 +12,9 @@ homepage = "https://github.com/thegenius/luna-orm"
 sqlx = { workspace = true }
 async-trait = { workspace = true }
 serde = { workspace = true }
+serde_with = {workspace = true}
+typetag = {workspace = true}
+
+[dev-dependencies]
+tokio = {workspace = true}
+serde_json = {workspace = true}
