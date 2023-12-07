@@ -6,9 +6,8 @@ use luna_orm_trait::{
 };
 use sqlx::Any;
 
-
+use sqlx::any::AnyRow;
 use sqlx::Executor;
-use sqlx::{any::AnyRow};
 
 #[async_trait]
 pub trait GenericDaoMapper {
@@ -170,7 +169,7 @@ pub trait GenericDaoMapper {
     {
         let table_name = location.table_name('`');
         let selected_fields = selection.get_sql_selection('`');
-        let where_clause = location.get_where_clause('`', "?");
+        let where_clause = location.get_where_clause('`', '?');
         let search_stmt = &format!(
             "SELECT {} FROM {} WHERE {}",
             selected_fields, table_name, where_clause
@@ -195,7 +194,7 @@ pub trait GenericDaoMapper {
     {
         let table_name = location.table_name('`');
         let selected_fields = selection.get_sql_selection('`');
-        let where_clause = location.get_where_clause('`', "?");
+        let where_clause = location.get_where_clause('`', '?');
         let search_stmt = &format!(
             "SELECT {} FROM {} WHERE {}",
             selected_fields, table_name, where_clause
@@ -222,7 +221,7 @@ pub trait GenericDaoMapper {
         L: Location + Send,
     {
         let table_name = location.table_name('`');
-        let where_clause = location.get_where_clause('`', "?");
+        let where_clause = location.get_where_clause('`', '?');
         let delete_stmt = &format!("DELETE FROM {} WHERE {}", table_name, where_clause);
         let args = location.into_any_arguments();
         let sqlx_query = sqlx::query_with(delete_stmt, args);
@@ -242,7 +241,7 @@ pub trait GenericDaoMapper {
     {
         let table_name = location.table_name('`');
         let update_clause = mutation.get_update_clause('`', "?");
-        let where_clause = location.get_where_clause('`', "?");
+        let where_clause = location.get_where_clause('`', '?');
         let change_stmt = &format!(
             "UPDATE {} SET {} WHERE {}",
             table_name, update_clause, where_clause

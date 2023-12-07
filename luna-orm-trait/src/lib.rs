@@ -2,12 +2,16 @@
 use async_trait::async_trait;
 use sqlx::any::AnyArguments;
 use sqlx::any::AnyRow;
-
 use sqlx::AnyPool;
+use sqlx::Arguments;
+use sqlx::Database;
+use sqlx::Row;
 
 use serde::{Deserialize, Serialize};
 
+mod database;
 mod field;
+pub mod lib2;
 mod location;
 
 pub type SqlxError = sqlx::Error;
@@ -79,6 +83,9 @@ pub fn merge_any_arguments<'p>(
 }
 
 pub trait Primary {
+    fn get_table_name(&self) -> &'static str;
+    fn get_primary_field_names(&self) -> &'static [&'static str];
+
     fn table_name(&self, wrap_char: char) -> String {
         let name = self.name();
         return format!("{}{}{}", wrap_char, name.to_lowercase(), wrap_char);
@@ -122,6 +129,8 @@ pub trait Mutation {
 pub trait Location {
     fn name(&self) -> String;
 
+    fn get_table_name(&self) -> &'static str;
+
     fn into_any_arguments<'p>(self) -> AnyArguments<'p>
     where
         Self: Sized;
@@ -133,7 +142,25 @@ pub trait Location {
         return format!("{}{}{}", wrap_char, name.to_lowercase(), wrap_char);
     }
 
-    fn get_where_clause(&self, wrap_char: char, place_holder: &str) -> String;
+    fn get_where_clause(&self, wrap_char: char, place_holder: char) -> String;
+}
+
+pub trait SelectedEntity2 {
+    fn get_select_sql(&self, wrap_char: char, place_holder: &str) -> String;
+
+    fn from_row<DB, T>(row: T) -> Result<Self, SqlxError>
+    where
+        DB: Database,
+        T: Row<Database = DB>,
+        Self: Sized;
+
+    fn into_select_arguments<'p>(self) -> AnyArguments<'p>
+    where
+        Self: Sized;
+
+    fn from_any_row(row: AnyRow) -> Result<Self, SqlxError>
+    where
+        Self: Sized;
 }
 
 pub trait Entity {
@@ -143,6 +170,8 @@ pub trait Entity {
     }
 
     fn name(&self) -> String;
+
+    fn get_table_name(&self) -> &'static str;
 
     fn get_fields_name(&self) -> Vec<String> {
         let mut fields = self.get_primary_fields_name();
@@ -375,7 +404,7 @@ pub trait GenericDaoMapper {
     ) -> Result<Vec<Self::SE>, SqlxError> {
         let table_name = location.table_name('`');
         let selected_fields = selection.get_sql_selection('`');
-        let where_clause = location.get_where_clause('`', "?");
+        let where_clause = location.get_where_clause('`', '?');
         let search_stmt = &format!(
             "SELECT {} FROM {} WHERE {}",
             selected_fields, table_name, where_clause
@@ -394,7 +423,7 @@ pub trait GenericDaoMapper {
     ) -> Result<PagedList<Self::SE>, SqlxError> {
         let table_name = location.table_name('`');
         let selected_fields = selection.get_sql_selection('`');
-        let where_clause = location.get_where_clause('`', "?");
+        let where_clause = location.get_where_clause('`', '?');
         let search_stmt = &format!(
             "SELECT {} FROM {} WHERE {}",
             selected_fields, table_name, where_clause
@@ -417,7 +446,7 @@ pub trait GenericDaoMapper {
 
     async fn try_purify(&self, location: Self::L) -> Result<usize, SqlxError> {
         let table_name = location.table_name('`');
-        let where_clause = location.get_where_clause('`', "?");
+        let where_clause = location.get_where_clause('`', '?');
         let delete_stmt = &format!("DELETE FROM {} WHERE {}", table_name, where_clause);
         let args = location.into_any_arguments();
         let sqlx_query = sqlx::query_with(delete_stmt, args);
@@ -428,7 +457,7 @@ pub trait GenericDaoMapper {
     async fn try_change(&self, location: Self::L, mutation: Self::M) -> Result<usize, SqlxError> {
         let table_name = location.table_name('`');
         let update_clause = mutation.get_update_clause('`', "?");
-        let where_clause = location.get_where_clause('`', "?");
+        let where_clause = location.get_where_clause('`', '?');
         let change_stmt = &format!(
             "UPDATE {} SET {} WHERE {}",
             table_name, update_clause, where_clause

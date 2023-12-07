@@ -3,6 +3,9 @@ use proc_macro::{self, TokenStream};
 use quote::quote;
 use quote::quote_spanned;
 
+mod utils;
+use utils::*;
+
 use proc_macro2::{Ident, Span};
 use syn::Attribute;
 use syn::Field;
@@ -11,6 +14,7 @@ use syn::{
     FieldsNamed, LitStr, Path, Result,
 };
 
+/*
 fn extract_fields_name(fields: &FieldsNamed) -> impl Iterator<Item = proc_macro2::TokenStream> {
     let clone_fields = fields.clone();
     let data_expanded_members = clone_fields.named.into_iter().map(|field| {
@@ -21,6 +25,7 @@ fn extract_fields_name(fields: &FieldsNamed) -> impl Iterator<Item = proc_macro2
     });
     return data_expanded_members;
 }
+*/
 
 fn build_args_push_clause(fields: &FieldsNamed) -> impl Iterator<Item = proc_macro2::TokenStream> {
     let cloned_named = fields.named.clone();
@@ -42,11 +47,20 @@ pub fn impl_primary_macro(input: TokenStream) -> TokenStream {
     let fields = extract_fields(&data).unwrap();
     let args_push_clause = build_args_push_clause(&fields);
     let fields_name = extract_fields_name(&fields);
+    let fields_name_str = extract_fields_name_str(&fields);
     let table_name = extract_table_name(&ident, &attrs);
 
     let output = quote! {
 
         impl Primary for #ident {
+
+            fn get_table_name(&self) -> &'static str {
+                #table_name
+            }
+
+            fn get_primary_field_names(&self) -> &'static [&'static str] {
+                &[ #(#fields_name_str)* ]
+            }
 
             fn name(&self) -> String {
                 String::from(#table_name)
@@ -64,7 +78,7 @@ pub fn impl_primary_macro(input: TokenStream) -> TokenStream {
         }
     };
 
-    // panic!("{}", output);
+    //panic!("{}", output);
     output.into()
 }
 
@@ -97,7 +111,7 @@ pub fn impl_location_macro(input: TokenStream) -> TokenStream {
             if let Some(#field_name) = &self.#field_name {
                 sql.push_str(#field_name_stringified);
                 sql.push_str(#field_name.cmp.get_sql());
-                sql.push_str(place_holder);
+                sql.push(place_holder);
             }
         }
     });
@@ -107,6 +121,10 @@ pub fn impl_location_macro(input: TokenStream) -> TokenStream {
     let output = quote! {
 
         impl Location for #ident {
+
+            fn get_table_name(&self) -> &'static str {
+                #table_name
+            }
 
             fn name(&self) -> String {
                 String::from(#table_name)
@@ -118,7 +136,7 @@ pub fn impl_location_macro(input: TokenStream) -> TokenStream {
                 ]
             }
 
-            fn get_where_clause(&self, wrap_char: char, place_holder: &str) -> String {
+            fn get_where_clause(&self, wrap_char: char, place_holder: char) -> String {
                 let mut sql = String::default();
                 #(#where_clause_members )*
                 return sql;
@@ -268,35 +286,7 @@ pub fn impl_selection_macro(input: TokenStream) -> TokenStream {
     };
     output.into()
 }
-
-fn extract_fields(data: &Data) -> Result<FieldsNamed> {
-    let fields = match data {
-        Data::Enum(DataEnum {
-            enum_token: token::Enum { span },
-            ..
-        })
-        | Data::Union(DataUnion {
-            union_token: token::Union { span },
-            ..
-        }) => {
-            return Err(Error::new(*span, "Expected a `struct`"));
-        }
-
-        Data::Struct(DataStruct {
-            fields: Fields::Named(it),
-            ..
-        }) => it,
-
-        Data::Struct(_) => {
-            return Err(Error::new(
-                Span::call_site(),
-                "Expected a `struct` with named fields",
-            ));
-        }
-    };
-    return Ok(fields.clone());
-}
-
+/*
 fn extract_val_from_attr(attr: &Attribute, name: &str) -> Option<String> {
     let path: &Path = &attr.path;
     let path_ident = path.get_ident().unwrap();
@@ -377,7 +367,7 @@ fn extract_not_annotated_fields(fields: &FieldsNamed, name: &str) -> Vec<Field> 
     }
     return result;
 }
-
+*/
 fn build_fields_name(fields: &Vec<Field>) -> impl Iterator<Item = proc_macro2::TokenStream> {
     let clone_fields = fields.clone();
     let data_expanded_members = clone_fields.into_iter().map(|field| {
@@ -465,6 +455,10 @@ pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
     impl Entity for #ident {
         fn name(&self) -> String {
             String::from(#name)
+        }
+
+        fn get_table_name(&self) -> &'static str {
+                #name
         }
 
         fn from_any_row(row: AnyRow) -> Result<Self, SqlxError> where Self: Sized {

@@ -3,6 +3,7 @@
 mod database;
 mod error;
 mod mapper;
+mod sql_generator;
 mod transaction;
 
 pub type LunaOrmResult<T> = std::result::Result<T, error::LunaOrmError>;
