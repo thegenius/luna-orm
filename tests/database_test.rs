@@ -56,7 +56,7 @@ pub async fn test_database() -> LunaOrmResult<()> {
         content: "test".to_string(),
     };
     let result = db.insert(entity).await?;
-    assert_eq!(result, true);
+    assert!(result);
 
     let primary = HelloPrimary { id: 23 };
     let selection = HelloSelection {

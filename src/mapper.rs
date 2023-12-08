@@ -240,7 +240,7 @@ pub trait GenericDaoMapper {
         M: Mutation + Send,
     {
         let table_name = location.table_name('`');
-        let update_clause = mutation.get_update_clause('`', "?");
+        let update_clause = mutation.get_update_clause('`', '?');
         let where_clause = location.get_where_clause('`', '?');
         let change_stmt = &format!(
             "UPDATE {} SET {} WHERE {}",

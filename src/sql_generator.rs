@@ -6,7 +6,7 @@ use sqlx::{
 */
 
 use async_trait::async_trait;
-use luna_orm_trait::{Entity, Location, Primary, SelectedEntity, Selection, SqlxError};
+use luna_orm_trait::{Entity, Location, Mutation, Pagination, Primary, Selection};
 
 #[inline]
 fn wrap_fields(fields: &[String], wrap_char: char) -> String {
@@ -150,6 +150,29 @@ pub trait SqlGenerator {
         self.post_process(select_sql)
     }
 
+    fn get_paged_search_sql(
+        &self,
+        selection: &dyn Selection,
+        location: &dyn Location,
+        page: &Pagination,
+    ) -> String {
+        let selected_field_names = selection.get_selected_fields();
+        let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());
+        let table_name = location.get_table_name();
+        let where_clause = location.get_where_clause(self.get_wrap_char(), self.get_place_holder());
+
+        let select_sql = format!(
+            "SELECT {} FROM {}{}{} WHERE {}",
+            selected_fields,
+            self.get_wrap_char(),
+            table_name,
+            self.get_wrap_char(),
+            where_clause
+        )
+        .to_string();
+        self.post_process(select_sql)
+    }
+
     fn get_insert_sql(&self, entity: &dyn Entity) -> String {
         let table_name = entity.get_table_name();
         let field_names = entity.get_fields_name();
@@ -222,6 +245,23 @@ pub trait SqlGenerator {
         self.post_process(update_sql)
     }
 
+    fn get_change_sql(&self, mutation: &dyn Mutation, location: &dyn Location) -> String {
+        let table_name = location.get_table_name();
+        let update_clause =
+            mutation.get_update_clause(self.get_wrap_char(), self.get_place_holder());
+        let where_clause = location.get_where_clause(self.get_wrap_char(), self.get_place_holder());
+        let update_sql = format!(
+            "UPDATE {}{}{} SET {} WHERE {}",
+            self.get_wrap_char(),
+            table_name,
+            self.get_wrap_char(),
+            update_clause,
+            where_clause
+        )
+        .to_string();
+        self.post_process(update_sql)
+    }
+
     fn get_delete_sql(&self, primary: &dyn Primary) -> String {
         let table_name = primary.get_table_name();
         let field_names = primary.get_primary_field_names();
@@ -238,6 +278,17 @@ pub trait SqlGenerator {
         self.post_process(delete_sql)
     }
 
-    /*
-     */
+    fn get_purify_sql(&self, location: &dyn Location) -> String {
+        let table_name = location.get_table_name();
+        let where_clause = location.get_where_clause(self.get_wrap_char(), self.get_place_holder());
+        let delete_sql = format!(
+            "DELETE FROM {}{}{} WHERE {}",
+            self.get_wrap_char(),
+            table_name,
+            self.get_wrap_char(),
+            where_clause
+        )
+        .to_string();
+        self.post_process(delete_sql)
+    }
 }
