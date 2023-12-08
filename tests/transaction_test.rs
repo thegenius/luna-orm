@@ -39,13 +39,12 @@ pub struct HelloLocation {
     content: Option<LocationExpr<String>>,
 }
 
-async fn build_db() -> Database {
+async fn build_db() -> DB<SqliteDatabase> {
     let config = SqliteLocalConfig {
         work_dir: "./workspace".to_string(),
         db_file: "test.db".to_string(),
     };
-    let config = DatabaseConfig::SqliteLocal(config);
-    let db = Database::build(config).await.unwrap();
+    let db = SqliteDatabase::build(config).await.unwrap();
     let mut trx = db.transaction().await.unwrap();
     trx.query("DROP TABLE IF EXISTS `article`").await.unwrap();
     trx.query("CREATE TABLE IF NOT EXISTS `article`(`id` INT PRIMARY KEY, `content` VARCHAR(64))")
@@ -53,10 +52,10 @@ async fn build_db() -> Database {
         .unwrap();
     trx.query("DELETE FROM `article`").await.unwrap();
     trx.commit().await.unwrap();
-    return db;
+    return DB(db);
 }
 
-async fn clear_db(db: &Database) {
+async fn clear_db(db: &DB<SqliteDatabase>) {
     db.query("DELETE FROM `article`").await.unwrap();
 }
 
@@ -74,7 +73,7 @@ pub async fn test_transaction() -> LunaOrmResult<()> {
     return Ok(());
 }
 
-async fn inner_test_transaction(db: &Database) -> LunaOrmResult<()> {
+async fn inner_test_transaction(db: &DB<SqliteDatabase>) -> LunaOrmResult<()> {
     let mut trx = db.transaction().await?;
 
     let entity = HelloEntity {
@@ -101,7 +100,7 @@ async fn inner_test_transaction(db: &Database) -> LunaOrmResult<()> {
     assert_eq!(result, Some(selected_entity));
     Ok(())
 }
-async fn test_transaction_rollback(db: &Database) -> LunaOrmResult<()> {
+async fn test_transaction_rollback(db: &DB<SqliteDatabase>) -> LunaOrmResult<()> {
     let mut trx = db.transaction().await?;
 
     let entity = HelloEntity {
@@ -150,7 +149,7 @@ async fn expect_commit_transaction<'a>(mut trx: Transaction<'a>) -> LunaOrmResul
     return Ok(());
 }
 
-pub async fn test_transaction_rollback2(db: &Database) -> LunaOrmResult<()> {
+pub async fn test_transaction_rollback2(db: &DB<SqliteDatabase>) -> LunaOrmResult<()> {
     let mut trx = db.transaction().await?;
     let _ = expect_rollback_transaction(trx).await;
 
@@ -165,7 +164,7 @@ pub async fn test_transaction_rollback2(db: &Database) -> LunaOrmResult<()> {
     return Ok(());
 }
 
-pub async fn test_transaction_commit(db: &Database) -> LunaOrmResult<()> {
+pub async fn test_transaction_commit(db: &DB<SqliteDatabase>) -> LunaOrmResult<()> {
     let mut trx = db.transaction().await?;
     let _ = expect_commit_transaction(trx).await;
 

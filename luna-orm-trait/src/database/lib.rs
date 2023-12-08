@@ -1,10 +1,11 @@
+use crate::{Entity, Location, Primary, SelectedEntity, Selection, SqlxError};
+use async_trait::async_trait;
 use sqlx::{
     any::{AnyArguments, AnyQueryResult, AnyRow},
     Any, Executor,
 };
-
-use crate::{Entity, Location, Primary, SelectedEntity, Selection, SqlxError};
-use async_trait::async_trait;
+use std::ops::Deref;
+use std::ops::DerefMut;
 
 pub enum SqlType {
     Insert,
@@ -233,5 +234,26 @@ pub trait Database {
         EX: 'e + Executor<'e, Database = Any>,
     {
         Ok(sqlx::query_with(stmt, args).execute(executor).await?)
+    }
+}
+
+pub struct DB<T: Database>(T);
+
+impl<T> Deref for DB<T>
+where
+    T: Database,
+{
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T> DerefMut for DB<T>
+where
+    T: Database,
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }

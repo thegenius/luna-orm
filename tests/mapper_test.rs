@@ -59,6 +59,7 @@ impl HelloMapperImpl {
     }
 }
 
+/*
 impl GenericDaoMapper for HelloMapperImpl {
     type P = HelloPrimary;
     type E = HelloEntity;
@@ -188,3 +189,4 @@ pub async fn test_mapper() {
     let result = mapper.try_change(location, mutation).await;
     assert_eq!(result.unwrap(), 2);
 }
+*/

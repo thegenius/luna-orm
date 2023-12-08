@@ -72,12 +72,26 @@ fn generate_question_mark_list(fields: &[String]) -> String {
 }
 
 pub struct DefaultSqlGenerator {}
+impl DefaultSqlGenerator {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 impl SqlGenerator for DefaultSqlGenerator {}
 
 #[async_trait]
 pub trait SqlGenerator {
-    const WRAP_CHAR: char = '`';
-    const PLACE_HOLDER: char = '?';
+    // const WRAP_CHAR: char = '`'; can not made trait to trait object
+    #[inline(always)]
+    fn get_wrap_char(&self) -> char {
+        '`'
+    }
+
+    // const PLACE_HOLDER: char = '?'; can not made trait to trait object
+    #[inline(always)]
+    fn get_place_holder(&self) -> char {
+        '?'
+    }
 
     #[inline]
     fn pg_post_process(&self, origin_sql: String) -> String {
@@ -99,16 +113,19 @@ pub trait SqlGenerator {
     fn get_select_sql(&self, selection: &dyn Selection, primay: &dyn Primary) -> String {
         let table_name = primay.get_table_name();
         let selected_fields: Vec<String> = selection.get_selected_fields();
-        let select_clause = wrap_fields(&selected_fields, Self::WRAP_CHAR);
+        let select_clause = wrap_fields(&selected_fields, self.get_wrap_char());
         let located_fields = primay.get_primary_field_names();
-        let where_clause =
-            wrap_locate_str_fields(located_fields, Self::WRAP_CHAR, Self::PLACE_HOLDER);
+        let where_clause = wrap_locate_str_fields(
+            located_fields,
+            self.get_wrap_char(),
+            self.get_place_holder(),
+        );
         let select_sql = format!(
             "SELECT {} FROM {}{}{} WHERE {}",
             select_clause,
-            Self::WRAP_CHAR,
+            self.get_wrap_char(),
             table_name,
-            Self::WRAP_CHAR,
+            self.get_wrap_char(),
             where_clause
         )
         .to_string();
@@ -117,16 +134,16 @@ pub trait SqlGenerator {
 
     fn get_search_sql(&self, selection: &dyn Selection, location: &dyn Location) -> String {
         let selected_field_names = selection.get_selected_fields();
-        let selected_fields = wrap_fields(&selected_field_names, Self::WRAP_CHAR);
+        let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());
         let table_name = location.get_table_name();
-        let where_clause = location.get_where_clause(Self::WRAP_CHAR, Self::PLACE_HOLDER);
+        let where_clause = location.get_where_clause(self.get_wrap_char(), self.get_place_holder());
 
         let select_sql = format!(
             "SELECT {} FROM {}{}{} WHERE {}",
             selected_fields,
-            Self::WRAP_CHAR,
+            self.get_wrap_char(),
             table_name,
-            Self::WRAP_CHAR,
+            self.get_wrap_char(),
             where_clause
         )
         .to_string();
@@ -136,13 +153,13 @@ pub trait SqlGenerator {
     fn get_insert_sql(&self, entity: &dyn Entity) -> String {
         let table_name = entity.get_table_name();
         let field_names = entity.get_fields_name();
-        let fields = wrap_fields(&field_names, Self::WRAP_CHAR);
+        let fields = wrap_fields(&field_names, self.get_wrap_char());
         let marks = generate_question_mark_list(&field_names);
         let insert_sql = format!(
             "INSERT INTO {}{}{} ({}) VALUES({})",
-            Self::WRAP_CHAR,
+            self.get_wrap_char(),
             table_name,
-            Self::WRAP_CHAR,
+            self.get_wrap_char(),
             fields,
             marks
         )
@@ -153,20 +170,23 @@ pub trait SqlGenerator {
     fn get_upsert_sql(&self, entity: &dyn Entity) -> String {
         let table_name = entity.get_table_name();
         let field_names = entity.get_fields_name();
-        let fields = wrap_fields(&field_names, Self::WRAP_CHAR);
+        let fields = wrap_fields(&field_names, self.get_wrap_char());
         let primary_field_names = entity.get_primary_fields_name();
-        let primary_fields = wrap_fields(&primary_field_names, Self::WRAP_CHAR);
+        let primary_fields = wrap_fields(&primary_field_names, self.get_wrap_char());
         let marks = generate_question_mark_list(&field_names);
         let body_field_names = entity.get_body_fields_name();
-        let assign_clause =
-            wrap_locate_fields(&body_field_names, Self::WRAP_CHAR, Self::PLACE_HOLDER);
+        let assign_clause = wrap_locate_fields(
+            &body_field_names,
+            self.get_wrap_char(),
+            self.get_place_holder(),
+        );
 
         let upsert_sql = format!(
             "INSERT INTO {}{}{} ({}) VALUES({})
             ON CONFLICT({}) DO UPDATE SET {}",
-            Self::WRAP_CHAR,
+            self.get_wrap_char(),
             table_name,
-            Self::WRAP_CHAR,
+            self.get_wrap_char(),
             fields,
             marks,
             primary_fields,
@@ -179,16 +199,22 @@ pub trait SqlGenerator {
     fn get_update_sql(&self, entity: &dyn Entity) -> String {
         let table_name = entity.get_table_name();
         let body_field_names = entity.get_body_fields_name();
-        let body_fields =
-            wrap_locate_fields(&body_field_names, Self::WRAP_CHAR, Self::PLACE_HOLDER);
+        let body_fields = wrap_locate_fields(
+            &body_field_names,
+            self.get_wrap_char(),
+            self.get_place_holder(),
+        );
         let primary_field_names = entity.get_primary_fields_name();
-        let primary_fields =
-            wrap_locate_fields(&primary_field_names, Self::WRAP_CHAR, Self::PLACE_HOLDER);
+        let primary_fields = wrap_locate_fields(
+            &primary_field_names,
+            self.get_wrap_char(),
+            self.get_place_holder(),
+        );
         let update_sql = format!(
             "UPDATE {}{}{} SET {} WHERE {}",
-            Self::WRAP_CHAR,
+            self.get_wrap_char(),
             table_name,
-            Self::WRAP_CHAR,
+            self.get_wrap_char(),
             body_fields,
             primary_fields
         )
@@ -199,12 +225,13 @@ pub trait SqlGenerator {
     fn get_delete_sql(&self, primary: &dyn Primary) -> String {
         let table_name = primary.get_table_name();
         let field_names = primary.get_primary_field_names();
-        let where_clause = wrap_locate_str_fields(field_names, Self::WRAP_CHAR, Self::PLACE_HOLDER);
+        let where_clause =
+            wrap_locate_str_fields(field_names, self.get_wrap_char(), self.get_place_holder());
         let delete_sql = format!(
             "DELETE FROM {}{}{} WHERE {}",
-            Self::WRAP_CHAR,
+            self.get_wrap_char(),
             table_name,
-            Self::WRAP_CHAR,
+            self.get_wrap_char(),
             where_clause
         )
         .to_string();
@@ -212,46 +239,5 @@ pub trait SqlGenerator {
     }
 
     /*
-    async fn fetch_optional<'e, EX, SE>(
-        &self,
-        executor: EX,
-        stmt: &str,
-        args: AnyArguments<'_>,
-    ) -> Result<Option<SE>, SqlxError>
-    where
-        EX: 'e + Executor<'e, Database = Any>,
-        SE: SelectedEntity + Send + Unpin,
-    {
-        let query = sqlx::query_with(stmt, args).try_map(|row: AnyRow| SE::from_any_row(row));
-        let result_opt: Option<SE> = query.fetch_optional(executor).await?;
-        Ok(result_opt)
-    }
-
-    async fn fetch_all<'e, EX, SE>(
-        &self,
-        executor: EX,
-        stmt: &str,
-        args: AnyArguments<'_>,
-    ) -> Result<Vec<SE>, SqlxError>
-    where
-        EX: 'e + Executor<'e, Database = Any>,
-        SE: SelectedEntity + Send + Unpin,
-    {
-        let query = sqlx::query_with(stmt, args).try_map(|row: AnyRow| SE::from_any_row(row));
-        let result_vec: Vec<SE> = query.fetch_all(executor).await?;
-        Ok(result_vec)
-    }
-
-    async fn execute<'e, EX>(
-        &self,
-        executor: EX,
-        stmt: &str,
-        args: AnyArguments<'_>,
-    ) -> Result<AnyQueryResult, SqlxError>
-    where
-        EX: 'e + Executor<'e, Database = Any>,
-    {
-        Ok(sqlx::query_with(stmt, args).execute(executor).await?)
-    }
-    */
+     */
 }
