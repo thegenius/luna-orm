@@ -11,17 +11,18 @@ use sqlx::any::AnyArguments;
 use sqlx::any::AnyQueryResult;
 use sqlx::any::AnyRow;
 use sqlx::AnyPool;
+use sqlx::Executor;
 
 #[async_trait]
 pub trait Database {
     fn get_type(&self) -> DatabaseType;
     fn get_pool(&self) -> &AnyPool;
     fn get_generator(&self) -> &dyn SqlGenerator;
-    //fn transaction<'a>(&self) -> LunaOrmResult<Transaction<'a>>;
 
-    async fn transaction<'a>(&self) -> LunaOrmResult<Transaction<'a>> {
+    async fn transaction(&self) -> LunaOrmResult<Transaction<'_>> {
         let trx = self.get_pool().begin().await?;
-        let transaction = Transaction::new(trx);
+        let generator = self.get_generator();
+        let transaction = Transaction::new(trx, generator);
         return Ok(transaction);
     }
 
@@ -210,16 +211,6 @@ pub trait Database {
             data: entity_list,
             page: page_info,
         });
-
-        /*
-        let result: PagedList<SE> = <GenericDaoMapperImpl as GenericDaoMapper>::search_paged(
-            self.get_pool(),
-            location,
-            selection,
-        )
-        .await?;
-        return Ok(result);
-        */
     }
 
     #[inline]
@@ -231,11 +222,6 @@ pub trait Database {
         let args = location.into_any_arguments();
         let result = self.execute(&sql, args).await?;
         return Ok(result.rows_affected() as usize);
-        /*
-        let result: usize =
-            <GenericDaoMapperImpl as GenericDaoMapper>::purify(self.get_pool(), location).await?;
-        return Ok(result);
-        */
     }
 
     #[inline]
@@ -250,12 +236,6 @@ pub trait Database {
         args = merge_any_arguments(args, where_args);
         let result = self.execute(&sql, args).await?;
         return Ok(result.rows_affected() as usize);
-        /*
-        let result: usize =
-            <GenericDaoMapperImpl as GenericDaoMapper>::change(self.get_pool(), location, mutation)
-                .await?;
-        return Ok(result);
-        */
     }
 
     /*
@@ -345,10 +325,6 @@ pub enum DatabaseType {
     SqliteLocal,
     MySql,
     PostgreSql,
-}
-
-pub trait DatabaseExecutor<'a> {
-    const SQL_GENERATOR: &'a dyn SqlGenerator = &DefaultSqlGenerator {};
 }
 
 pub struct DB<T: Database>(pub T);

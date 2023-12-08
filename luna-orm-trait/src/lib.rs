@@ -9,7 +9,6 @@ use sqlx::Row;
 
 use serde::{Deserialize, Serialize};
 
-mod database;
 mod field;
 pub mod lib2;
 mod location;

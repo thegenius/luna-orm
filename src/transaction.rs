@@ -1,31 +1,75 @@
 use crate::error::LunaOrmError;
 use crate::mapper::{GenericDaoMapper, GenericDaoMapperImpl};
+use crate::sql_generator::{self, SqlGenerator};
+use sqlx::any::AnyArguments;
+use sqlx::any::AnyQueryResult;
+use sqlx::any::AnyRow;
 
 use luna_orm_trait::SqlxError;
 use luna_orm_trait::{Entity, Location, Mutation, PagedList, Primary, SelectedEntity, Selection};
 
 pub struct Transaction<'a> {
     transaction: sqlx::Transaction<'a, sqlx::Any>,
+    sql_generator: &'a dyn SqlGenerator,
 }
 
 impl<'a> Transaction<'a> {
-    pub fn new(trx: sqlx::Transaction<'a, sqlx::Any>) -> Self {
-        Self { transaction: trx }
+    pub fn new(trx: sqlx::Transaction<'a, sqlx::Any>, sql_generator: &'a dyn SqlGenerator) -> Self {
+        Self {
+            transaction: trx,
+            sql_generator,
+        }
     }
 
     #[inline]
-    pub async fn commit(self) -> Result<(), SqlxError> {
-        return Ok(self.transaction.commit().await?);
+    pub async fn commit(self) -> Result<(), LunaOrmError> {
+        Ok(self.transaction.commit().await?)
     }
 
     #[inline]
-    pub async fn rollback(self) -> Result<(), SqlxError> {
-        return Ok(self.transaction.rollback().await?);
+    pub async fn rollback(self) -> Result<(), LunaOrmError> {
+        Ok(self.transaction.rollback().await?)
     }
 
     pub async fn query(&mut self, sql: &str) -> Result<usize, LunaOrmError> {
         let result = sqlx::query(sql).execute(&mut *self.transaction).await?;
-        return Ok(result.rows_affected() as usize);
+        Ok(result.rows_affected() as usize)
+    }
+
+    async fn fetch_optional<SE>(
+        &mut self,
+        stmt: &str,
+        args: AnyArguments<'_>,
+    ) -> Result<Option<SE>, LunaOrmError>
+    where
+        SE: SelectedEntity + Send + Unpin,
+    {
+        let query = sqlx::query_with(stmt, args).try_map(|row: AnyRow| SE::from_any_row(row));
+        let result_opt: Option<SE> = query.fetch_optional(&mut *self.transaction).await?;
+        Ok(result_opt)
+    }
+
+    async fn fetch_all<'e, SE>(
+        &mut self,
+        stmt: &str,
+        args: AnyArguments<'_>,
+    ) -> Result<Vec<SE>, LunaOrmError>
+    where
+        SE: SelectedEntity + Send + Unpin,
+    {
+        let query = sqlx::query_with(stmt, args).try_map(|row: AnyRow| SE::from_any_row(row));
+        let result_vec: Vec<SE> = query.fetch_all(&mut *self.transaction).await?;
+        Ok(result_vec)
+    }
+
+    async fn execute(
+        &mut self,
+        stmt: &str,
+        args: AnyArguments<'_>,
+    ) -> Result<AnyQueryResult, LunaOrmError> {
+        Ok(sqlx::query_with(stmt, args)
+            .execute(&mut *self.transaction)
+            .await?)
     }
 
     #[inline]
@@ -33,19 +77,16 @@ impl<'a> Transaction<'a> {
         &mut self,
         primary: P,
         selection: S,
-    ) -> Result<Option<SE>, SqlxError>
+    ) -> Result<Option<SE>, LunaOrmError>
     where
         P: Primary + Send,
         S: Selection + Send,
         SE: SelectedEntity + Send + Unpin,
     {
-        let result: Option<SE> = <GenericDaoMapperImpl as GenericDaoMapper>::select(
-            &mut *self.transaction,
-            primary,
-            selection,
-        )
-        .await?;
-        return Ok(result);
+        let sql = self.sql_generator.get_select_sql(&selection, &primary);
+        let args = primary.into_any_arguments();
+        let result: Option<SE> = self.fetch_optional(&sql, args).await?;
+        Ok(result)
     }
 
     #[inline]
