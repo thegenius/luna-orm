@@ -153,14 +153,18 @@ pub trait SqlGenerator {
         let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());
         let table_name = location.get_table_name();
         let where_clause = location.get_where_clause(self.get_wrap_char(), self.get_place_holder());
+        let offset = page.page_size * page.page_num;
+        let count = page.page_size;
 
         let select_sql = format!(
-            "SELECT {} FROM {}{}{} WHERE {}",
+            "SELECT {} FROM {}{}{} WHERE {} LIMIT {},{}",
             selected_fields,
             self.get_wrap_char(),
             table_name,
             self.get_wrap_char(),
-            where_clause
+            where_clause,
+            offset,
+            count
         )
         .to_string();
         self.post_process(select_sql)

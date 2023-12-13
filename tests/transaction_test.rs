@@ -88,16 +88,26 @@ async fn inner_test_transaction(db: &DB<SqliteDatabase>) -> LunaOrmResult<()> {
         id: None,
         content: Some(true),
     };
-    trx.commit().await?;
 
-    let mut trx = db.transaction().await?;
+    //let mut trx = db.transaction().await?;
 
-    let result: Option<HelloSelectedEntity> = trx.select(primary, selection).await?;
+    let result: Option<HelloSelectedEntity> = trx.remove(primary, selection).await?;
     let selected_entity = HelloSelectedEntity {
         id: None,
         content: Some("test".to_string()),
     };
     assert_eq!(result, Some(selected_entity));
+
+    let primary = HelloPrimary { id: 23 };
+    let selection = HelloSelection {
+        id: None,
+        content: Some(true),
+    };
+    let result: Option<HelloSelectedEntity> = trx.select(primary, selection).await?;
+    assert_eq!(result, None);
+
+    trx.commit().await?;
+
     Ok(())
 }
 async fn test_transaction_rollback(db: &DB<SqliteDatabase>) -> LunaOrmResult<()> {

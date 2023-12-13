@@ -3,6 +3,7 @@ use crate::sql_executor::SqlExecutor;
 use crate::sql_generator::SqlGenerator;
 use crate::LunaOrmResult;
 
+use crate::transaction::Transaction;
 use async_trait::async_trait;
 use luna_orm_trait::*;
 
@@ -70,20 +71,26 @@ pub trait CommandExecutor: SqlExecutor {
         return Ok(result.rows_affected() > 0);
     }
 
+    /*
     #[inline]
-    async fn remove<P, E>(&mut self, primary: P) -> LunaOrmResult<E>
+    async fn remove<P, S, SE>(&mut self, primary: P, selection: S) -> LunaOrmResult<Option<SE>>
     where
-        P: Primary + Send,
-        E: Entity + Send + Clone,
+        P: Primary + Send + Clone,
+        S: Selection + Send,
+        SE: SelectedEntity + Send + Unpin,
     {
-        todo!()
-        /*
+        let primary_cloned = primary.clone();
+        let selected_entity: Option<SE> = self.select(primary_cloned, selection).await?;
         let sql = self.get_generator().get_delete_sql(&primary);
         let args = primary.into_any_arguments();
         let result = self.execute(&sql, args).await?;
-        return Ok(result.rows_affected() > 0);
-        */
+        if result.rows_affected() > 0 {
+            return Ok(selected_entity);
+        } else {
+            return Ok(None);
+        }
     }
+    */
 
     #[inline]
     async fn delete<P>(&mut self, primary: P) -> LunaOrmResult<bool>
