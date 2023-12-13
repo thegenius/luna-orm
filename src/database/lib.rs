@@ -1,4 +1,6 @@
+use crate::command_executor::CommandExecutor;
 use crate::error::LunaOrmError;
+use crate::sql_executor::SqlExecutor;
 use crate::sql_generator::{DefaultSqlGenerator, SqlGenerator};
 use crate::transaction::Transaction;
 use crate::LunaOrmResult;
@@ -10,22 +12,25 @@ use luna_orm_trait::*;
 use sqlx::any::AnyArguments;
 use sqlx::any::AnyQueryResult;
 use sqlx::any::AnyRow;
-use sqlx::AnyPool;
 use sqlx::Executor;
+use sqlx::{AnyConnection, AnyPool};
 
 #[async_trait]
-pub trait Database {
-    fn get_type(&self) -> DatabaseType;
-    fn get_pool(&self) -> &AnyPool;
-    fn get_generator(&self) -> &dyn SqlGenerator;
+pub trait Database: CommandExecutor + SqlExecutor {
+    //type G: SqlGenerator + Sync;
 
-    async fn transaction(&self) -> LunaOrmResult<Transaction<'_>> {
-        let trx = self.get_pool().begin().await?;
+    fn get_type(&self) -> &DatabaseType;
+    //fn get_pool(&self) -> &AnyPool;
+    //fn get_generator(&self) -> &Self::G;
+
+    async fn transaction<'a>(&'a self) -> LunaOrmResult<Transaction<'a, Self::G>> {
+        let trx = self.get_pool()?.begin().await?;
         let generator = self.get_generator();
         let transaction = Transaction::new(trx, generator);
         return Ok(transaction);
     }
 
+    /*
     #[inline]
     async fn query(&self, sql: &str) -> Result<usize, LunaOrmError> {
         let result = sqlx::query(sql).execute(self.get_pool()).await?;
@@ -237,6 +242,7 @@ pub trait Database {
         let result = self.execute(&sql, args).await?;
         return Ok(result.rows_affected() as usize);
     }
+    */
 
     /*
     async fn fetch_optional<'e, EX, SE>(
@@ -254,6 +260,7 @@ pub trait Database {
         Ok(result_opt)
     }
     */
+    /*
     async fn fetch_optional<SE>(
         &self,
         stmt: &str,
@@ -266,6 +273,7 @@ pub trait Database {
         let result_opt: Option<SE> = query.fetch_optional(self.get_pool()).await?;
         Ok(result_opt)
     }
+    */
 
     /*
     async fn fetch_all<'e, EX, SE>(
@@ -283,6 +291,7 @@ pub trait Database {
         Ok(result_vec)
     }
     */
+    /*
     async fn fetch_all<'e, SE>(
         &self,
         stmt: &str,
@@ -295,7 +304,7 @@ pub trait Database {
         let result_vec: Vec<SE> = query.fetch_all(self.get_pool()).await?;
         Ok(result_vec)
     }
-
+    */
     /*
     async fn execute<'e, EX>(
         &self,
@@ -310,6 +319,7 @@ pub trait Database {
     }
     */
 
+    /*
     async fn execute(
         &self,
         stmt: &str,
@@ -319,6 +329,7 @@ pub trait Database {
             .execute(self.get_pool())
             .await?)
     }
+    */
 }
 
 pub enum DatabaseType {

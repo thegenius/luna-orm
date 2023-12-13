@@ -7,4 +7,7 @@ pub enum LunaOrmError {
 
     #[error(transparent)]
     SqlxError(#[from] sqlx::Error),
+
+    #[error("method not implement error")]
+    NotImplement,
 }

@@ -45,11 +45,15 @@ pub async fn test_database() -> LunaOrmResult<()> {
         work_dir: "./workspace".to_string(),
         db_file: "test.db".to_string(),
     };
-    let db: SqliteDatabase = SqliteDatabase::build(config).await.unwrap();
-    db.query("DROP TABLE IF EXISTS `article`").await.unwrap();
-    db.query("CREATE TABLE IF NOT EXISTS `article`(`id` INT PRIMARY KEY, `content` VARCHAR(64))")
+    let mut db: SqliteDatabase = SqliteDatabase::build(config).await.unwrap();
+    db.execute_plain("DROP TABLE IF EXISTS `article`")
         .await
         .unwrap();
+    db.execute_plain(
+        "CREATE TABLE IF NOT EXISTS `article`(`id` INT PRIMARY KEY, `content` VARCHAR(64))",
+    )
+    .await
+    .unwrap();
 
     let entity = HelloEntity {
         id: 23,

@@ -1,10 +1,3 @@
-/*
-use sqlx::{
-    any::{AnyArguments, AnyQueryResult, AnyRow},
-    Any, Executor,
-};
-*/
-
 use async_trait::async_trait;
 use luna_orm_trait::{Entity, Location, Mutation, Pagination, Primary, Selection};
 

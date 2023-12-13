@@ -55,21 +55,21 @@ async fn build_db() -> DB<SqliteDatabase> {
     return DB(db);
 }
 
-async fn clear_db(db: &DB<SqliteDatabase>) {
-    db.query("DELETE FROM `article`").await.unwrap();
+async fn clear_db(db: &mut DB<SqliteDatabase>) {
+    db.execute_plain("DELETE FROM `article`").await.unwrap();
 }
 
 #[tokio::test]
 pub async fn test_transaction() -> LunaOrmResult<()> {
-    let db = build_db().await;
+    let mut db = build_db().await;
 
     inner_test_transaction(&db).await?;
-    clear_db(&db).await;
-    test_transaction_commit(&db).await?;
-    clear_db(&db).await;
+    clear_db(&mut db).await;
+    test_transaction_commit(&mut db).await?;
+    clear_db(&mut db).await;
     test_transaction_rollback(&db).await?;
-    clear_db(&db).await;
-    test_transaction_rollback2(&db).await?;
+    clear_db(&mut db).await;
+    test_transaction_rollback2(&mut db).await?;
     return Ok(());
 }
 
@@ -128,7 +128,9 @@ async fn test_transaction_rollback(db: &DB<SqliteDatabase>) -> LunaOrmResult<()>
     return Ok(());
 }
 
-async fn expect_rollback_transaction<'a>(mut trx: Transaction<'a>) -> LunaOrmResult<()> {
+async fn expect_rollback_transaction<'a, G: SqlGenerator + Sync>(
+    mut trx: Transaction<'a, G>,
+) -> LunaOrmResult<()> {
     let entity = HelloEntity {
         id: 23,
         content: "test".to_string(),
@@ -138,7 +140,9 @@ async fn expect_rollback_transaction<'a>(mut trx: Transaction<'a>) -> LunaOrmRes
     return Ok(());
 }
 
-async fn expect_commit_transaction<'a>(mut trx: Transaction<'a>) -> LunaOrmResult<()> {
+async fn expect_commit_transaction<'a, G: SqlGenerator + Sync>(
+    mut trx: Transaction<'a, G>,
+) -> LunaOrmResult<()> {
     let entity = HelloEntity {
         id: 23,
         content: "test".to_string(),
@@ -149,7 +153,7 @@ async fn expect_commit_transaction<'a>(mut trx: Transaction<'a>) -> LunaOrmResul
     return Ok(());
 }
 
-pub async fn test_transaction_rollback2(db: &DB<SqliteDatabase>) -> LunaOrmResult<()> {
+pub async fn test_transaction_rollback2(db: &mut DB<SqliteDatabase>) -> LunaOrmResult<()> {
     let mut trx = db.transaction().await?;
     let _ = expect_rollback_transaction(trx).await;
 
@@ -164,7 +168,7 @@ pub async fn test_transaction_rollback2(db: &DB<SqliteDatabase>) -> LunaOrmResul
     return Ok(());
 }
 
-pub async fn test_transaction_commit(db: &DB<SqliteDatabase>) -> LunaOrmResult<()> {
+pub async fn test_transaction_commit(db: &mut DB<SqliteDatabase>) -> LunaOrmResult<()> {
     let mut trx = db.transaction().await?;
     let _ = expect_commit_transaction(trx).await;
 

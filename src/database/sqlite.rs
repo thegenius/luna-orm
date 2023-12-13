@@ -2,17 +2,26 @@ use crate::database::lib::DatabaseType;
 
 use crate::database::lib::Database;
 use crate::{error::LunaOrmError, LunaOrmResult};
+use luna_orm_trait::SelectedEntity;
+use sqlx::any::AnyArguments;
 use sqlx::any::AnyConnectOptions;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePool, SqliteSynchronous};
 use sqlx::AnyPool;
+use sqlx::SqliteExecutor;
 
 use std::fs;
 use std::path::Path;
 use std::str::FromStr;
 
+use crate::command_executor::CommandExecutor;
+use crate::sql_executor::SqlExecutor;
 use crate::sql_generator::DefaultSqlGenerator;
 use crate::sql_generator::SqlGenerator;
+use async_trait::async_trait;
+use luna_orm_trait::SqlxError;
 use path_absolutize::*;
+use sqlx::any::AnyQueryResult;
+use sqlx::any::AnyRow;
 
 pub struct SqliteLocalConfig {
     pub work_dir: String,
@@ -25,20 +34,23 @@ pub struct SqliteDatabase {
     sql_generator: DefaultSqlGenerator,
 }
 
-impl Database for SqliteDatabase {
-    #[inline]
-    fn get_type(&self) -> DatabaseType {
-        DatabaseType::SqliteLocal
+impl SqlExecutor for SqliteDatabase {
+    fn get_pool(&self) -> LunaOrmResult<&AnyPool> {
+        Ok(&self.pool)
     }
+}
 
-    #[inline]
-    fn get_pool(&self) -> &AnyPool {
-        &self.pool
-    }
+impl CommandExecutor for SqliteDatabase {
+    type G = DefaultSqlGenerator;
 
-    #[inline]
-    fn get_generator(&self) -> &dyn SqlGenerator {
+    fn get_generator(&self) -> &Self::G {
         &self.sql_generator
+    }
+}
+
+impl Database for SqliteDatabase {
+    fn get_type(&self) -> &DatabaseType {
+        &self.database_type
     }
 }
 
