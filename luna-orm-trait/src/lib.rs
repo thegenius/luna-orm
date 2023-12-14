@@ -2,10 +2,13 @@
 use async_trait::async_trait;
 use sqlx::any::AnyArguments;
 use sqlx::any::AnyRow;
+use sqlx::Any;
 use sqlx::AnyPool;
 use sqlx::Arguments;
 use sqlx::Database;
+use sqlx::Encode;
 use sqlx::Row;
+use sqlx::Type;
 
 use serde::{Deserialize, Serialize};
 
@@ -20,6 +23,8 @@ pub struct LocationExpr<T> {
     pub val: T,
     pub cmp: CmpOperator,
 }
+
+//impl Encode<'_, Any> for LocationExpr<T>
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub enum CmpOperator {
@@ -78,7 +83,14 @@ pub fn merge_any_arguments<'p>(
     args_b: AnyArguments<'p>,
 ) -> AnyArguments<'p> {
     args_a.values.0.extend(args_b.values.0);
-    return args_a;
+    args_a
+}
+
+pub fn add_arg<'q, T>(args: &mut AnyArguments<'q>, value: &T)
+where
+    T: 'q + Send + Encode<'q, Any> + Type<Any>,
+{
+    let _ = value.encode_by_ref(&mut args.values);
 }
 
 pub trait Primary {
@@ -106,6 +118,8 @@ pub trait Primary {
     fn into_any_arguments<'p>(self) -> AnyArguments<'p>
     where
         Self: Sized;
+
+    fn any_arguments(&self) -> AnyArguments<'_>;
 }
 
 pub trait Mutation {
@@ -133,6 +147,8 @@ pub trait Location {
     fn into_any_arguments<'p>(self) -> AnyArguments<'p>
     where
         Self: Sized;
+
+    fn any_arguments<'p>(&self) -> AnyArguments<'p>;
 
     fn get_fields_name(&self) -> Vec<String>;
 
@@ -183,6 +199,11 @@ pub trait Entity {
 
     fn get_body_fields_name(&self) -> Vec<String>;
 
+    fn any_arguments_of_insert<'p>(&self) -> AnyArguments<'p>;
+    fn any_arguments_of_upsert<'p>(&self) -> AnyArguments<'p>;
+    fn any_arguments_of_update<'p>(&self) -> AnyArguments<'p>;
+
+    /*
     fn into_insert_any_arguments<'p>(self) -> AnyArguments<'p>
     where
         Self: Sized;
@@ -194,6 +215,7 @@ pub trait Entity {
     fn into_upsert_any_arguments<'p>(self) -> AnyArguments<'p>
     where
         Self: Sized;
+    */
 
     fn from_any_row(row: AnyRow) -> Result<Self, SqlxError>
     where
@@ -317,7 +339,7 @@ pub trait GenericDaoMapper {
             "INSERT INTO {} ({}) VALUES({})",
             table_name, field_names, question_marks
         );
-        let args = entity.clone().into_insert_any_arguments();
+        let args = entity.clone().any_arguments_of_insert();
         let _ = sqlx::query_with(insert_stmt, args)
             .execute(self.get_pool())
             .await?;
@@ -337,7 +359,7 @@ pub trait GenericDaoMapper {
             "INSERT INTO {} ({}) VALUES({})",
             table_name, field_names, question_marks
         );
-        let args = entity.clone().into_insert_any_arguments();
+        let args = entity.clone().any_arguments_of_insert();
         let result = sqlx::query_with(insert_stmt, args)
             .execute(self.get_pool())
             .await?;
@@ -360,7 +382,7 @@ pub trait GenericDaoMapper {
             ON CONFLICT({}) DO UPDATE SET {}",
             table_name, field_names, question_marks, primary_fields_string, upsert_assign_clause
         );
-        let args = entity.clone().into_upsert_any_arguments();
+        let args = entity.clone().any_arguments_of_upsert();
         let result = sqlx::query_with(upsert_stmt, args)
             .execute(self.get_pool())
             .await?;
@@ -375,7 +397,7 @@ pub trait GenericDaoMapper {
             "UPDATE {} SET {} WHERE {}",
             table_name, body_assign_clause, primary_assign_clause
         );
-        let args = entity.into_update_any_arguments();
+        let args = entity.any_arguments_of_update();
         let result = sqlx::query_with(update_stmt, args)
             .execute(self.get_pool())
             .await?;

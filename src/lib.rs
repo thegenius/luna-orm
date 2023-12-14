@@ -1,4 +1,6 @@
 #![allow(dead_code)]
+//#![feature(trait_upcasting)]
+//#![allow(incomplete_features)]
 
 mod command_executor;
 mod database;

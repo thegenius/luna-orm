@@ -59,7 +59,7 @@ pub async fn test_database() -> LunaOrmResult<()> {
         id: 23,
         content: "test".to_string(),
     };
-    let result = db.insert(entity).await?;
+    let result = db.insert(&entity).await?;
     assert!(result);
 
     let primary = HelloPrimary { id: 23 };
@@ -67,7 +67,7 @@ pub async fn test_database() -> LunaOrmResult<()> {
         id: None,
         content: Some(true),
     };
-    let result: Option<HelloSelectedEntity> = db.select(primary, selection).await?;
+    let result: Option<HelloSelectedEntity> = db.select(&primary, &selection).await?;
     let selected_entity = HelloSelectedEntity {
         id: None,
         content: Some("test".to_string()),

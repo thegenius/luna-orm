@@ -7,66 +7,92 @@ use crate::transaction::Transaction;
 use async_trait::async_trait;
 use luna_orm_trait::*;
 
+pub trait PrimarySync: Primary + Sync {}
+pub trait SelectionSync: Selection + Sync {}
+pub trait EntitySync: Entity + Sync {}
+
 #[async_trait]
 pub trait CommandExecutor: SqlExecutor {
     type G: SqlGenerator + Sync;
 
     fn get_generator(&self) -> &Self::G;
 
-    #[inline]
-    async fn select<P, S, SE>(&mut self, primary: P, selection: S) -> LunaOrmResult<Option<SE>>
+    /*
+    async fn try_select<SE>(
+        &mut self,
+        primary: &dyn PrimarySync,
+        selection: &dyn SelectionSync,
+    ) -> LunaOrmResult<Option<SE>>
     where
-        P: Primary + Send,
-        S: Selection + Send,
         SE: SelectedEntity + Send + Unpin,
     {
-        let sql = self.get_generator().get_select_sql(&selection, &primary);
-        let args = primary.into_any_arguments();
+        let sql = self.get_generator().get_select_sql(selection, primary);
+        let args = primary.any_arguments();
+        let result: Option<SE> = self.fetch_optional(&sql, args).await?;
+        return Ok(result);
+    }
+
+    async fn try_create(&mut self, entity: &dyn EntitySync) -> LunaOrmResult<&dyn EntitySync> {
+        let sql = self.get_generator().get_insert_sql(entity);
+        let args = entity.any_arguments_of_insert();
+        self.execute(&sql, args).await?;
+        return Ok(entity);
+    }
+    */
+
+    #[inline]
+    async fn select<P, S, SE>(&mut self, primary: &P, selection: &S) -> LunaOrmResult<Option<SE>>
+    where
+        P: Primary + Sync,
+        S: Selection + Sync,
+        SE: SelectedEntity + Send + Unpin,
+    {
+        let sql = self.get_generator().get_select_sql(selection, primary);
+        let args = primary.any_arguments();
         let result: Option<SE> = self.fetch_optional(&sql, args).await?;
         return Ok(result);
     }
 
     #[inline]
-    async fn create<E>(&mut self, entity: E) -> LunaOrmResult<E>
+    async fn create<'a, E>(&mut self, entity: &'a E) -> LunaOrmResult<&'a E>
     where
-        E: Entity + Send + Clone,
+        E: Entity + Sync,
     {
-        let sql = self.get_generator().get_insert_sql(&entity);
-        let entity_clone = entity.clone();
-        let args = entity.into_insert_any_arguments();
+        let sql = self.get_generator().get_insert_sql(entity);
+        let args = entity.any_arguments_of_insert();
         self.execute(&sql, args).await?;
-        return Ok(entity_clone);
+        return Ok(entity);
     }
 
     #[inline]
-    async fn insert<E>(&mut self, entity: E) -> LunaOrmResult<bool>
+    async fn insert<E>(&mut self, entity: &E) -> LunaOrmResult<bool>
     where
-        E: Entity + Send + Clone,
+        E: Entity + Sync,
     {
-        let sql = self.get_generator().get_insert_sql(&entity);
-        let args = entity.into_insert_any_arguments();
+        let sql = self.get_generator().get_insert_sql(entity);
+        let args = entity.any_arguments_of_insert();
         let result = self.execute(&sql, args).await?;
         return Ok(result.rows_affected() > 0);
     }
 
     #[inline]
-    async fn upsert<E>(&mut self, entity: E) -> LunaOrmResult<bool>
+    async fn upsert<E>(&mut self, entity: &E) -> LunaOrmResult<bool>
     where
-        E: Entity + Send + Clone,
+        E: Entity + Sync,
     {
-        let sql = self.get_generator().get_upsert_sql(&entity);
-        let args = entity.into_upsert_any_arguments();
+        let sql = self.get_generator().get_upsert_sql(entity);
+        let args = entity.any_arguments_of_upsert();
         let result = self.execute(&sql, args).await?;
         return Ok(result.rows_affected() > 0);
     }
 
     #[inline]
-    async fn update<E>(&mut self, entity: E) -> LunaOrmResult<bool>
+    async fn update<E>(&mut self, entity: &E) -> LunaOrmResult<bool>
     where
-        E: Entity + Send + Clone,
+        E: Entity + Sync,
     {
-        let sql = self.get_generator().get_update_sql(&entity);
-        let args = entity.into_update_any_arguments();
+        let sql = self.get_generator().get_update_sql(entity);
+        let args = entity.any_arguments_of_update();
         let result = self.execute(&sql, args).await?;
         return Ok(result.rows_affected() > 0);
     }
@@ -93,25 +119,25 @@ pub trait CommandExecutor: SqlExecutor {
     */
 
     #[inline]
-    async fn delete<P>(&mut self, primary: P) -> LunaOrmResult<bool>
+    async fn delete<P>(&mut self, primary: &P) -> LunaOrmResult<bool>
     where
-        P: Primary + Send,
+        P: Primary + Sync,
     {
-        let sql = self.get_generator().get_delete_sql(&primary);
-        let args = primary.into_any_arguments();
+        let sql = self.get_generator().get_delete_sql(primary);
+        let args = primary.any_arguments();
         let result = self.execute(&sql, args).await?;
         return Ok(result.rows_affected() > 0);
     }
 
     #[inline]
-    async fn search<EX, L, S, SE>(&mut self, location: L, selection: S) -> LunaOrmResult<Vec<SE>>
+    async fn search<EX, L, S, SE>(&mut self, location: &L, selection: &S) -> LunaOrmResult<Vec<SE>>
     where
-        L: Location + Send,
-        S: Selection + Send,
+        L: Location + Sync,
+        S: Selection + Sync,
         SE: SelectedEntity + Send + Unpin,
     {
-        let sql = self.get_generator().get_search_sql(&selection, &location);
-        let args = location.into_any_arguments();
+        let sql = self.get_generator().get_search_sql(selection, location);
+        let args = location.any_arguments();
         let result: Vec<SE> = self.fetch_all(&sql, args).await?;
         return Ok(result);
     }

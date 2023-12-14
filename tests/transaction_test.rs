@@ -80,7 +80,7 @@ async fn inner_test_transaction(db: &DB<SqliteDatabase>) -> LunaOrmResult<()> {
         id: 23,
         content: "test".to_string(),
     };
-    let result = trx.insert(entity).await?;
+    let result = trx.insert(&entity).await?;
     assert_eq!(result, true);
 
     let primary = HelloPrimary { id: 23 };
@@ -91,7 +91,7 @@ async fn inner_test_transaction(db: &DB<SqliteDatabase>) -> LunaOrmResult<()> {
 
     //let mut trx = db.transaction().await?;
 
-    let result: Option<HelloSelectedEntity> = trx.remove(primary, selection).await?;
+    let result: Option<HelloSelectedEntity> = trx.remove(&primary, &selection).await?;
     let selected_entity = HelloSelectedEntity {
         id: None,
         content: Some("test".to_string()),
@@ -103,7 +103,7 @@ async fn inner_test_transaction(db: &DB<SqliteDatabase>) -> LunaOrmResult<()> {
         id: None,
         content: Some(true),
     };
-    let result: Option<HelloSelectedEntity> = trx.select(primary, selection).await?;
+    let result: Option<HelloSelectedEntity> = trx.select(&primary, &selection).await?;
     assert_eq!(result, None);
 
     trx.commit().await?;
@@ -117,7 +117,7 @@ async fn test_transaction_rollback(db: &DB<SqliteDatabase>) -> LunaOrmResult<()>
         id: 23,
         content: "test".to_string(),
     };
-    let result = trx.insert(entity).await?;
+    let result = trx.insert(&entity).await?;
     assert_eq!(result, true);
 
     let primary = HelloPrimary { id: 23 };
@@ -128,7 +128,7 @@ async fn test_transaction_rollback(db: &DB<SqliteDatabase>) -> LunaOrmResult<()>
     trx.rollback().await?;
 
     let mut trx = db.transaction().await?;
-    let result: Option<HelloSelectedEntity> = trx.select(primary, selection).await?;
+    let result: Option<HelloSelectedEntity> = trx.select(&primary, &selection).await?;
     let selected_entity = HelloSelectedEntity {
         id: None,
         content: Some("test".to_string()),
@@ -145,7 +145,7 @@ async fn expect_rollback_transaction<'a, G: SqlGenerator + Sync>(
         id: 23,
         content: "test".to_string(),
     };
-    let result = trx.insert(entity).await?;
+    let result = trx.insert(&entity).await?;
     assert_eq!(result, true);
     return Ok(());
 }
@@ -157,7 +157,7 @@ async fn expect_commit_transaction<'a, G: SqlGenerator + Sync>(
         id: 23,
         content: "test".to_string(),
     };
-    let result = trx.insert(entity).await?;
+    let result = trx.insert(&entity).await?;
     assert_eq!(result, true);
     trx.commit().await?;
     return Ok(());
@@ -172,7 +172,7 @@ pub async fn test_transaction_rollback2(db: &mut DB<SqliteDatabase>) -> LunaOrmR
         id: None,
         content: Some(true),
     };
-    let result: Option<HelloSelectedEntity> = db.select(primary, selection).await?;
+    let result: Option<HelloSelectedEntity> = db.select(&primary, &selection).await?;
     assert_eq!(result, None);
 
     return Ok(());
@@ -187,7 +187,7 @@ pub async fn test_transaction_commit(db: &mut DB<SqliteDatabase>) -> LunaOrmResu
         id: None,
         content: Some(true),
     };
-    let result: Option<HelloSelectedEntity> = db.select(primary, selection).await?;
+    let result: Option<HelloSelectedEntity> = db.select(&primary, &selection).await?;
 
     let selected_entity = HelloSelectedEntity {
         id: None,

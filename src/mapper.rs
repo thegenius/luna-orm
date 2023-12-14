@@ -56,7 +56,7 @@ pub trait GenericDaoMapper {
             "INSERT INTO {} ({}) VALUES({})",
             table_name, field_names, question_marks
         );
-        let args = entity.clone().into_insert_any_arguments();
+        let args = entity.clone().any_arguments_of_insert();
         let _ = sqlx::query_with(insert_stmt, args)
             .execute(executor)
             .await?;
@@ -80,7 +80,7 @@ pub trait GenericDaoMapper {
             "INSERT INTO {} ({}) VALUES({})",
             table_name, field_names, question_marks
         );
-        let args = entity.clone().into_insert_any_arguments();
+        let args = entity.clone().any_arguments_of_insert();
         let result = sqlx::query_with(insert_stmt, args)
             .execute(executor)
             .await?;
@@ -107,7 +107,7 @@ pub trait GenericDaoMapper {
             ON CONFLICT({}) DO UPDATE SET {}",
             table_name, field_names, question_marks, primary_fields_string, upsert_assign_clause
         );
-        let args = entity.clone().into_upsert_any_arguments();
+        let args = entity.clone().any_arguments_of_upsert();
         let result = sqlx::query_with(upsert_stmt, args)
             .execute(executor)
             .await?;
@@ -126,7 +126,7 @@ pub trait GenericDaoMapper {
             "UPDATE {} SET {} WHERE {}",
             table_name, body_assign_clause, primary_assign_clause
         );
-        let args = entity.into_update_any_arguments();
+        let args = entity.any_arguments_of_update();
         let result = sqlx::query_with(update_stmt, args)
             .execute(executor)
             .await?;
