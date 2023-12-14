@@ -127,6 +127,8 @@ pub trait Mutation {
     where
         Self: Sized;
 
+    fn any_arguments<'p>(&self) -> AnyArguments<'p>;
+
     fn get_fields_name(&self) -> Vec<String>;
 
     fn get_update_clause(&self, wrap_char: char, place_holder: char) -> String {

@@ -101,7 +101,7 @@ where
         selection: &S,
     ) -> LunaOrmResult<Option<SE>>
     where
-        P: Primary + Sync + Clone,
+        P: Primary + Sync,
         S: Selection + Sync,
         SE: SelectedEntity + Send + Unpin,
     {

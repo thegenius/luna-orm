@@ -18,16 +18,15 @@ pub trait Database: CommandExecutor + SqlExecutor {
         return Ok(transaction);
     }
 
-    async fn remove<P, S, SE>(&mut self, primary: P, selection: S) -> LunaOrmResult<Option<SE>>
+    async fn remove<P, S, SE>(&mut self, primary: &P, selection: &S) -> LunaOrmResult<Option<SE>>
     where
-        P: Primary + Send + Sync + Clone,
-        S: Selection + Send + Sync,
-        SE: SelectedEntity + Sync + Send + Unpin,
+        P: Primary + Sync,
+        S: Selection + Sync,
+        SE: SelectedEntity + Send + Unpin,
     {
         let mut trx = self.get_pool()?.begin().await?;
-        let primary_cloned = primary.clone();
-        let selected_entity: Option<SE> = self.select(&primary, &selection).await?;
-        let sql = self.get_generator().get_delete_sql(&primary);
+        let selected_entity: Option<SE> = self.select(primary, selection).await?;
+        let sql = self.get_generator().get_delete_sql(primary);
         let args = primary.any_arguments();
         let result = sqlx::query_with(&sql, args).execute(&mut *trx).await?;
         trx.commit().await?;

@@ -145,19 +145,19 @@ pub trait CommandExecutor: SqlExecutor {
     #[inline]
     async fn search_paged<EX, L, S, SE>(
         &mut self,
-        location: L,
-        selection: S,
+        location: &L,
+        selection: &S,
         page: &Pagination,
     ) -> LunaOrmResult<PagedList<SE>>
     where
-        L: Location + Send,
-        S: Selection + Send,
+        L: Location + Sync,
+        S: Selection + Sync,
         SE: SelectedEntity + Send + Unpin,
     {
         let sql = self
             .get_generator()
-            .get_paged_search_sql(&selection, &location, page);
-        let args = location.into_any_arguments();
+            .get_paged_search_sql(selection, location, page);
+        let args = location.any_arguments();
         let entity_list: Vec<SE> = self.fetch_all(&sql, args).await?;
         let page_info = PageInfo {
             page_size: 10,
@@ -172,25 +172,25 @@ pub trait CommandExecutor: SqlExecutor {
     }
 
     #[inline]
-    async fn purify<EX, L>(&mut self, location: L) -> LunaOrmResult<usize>
+    async fn purify<EX, L>(&mut self, location: &L) -> LunaOrmResult<usize>
     where
-        L: Location + Send,
+        L: Location + Sync,
     {
-        let sql = self.get_generator().get_purify_sql(&location);
-        let args = location.into_any_arguments();
+        let sql = self.get_generator().get_purify_sql(location);
+        let args = location.any_arguments();
         let result = self.execute(&sql, args).await?;
         return Ok(result.rows_affected() as usize);
     }
 
     #[inline]
-    async fn change<EX, L, M>(&mut self, location: L, mutation: M) -> LunaOrmResult<usize>
+    async fn change<EX, L, M>(&mut self, location: &L, mutation: &M) -> LunaOrmResult<usize>
     where
-        L: Location + Send,
-        M: Mutation + Send,
+        L: Location + Sync,
+        M: Mutation + Sync,
     {
-        let sql = self.get_generator().get_change_sql(&mutation, &location);
-        let mut args = mutation.into_any_arguments();
-        let where_args = location.into_any_arguments();
+        let sql = self.get_generator().get_change_sql(mutation, location);
+        let mut args = mutation.any_arguments();
+        let where_args = location.any_arguments();
         args = merge_any_arguments(args, where_args);
         let result = self.execute(&sql, args).await?;
         return Ok(result.rows_affected() as usize);
