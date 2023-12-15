@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use luna_orm_trait::{Entity, Location, Mutation, Pagination, Primary, Selection};
+use luna_orm_trait::{Entity, Location, Mutation, OrderBy, Pagination, Primary, Selection};
 
 pub struct DefaultSqlGenerator {}
 impl DefaultSqlGenerator {
@@ -79,28 +79,49 @@ pub trait SqlGenerator {
         self.post_process(select_sql)
     }
 
-    fn get_search_sql(&self, selection: &dyn Selection, location: &dyn Location) -> String {
+    fn get_search_sql(
+        &self,
+        selection: &dyn Selection,
+        location: &dyn Location,
+        order_by: &dyn OrderBy,
+    ) -> String {
         let selected_field_names = selection.get_selected_fields();
         let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());
         let table_name = location.get_table_name();
         let where_clause = location.get_where_clause(self.get_wrap_char(), self.get_place_holder());
-
-        let select_sql = format!(
-            "SELECT {} FROM {}{}{} WHERE {}",
-            selected_fields,
-            self.get_wrap_char(),
-            table_name,
-            self.get_wrap_char(),
-            where_clause
-        )
-        .to_string();
-        self.post_process(select_sql)
+        let order_by_field_names = order_by.get_order_by_fields();
+        if order_by_field_names.is_empty() {
+            let select_sql = format!(
+                "SELECT {} FROM {}{}{} WHERE {}",
+                selected_fields,
+                self.get_wrap_char(),
+                table_name,
+                self.get_wrap_char(),
+                where_clause
+            )
+            .to_string();
+            self.post_process(select_sql)
+        } else {
+            let order_by_fields = wrap_fields(&order_by_field_names, self.get_wrap_char());
+            let select_sql = format!(
+                "SELECT {} FROM {}{}{} WHERE {} ORDER BY {}",
+                selected_fields,
+                self.get_wrap_char(),
+                table_name,
+                self.get_wrap_char(),
+                where_clause,
+                order_by_fields
+            )
+            .to_string();
+            self.post_process(select_sql)
+        }
     }
 
     fn get_paged_search_sql(
         &self,
         selection: &dyn Selection,
         location: &dyn Location,
+        order_by: &dyn OrderBy,
         page: &Pagination,
     ) -> String {
         let selected_field_names = selection.get_selected_fields();

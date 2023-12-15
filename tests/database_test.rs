@@ -7,6 +7,11 @@ pub struct HelloSelection {
     content: Option<bool>,
 }
 
+#[derive(OrderBy, Default, Clone)]
+pub struct HelloOrderBy {
+    id: bool,
+    content: bool,
+}
 #[derive(Primary, Default, Clone)]
 #[TableName = "article"]
 pub struct HelloPrimary {
@@ -96,8 +101,13 @@ pub async fn test_database() -> LunaOrmResult<()> {
         page_size: 1,
         page_num: 0,
     };
-    let result: PagedList<HelloSelectedEntity> =
-        db.search_paged(&location, &selection, &page).await?;
+    let order_by = HelloOrderBy {
+        id: true,
+        content: false,
+    };
+    let result: PagedList<HelloSelectedEntity> = db
+        .search_paged(&location, &order_by, &selection, &page)
+        .await?;
     assert_eq!(result.page.total, 3);
     assert_eq!(result.data.len(), 1);
 

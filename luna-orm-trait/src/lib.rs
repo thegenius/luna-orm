@@ -62,6 +62,10 @@ pub trait Selection: Sync {
     fn get_selected_fields(&self) -> Vec<String>;
 }
 
+pub trait OrderBy: Sync {
+    fn get_order_by_fields(&self) -> Vec<String>;
+}
+
 pub trait SelectedEntity {
     fn from_any_row(row: AnyRow) -> Result<Self, SqlxError>
     where

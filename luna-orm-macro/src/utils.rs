@@ -91,6 +91,11 @@ pub fn extract_selected_fields_name(fields: &FieldsNamed) -> Vec<proc_macro2::To
         map_field(field, FieldMapType::OptionBoolPush)
     })
 }
+pub fn extract_order_by_fields_name(fields: &FieldsNamed) -> Vec<proc_macro2::TokenStream> {
+    map_fields(fields, &|field: Field| {
+        map_field(field, FieldMapType::BoolPush)
+    })
+}
 
 enum FieldMapType {
     Str,

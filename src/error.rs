@@ -8,6 +8,9 @@ pub enum LunaOrmError {
     #[error(transparent)]
     SqlxError(#[from] sqlx::Error),
 
+    #[error("invalid order by fields")]
+    OrderByFieldsError,
+
     #[error("method not implement error")]
     NotImplement,
 }

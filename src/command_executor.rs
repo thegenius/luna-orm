@@ -69,12 +69,15 @@ pub trait CommandExecutor: SqlExecutor {
     async fn search<SE>(
         &mut self,
         location: &dyn Location,
+        order_by: &dyn OrderBy,
         selection: &dyn Selection,
     ) -> LunaOrmResult<Vec<SE>>
     where
         SE: SelectedEntity + Send + Unpin,
     {
-        let sql = self.get_generator().get_search_sql(selection, location);
+        let sql = self
+            .get_generator()
+            .get_search_sql(selection, location, order_by);
         let args = location.any_arguments();
         let result: Vec<SE> = self.fetch_all(&sql, args).await?;
         return Ok(result);
@@ -83,6 +86,7 @@ pub trait CommandExecutor: SqlExecutor {
     async fn search_paged<SE>(
         &mut self,
         location: &dyn Location,
+        order_by: &dyn OrderBy,
         selection: &dyn Selection,
         page: &Pagination,
     ) -> LunaOrmResult<PagedList<SE>>
@@ -103,7 +107,7 @@ pub trait CommandExecutor: SqlExecutor {
 
         let sql = self
             .get_generator()
-            .get_paged_search_sql(selection, location, page);
+            .get_paged_search_sql(selection, location, order_by, page);
         let args = location.any_arguments();
         let entity_list: Vec<SE> = self.fetch_all(&sql, args).await?;
         let page_info = PageInfo {
