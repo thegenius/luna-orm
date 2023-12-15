@@ -31,7 +31,7 @@ pub trait GenericDaoMapper {
             select_clause, table_name, where_clause
         );
         // dbg!(&select_stmt);
-        let args = primary.into_any_arguments();
+        let args = primary.any_arguments();
         let sqlx_query =
             sqlx::query_with(select_stmt, args).try_map(|row: AnyRow| SE::from_any_row(row));
         let entity_opt: Option<SE> = sqlx_query.fetch_optional(executor).await?;
@@ -149,7 +149,7 @@ pub trait GenericDaoMapper {
         let table_name = primary.table_name('`');
         let where_clause = primary.get_where_clause('`', "?");
         let delete_stmt = &format!("DELETE FROM {} WHERE {}", table_name, where_clause);
-        let args = primary.into_any_arguments();
+        let args = primary.any_arguments();
         let result = sqlx::query_with(delete_stmt, args)
             .execute(executor)
             .await?;

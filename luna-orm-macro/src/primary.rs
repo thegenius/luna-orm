@@ -43,12 +43,6 @@ pub fn impl_primary_macro(input: TokenStream) -> TokenStream {
                 vec![ #(#fields_name, )* ]
             }
 
-            fn into_any_arguments<'p>(self) -> AnyArguments<'p> {
-                let mut arguments = AnyArguments::default();
-                #(#args_push_clause;)*
-                return arguments;
-            }
-
             fn any_arguments(&self) -> sqlx::any::AnyArguments<'_> {
                 let mut arguments = AnyArguments::default();
                 #(#args_add_clause;)*

@@ -8,7 +8,9 @@ use sqlx::any::AnyRow;
 use crate::command_executor::CommandExecutor;
 use crate::sql_executor::SqlExecutor;
 use async_trait::async_trait;
-use luna_orm_trait::{Entity, Location, Mutation, PagedList, Primary, SelectedEntity, Selection};
+use luna_orm_trait::{
+    Entity, Location, Mutation, PagedList, Primary, PrimarySync, SelectedEntity, Selection,
+};
 
 pub struct Transaction<'a, G>
 where
@@ -95,13 +97,12 @@ where
         Ok(result.rows_affected() as usize)
     }
 
-    pub async fn remove<P, S, SE>(
+    pub async fn remove<S, SE>(
         &mut self,
-        primary: &P,
+        primary: &dyn Primary,
         selection: &S,
     ) -> LunaOrmResult<Option<SE>>
     where
-        P: Primary + Sync,
         S: Selection + Sync,
         SE: SelectedEntity + Send + Unpin,
     {

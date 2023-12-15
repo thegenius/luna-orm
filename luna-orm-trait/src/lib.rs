@@ -24,8 +24,6 @@ pub struct LocationExpr<T> {
     pub cmp: CmpOperator,
 }
 
-//impl Encode<'_, Any> for LocationExpr<T>
-
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub enum CmpOperator {
     #[serde(alias = "=")]
@@ -93,7 +91,7 @@ where
     let _ = value.encode_by_ref(&mut args.values);
 }
 
-pub trait Primary {
+pub trait Primary: Sync {
     fn get_table_name(&self) -> &'static str;
     fn get_primary_field_names(&self) -> &'static [&'static str];
 
@@ -114,15 +112,16 @@ pub trait Primary {
             .collect();
         return sql_fields.join(" ,");
     }
-
+    /*
     fn into_any_arguments<'p>(self) -> AnyArguments<'p>
     where
         Self: Sized;
+    */
 
     fn any_arguments(&self) -> AnyArguments<'_>;
 }
 
-pub trait Mutation {
+pub trait Mutation: Sync {
     fn into_any_arguments<'p>(self) -> AnyArguments<'p>
     where
         Self: Sized;
@@ -141,7 +140,7 @@ pub trait Mutation {
     }
 }
 
-pub trait Location {
+pub trait Location: Sync {
     fn name(&self) -> String;
 
     fn get_table_name(&self) -> &'static str;
@@ -180,7 +179,7 @@ pub trait SelectedEntity2 {
         Self: Sized;
 }
 
-pub trait Entity {
+pub trait Entity: Sync {
     fn table_name(&self, wrap_char: char) -> String {
         let name = self.name();
         return format!("{}{}{}", wrap_char, name.to_lowercase(), wrap_char);
@@ -274,7 +273,7 @@ pub trait Entity {
     }
 }
 
-pub trait Selection {
+pub trait Selection: Sync {
     fn get_selected_fields(&self) -> Vec<String>;
     fn get_sql_selection(&self, wrap_char: char) -> String {
         let selected_fields = self.get_selected_fields();
@@ -290,6 +289,18 @@ pub trait SelectedEntity {
     fn from_any_row(row: AnyRow) -> Result<Self, SqlxError>
     where
         Self: Sized;
+}
+
+pub trait PrimarySync: Primary + Sync {}
+
+pub trait AsPrimary {
+    fn as_primary(&self) -> &dyn Primary;
+}
+
+impl<T: Primary> AsPrimary for T {
+    fn as_primary(&self) -> &dyn Primary {
+        self
+    }
 }
 
 #[async_trait]
@@ -320,7 +331,7 @@ pub trait GenericDaoMapper {
             select_clause, table_name, where_clause
         );
         // dbg!(&select_stmt);
-        let args = primary.into_any_arguments();
+        let args = primary.any_arguments();
         let sqlx_query =
             sqlx::query_with(select_stmt, args).try_map(|row: AnyRow| Self::SE::from_any_row(row));
         let entity_opt: Option<Self::SE> = sqlx_query.fetch_optional(self.get_pool()).await?;
@@ -413,7 +424,7 @@ pub trait GenericDaoMapper {
         let table_name = primary.table_name('`');
         let where_clause = primary.get_where_clause('`', "?");
         let delete_stmt = &format!("DELETE FROM {} WHERE {}", table_name, where_clause);
-        let args = primary.into_any_arguments();
+        let args = primary.any_arguments();
         let result = sqlx::query_with(delete_stmt, args)
             .execute(self.get_pool())
             .await?;
