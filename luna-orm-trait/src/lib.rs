@@ -3,12 +3,16 @@ use sqlx::any::AnyArguments;
 use sqlx::any::AnyRow;
 use sqlx::Any;
 use sqlx::Encode;
+use sqlx::Row;
 use sqlx::Type;
 
 use serde::{Deserialize, Serialize};
 
 mod field;
 mod location;
+mod request;
+pub use location::*;
+pub use request::WriteCommand;
 
 pub type SqlxError = sqlx::Error;
 
@@ -64,38 +68,17 @@ pub trait SelectedEntity {
         Self: Sized;
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct LocationExpr<T> {
-    pub val: T,
-    pub cmp: CmpOperator,
+pub struct RecordCount {
+    pub count: i64,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub enum CmpOperator {
-    #[serde(alias = "=")]
-    Eq,
-    #[serde(alias = "<")]
-    LessThan,
-    #[serde(alias = "<=")]
-    LessOrEq,
-    #[serde(alias = ">")]
-    GreaterThan,
-    #[serde(alias = ">=")]
-    GreaterOrEq,
-    #[serde(alias = "like")]
-    Like,
-}
-
-impl CmpOperator {
-    pub fn get_sql(&self) -> &'static str {
-        match self {
-            CmpOperator::Eq => "=",
-            CmpOperator::LessThan => "<",
-            CmpOperator::LessOrEq => "<=",
-            CmpOperator::GreaterThan => ">",
-            CmpOperator::GreaterOrEq => ">=",
-            CmpOperator::Like => "LIKE",
-        }
+impl SelectedEntity for RecordCount {
+    fn from_any_row(row: AnyRow) -> Result<Self, SqlxError>
+    where
+        Self: Sized,
+    {
+        let count: i64 = row.try_get("count")?;
+        Ok(Self { count })
     }
 }
 
@@ -113,6 +96,17 @@ pub struct PageInfo {
     pub total: usize,
 }
 
+impl PageInfo {
+    pub fn empty(page_size: usize, page_num: usize) -> Self {
+        Self {
+            page_size,
+            page_num,
+            page_total: 0,
+            total: 0,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct PagedList<T>
 where
@@ -120,6 +114,18 @@ where
 {
     pub data: Vec<T>,
     pub page: PageInfo,
+}
+
+impl<T> PagedList<T>
+where
+    T: SelectedEntity,
+{
+    pub fn empty(page_size: usize, page_num: usize) -> Self {
+        Self {
+            page: PageInfo::empty(page_size, page_num),
+            data: Vec::new(),
+        }
+    }
 }
 
 pub fn merge_any_arguments<'p>(

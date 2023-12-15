@@ -74,5 +74,32 @@ pub async fn test_database() -> LunaOrmResult<()> {
     };
     assert_eq!(result, Some(selected_entity));
 
+    let entity = HelloEntity {
+        id: 24,
+        content: "test2".to_string(),
+    };
+    let result = db.insert(&entity).await?;
+    assert!(result);
+
+    let entity = HelloEntity {
+        id: 25,
+        content: "test3".to_string(),
+    };
+    let result = db.insert(&entity).await?;
+    assert!(result);
+
+    let location: HelloLocation = HelloLocation {
+        id: Some(LocationExpr::new(CmpOperator::GreaterThan, 0)),
+        content: None,
+    };
+    let page = Pagination {
+        page_size: 1,
+        page_num: 0,
+    };
+    let result: PagedList<HelloSelectedEntity> =
+        db.search_paged(&location, &selection, &page).await?;
+    assert_eq!(result.page.total, 3);
+    assert_eq!(result.data.len(), 1);
+
     return Ok(());
 }

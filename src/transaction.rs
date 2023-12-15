@@ -8,7 +8,9 @@ use sqlx::any::AnyRow;
 use crate::command_executor::CommandExecutor;
 use crate::sql_executor::SqlExecutor;
 use async_trait::async_trait;
-use luna_orm_trait::{Entity, Location, Mutation, Primary, SelectedEntity, Selection};
+use luna_orm_trait::{
+    Entity, Location, Mutation, Primary, SelectedEntity, Selection, WriteCommand,
+};
 
 pub struct Transaction<'a, G>
 where
@@ -115,5 +117,31 @@ where
         } else {
             Ok(None)
         }
+    }
+
+    async fn transact(&mut self, commands: &[WriteCommand]) -> LunaOrmResult<bool> {
+        for command in commands {
+            match command {
+                WriteCommand::Insert { entity } => {
+                    self.insert(entity.as_ref()).await?;
+                }
+                WriteCommand::Upsert { entity } => {
+                    self.upsert(entity.as_ref()).await?;
+                }
+                WriteCommand::Update { mutation, primary } => {
+                    self.update(mutation.as_ref(), primary.as_ref()).await?;
+                }
+                WriteCommand::Change { mutation, location } => {
+                    self.change(mutation.as_ref(), location.as_ref()).await?;
+                }
+                WriteCommand::Delete { primary } => {
+                    self.delete(primary.as_ref()).await?;
+                }
+                WriteCommand::Purify { location } => {
+                    self.purify(location.as_ref()).await?;
+                }
+            }
+        }
+        Ok(true)
     }
 }

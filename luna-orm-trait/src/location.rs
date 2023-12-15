@@ -7,6 +7,47 @@ impl<T> SelectionWithSend for T where T: Selection + Send {}
 pub trait LocationWithSend: Location + Send {}
 impl<T> LocationWithSend for T where T: Location + Send {}
 
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+pub struct LocationExpr<T> {
+    pub val: T,
+    pub cmp: CmpOperator,
+}
+
+impl<T> LocationExpr<T> {
+    pub fn new(cmp: CmpOperator, val: T) -> Self {
+        Self { cmp, val }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+pub enum CmpOperator {
+    #[serde(alias = "=")]
+    Eq,
+    #[serde(alias = "<")]
+    LessThan,
+    #[serde(alias = "<=")]
+    LessOrEq,
+    #[serde(alias = ">")]
+    GreaterThan,
+    #[serde(alias = ">=")]
+    GreaterOrEq,
+    #[serde(alias = "like")]
+    Like,
+}
+
+impl CmpOperator {
+    pub fn get_sql(&self) -> &'static str {
+        match self {
+            CmpOperator::Eq => "=",
+            CmpOperator::LessThan => "<",
+            CmpOperator::LessOrEq => "<=",
+            CmpOperator::GreaterThan => ">",
+            CmpOperator::GreaterOrEq => ">=",
+            CmpOperator::Like => "LIKE",
+        }
+    }
+}
+
 /*
 #[derive(Deserialize)]
 pub struct LocationQuery<S, L>

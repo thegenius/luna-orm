@@ -89,16 +89,28 @@ pub trait CommandExecutor: SqlExecutor {
     where
         SE: SelectedEntity + Send + Unpin,
     {
+        let args = location.any_arguments();
+        let count_sql = self.get_generator().get_search_count_sql(location);
+        let record_count: Option<RecordCount> = self.fetch_optional(&count_sql, args).await?;
+        if record_count.is_none() {
+            return Ok(PagedList::empty(page.page_size, page.page_num));
+        }
+        let record_count: RecordCount = record_count.unwrap();
+        if record_count.count <= 0 {
+            return Ok(PagedList::empty(page.page_size, page.page_num));
+        }
+        let record_count: i64 = record_count.count;
+
         let sql = self
             .get_generator()
             .get_paged_search_sql(selection, location, page);
         let args = location.any_arguments();
         let entity_list: Vec<SE> = self.fetch_all(&sql, args).await?;
         let page_info = PageInfo {
-            page_size: 10,
-            page_num: 10,
-            page_total: 10,
-            total: 100,
+            page_size: page.page_size,
+            page_num: page.page_num,
+            page_total: (record_count / page.page_size as i64) as usize,
+            total: record_count as usize,
         };
         return Ok(PagedList {
             data: entity_list,
@@ -115,8 +127,8 @@ pub trait CommandExecutor: SqlExecutor {
 
     async fn change(
         &mut self,
-        location: &dyn Location,
         mutation: &dyn Mutation,
+        location: &dyn Location,
     ) -> LunaOrmResult<usize> {
         let sql = self.get_generator().get_change_sql(mutation, location);
         let mut args = mutation.any_arguments();

@@ -29,22 +29,6 @@ impl Primary for HelloPrimary {
         &["name", "age"]
     }
 
-    fn name(&self) -> String {
-        "user".to_string()
-    }
-    fn get_fields_name(&self) -> Vec<String> {
-        vec!["name".to_string(), "age".to_string()]
-    }
-
-    fn into_any_arguments<'p>(self) -> sqlx::any::AnyArguments<'p>
-    where
-        Self: Sized,
-    {
-        let mut args = AnyArguments::default();
-        args.add(self.name);
-        args
-    }
-
     fn any_arguments(&self) -> sqlx::any::AnyArguments<'_> {
         let mut args = AnyArguments::default();
         //<Encode<'_, Any>>::encode_by_ref(self.name, args.values);

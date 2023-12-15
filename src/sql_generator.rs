@@ -62,6 +62,23 @@ pub trait SqlGenerator {
         self.post_process(select_sql)
     }
 
+    fn get_search_count_sql(&self, location: &dyn Location) -> String {
+        let table_name = location.get_table_name();
+        let where_clause = location.get_where_clause(self.get_wrap_char(), self.get_place_holder());
+
+        let select_sql = format!(
+            "SELECT COUNT(1) AS {}count{} FROM {}{}{} WHERE {}",
+            self.get_wrap_char(),
+            self.get_wrap_char(),
+            self.get_wrap_char(),
+            table_name,
+            self.get_wrap_char(),
+            where_clause
+        )
+        .to_string();
+        self.post_process(select_sql)
+    }
+
     fn get_search_sql(&self, selection: &dyn Selection, location: &dyn Location) -> String {
         let selected_field_names = selection.get_selected_fields();
         let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());

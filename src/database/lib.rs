@@ -39,6 +39,34 @@ pub trait Database: CommandExecutor + SqlExecutor {
             return Ok(None);
         }
     }
+
+    async fn transact(&mut self, commands: &[WriteCommand]) -> LunaOrmResult<bool> {
+        let trx = self.get_pool()?.begin().await?;
+        for command in commands {
+            match command {
+                WriteCommand::Insert { entity } => {
+                    self.insert(entity.as_ref()).await?;
+                }
+                WriteCommand::Upsert { entity } => {
+                    self.upsert(entity.as_ref()).await?;
+                }
+                WriteCommand::Update { mutation, primary } => {
+                    self.update(mutation.as_ref(), primary.as_ref()).await?;
+                }
+                WriteCommand::Change { mutation, location } => {
+                    self.change(mutation.as_ref(), location.as_ref()).await?;
+                }
+                WriteCommand::Delete { primary } => {
+                    self.delete(primary.as_ref()).await?;
+                }
+                WriteCommand::Purify { location } => {
+                    self.purify(location.as_ref()).await?;
+                }
+            }
+        }
+        trx.commit().await?;
+        Ok(true)
+    }
 }
 
 pub enum DatabaseType {
