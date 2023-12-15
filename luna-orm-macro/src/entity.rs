@@ -69,9 +69,6 @@ pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
 
     let output = quote! {
     impl Entity for #ident {
-        fn name(&self) -> String {
-            String::from(#name)
-        }
 
         fn get_table_name(&self) -> &'static str {
                 #name
@@ -116,31 +113,6 @@ pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
             #(#primary_args_add_ref; )*
             return arguments;
         }
-
-        /*
-        fn into_insert_any_arguments<'p>(self) -> AnyArguments<'p> where Self: Sized {
-            let mut arguments = AnyArguments::default();
-            #(#primary_args_add; )*
-            #(#body_args_add; )*
-            return arguments;
-        }
-
-        fn into_update_any_arguments<'p>(self) -> AnyArguments<'p> where Self: Sized {
-            let mut arguments = AnyArguments::default();
-            #(#body_args_add; )*
-            #(#primary_args_add; )*
-            return arguments;
-        }
-
-        fn into_upsert_any_arguments<'p>(self) -> AnyArguments<'p> where Self: Sized {
-            let mut arguments = AnyArguments::default();
-            #(#primary_args_add; )*
-            #(#body_args_add_cloned; )*
-            #(#body_args_add; )*
-            return arguments;
-        }
-        */
-
     }
     };
     // panic!("{}", output);

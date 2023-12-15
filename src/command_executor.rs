@@ -1,9 +1,7 @@
-use crate::error::LunaOrmError;
 use crate::sql_executor::SqlExecutor;
 use crate::sql_generator::SqlGenerator;
 use crate::LunaOrmResult;
 
-use crate::transaction::Transaction;
 use async_trait::async_trait;
 use luna_orm_trait::*;
 
@@ -48,9 +46,15 @@ pub trait CommandExecutor: SqlExecutor {
         return Ok(result.rows_affected() > 0);
     }
 
-    async fn update(&mut self, entity: &dyn Entity) -> LunaOrmResult<bool> {
-        let sql = self.get_generator().get_update_sql(entity);
-        let args = entity.any_arguments_of_update();
+    async fn update(
+        &mut self,
+        mutation: &dyn Mutation,
+        primary: &dyn Primary,
+    ) -> LunaOrmResult<bool> {
+        let sql = self.get_generator().get_update_sql(mutation, primary);
+        let mut args = mutation.any_arguments();
+        let where_args = primary.any_arguments();
+        args = merge_any_arguments(args, where_args);
         let result = self.execute(&sql, args).await?;
         return Ok(result.rows_affected() > 0);
     }
@@ -62,11 +66,12 @@ pub trait CommandExecutor: SqlExecutor {
         return Ok(result.rows_affected() > 0);
     }
 
-    #[inline]
-    async fn search<EX, L, S, SE>(&mut self, location: &L, selection: &S) -> LunaOrmResult<Vec<SE>>
+    async fn search<SE>(
+        &mut self,
+        location: &dyn Location,
+        selection: &dyn Selection,
+    ) -> LunaOrmResult<Vec<SE>>
     where
-        L: Location + Sync,
-        S: Selection + Sync,
         SE: SelectedEntity + Send + Unpin,
     {
         let sql = self.get_generator().get_search_sql(selection, location);
@@ -75,16 +80,13 @@ pub trait CommandExecutor: SqlExecutor {
         return Ok(result);
     }
 
-    #[inline]
-    async fn search_paged<EX, L, S, SE>(
+    async fn search_paged<SE>(
         &mut self,
-        location: &L,
-        selection: &S,
+        location: &dyn Location,
+        selection: &dyn Selection,
         page: &Pagination,
     ) -> LunaOrmResult<PagedList<SE>>
     where
-        L: Location + Sync,
-        S: Selection + Sync,
         SE: SelectedEntity + Send + Unpin,
     {
         let sql = self
@@ -104,23 +106,18 @@ pub trait CommandExecutor: SqlExecutor {
         });
     }
 
-    #[inline]
-    async fn purify<EX, L>(&mut self, location: &L) -> LunaOrmResult<usize>
-    where
-        L: Location + Sync,
-    {
+    async fn purify(&mut self, location: &dyn Location) -> LunaOrmResult<usize> {
         let sql = self.get_generator().get_purify_sql(location);
         let args = location.any_arguments();
         let result = self.execute(&sql, args).await?;
         return Ok(result.rows_affected() as usize);
     }
 
-    #[inline]
-    async fn change<EX, L, M>(&mut self, location: &L, mutation: &M) -> LunaOrmResult<usize>
-    where
-        L: Location + Sync,
-        M: Mutation + Sync,
-    {
+    async fn change(
+        &mut self,
+        location: &dyn Location,
+        mutation: &dyn Mutation,
+    ) -> LunaOrmResult<usize> {
         let sql = self.get_generator().get_change_sql(mutation, location);
         let mut args = mutation.any_arguments();
         let where_args = location.any_arguments();

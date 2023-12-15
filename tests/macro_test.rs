@@ -16,11 +16,6 @@ fn it_works() {
         id2: 24,
         content: "content".to_string(),
     };
-    let desc = describe.get_fields_name();
-    assert_eq!(
-        desc,
-        vec!["id".to_string(), "id2".to_string(), "content".to_string()]
-    );
 
     let primary_fields = describe.get_primary_fields_name();
     assert_eq!(primary_fields, vec!["id".to_string(), "id2".to_string()]);

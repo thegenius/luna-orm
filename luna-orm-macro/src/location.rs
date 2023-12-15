@@ -56,9 +56,6 @@ pub fn impl_location_macro(input: TokenStream) -> TokenStream {
                 #table_name
             }
 
-            fn name(&self) -> String {
-                String::from(#table_name)
-            }
 
             fn get_fields_name(&self) -> Vec<String> {
                 vec![
@@ -75,12 +72,6 @@ pub fn impl_location_macro(input: TokenStream) -> TokenStream {
             fn any_arguments<'p>(&self) -> AnyArguments<'p> {
                 let mut arguments = AnyArguments::default();
                 #(#arguments_ref_expanded_members ;)*
-                return arguments;
-            }
-
-            fn into_any_arguments<'p>(self) -> AnyArguments<'p> {
-                let mut arguments = AnyArguments::default();
-                #(#arguments_expanded_members ;)*
                 return arguments;
             }
         }

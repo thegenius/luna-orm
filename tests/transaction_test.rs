@@ -129,7 +129,7 @@ async fn test_transaction_rollback(db: &DB<SqliteDatabase>) -> LunaOrmResult<()>
 
     let mut trx = db.transaction().await?;
     let result: Option<HelloSelectedEntity> = trx.select(&primary, &selection).await?;
-    let selected_entity = HelloSelectedEntity {
+    let _selected_entity = HelloSelectedEntity {
         id: None,
         content: Some("test".to_string()),
     };
@@ -164,7 +164,7 @@ async fn expect_commit_transaction<'a, G: SqlGenerator + Sync>(
 }
 
 pub async fn test_transaction_rollback2(db: &mut DB<SqliteDatabase>) -> LunaOrmResult<()> {
-    let mut trx = db.transaction().await?;
+    let trx = db.transaction().await?;
     let _ = expect_rollback_transaction(trx).await;
 
     let primary = HelloPrimary { id: 23 };
@@ -179,7 +179,7 @@ pub async fn test_transaction_rollback2(db: &mut DB<SqliteDatabase>) -> LunaOrmR
 }
 
 pub async fn test_transaction_commit(db: &mut DB<SqliteDatabase>) -> LunaOrmResult<()> {
-    let mut trx = db.transaction().await?;
+    let trx = db.transaction().await?;
     let _ = expect_commit_transaction(trx).await;
 
     let primary = HelloPrimary { id: 23 };

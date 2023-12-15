@@ -1,69 +1,6 @@
 use async_trait::async_trait;
 use luna_orm_trait::{Entity, Location, Mutation, Pagination, Primary, Selection};
 
-#[inline]
-fn wrap_fields(fields: &[String], wrap_char: char) -> String {
-    fields
-        .iter()
-        .map(|e| format!("{}{}{}", wrap_char, e, wrap_char))
-        .collect::<Vec<String>>()
-        .join(",")
-}
-
-#[inline]
-fn wrap_locate_fields(fields: &[String], wrap_char: char, place_holder: char) -> String {
-    fields
-        .iter()
-        .map(|e| format!("{}{}{} = {}", wrap_char, e, wrap_char, place_holder))
-        .collect::<Vec<String>>()
-        .join(",")
-}
-
-#[inline]
-fn wrap_str_fields(fields: &[&str], wrap_char: char) -> String {
-    fields
-        .iter()
-        .map(|e| format!("{}{}{}", wrap_char, e, wrap_char))
-        .collect::<Vec<String>>()
-        .join(",")
-}
-
-#[inline]
-fn wrap_locate_str_fields(fields: &[&str], wrap_char: char, place_holder: char) -> String {
-    fields
-        .iter()
-        .map(|e| format!("{}{}{} = {}", wrap_char, e, wrap_char, place_holder))
-        .collect::<Vec<String>>()
-        .join(",")
-}
-
-#[inline]
-fn wrap_pg_locate_str_fields(fields: &[&str], wrap_char: char) -> String {
-    fields
-        .iter()
-        .enumerate()
-        .map(|(i, e)| format!("{}{}{} = ${}", wrap_char, e, wrap_char, i + 1))
-        .collect::<Vec<String>>()
-        .join(",")
-}
-
-#[inline]
-fn generate_question_marks(fields: &[&str]) -> String {
-    fields
-        .iter()
-        .map(|_| "?".to_string())
-        .collect::<Vec<String>>()
-        .join(", ")
-}
-#[inline]
-fn generate_question_mark_list(fields: &[String]) -> String {
-    fields
-        .iter()
-        .map(|_| "?".to_string())
-        .collect::<Vec<String>>()
-        .join(", ")
-}
-
 pub struct DefaultSqlGenerator {}
 impl DefaultSqlGenerator {
     pub fn new() -> Self {
@@ -98,7 +35,7 @@ pub trait SqlGenerator {
             .collect()
     }
 
-    #[inline]
+    #[inline(always)]
     fn post_process(&self, origin: String) -> String {
         origin
     }
@@ -172,7 +109,8 @@ pub trait SqlGenerator {
 
     fn get_insert_sql(&self, entity: &dyn Entity) -> String {
         let table_name = entity.get_table_name();
-        let field_names = entity.get_fields_name();
+        let mut field_names = entity.get_primary_fields_name();
+        field_names.extend(entity.get_body_fields_name());
         let fields = wrap_fields(&field_names, self.get_wrap_char());
         let marks = generate_question_mark_list(&field_names);
         let insert_sql = format!(
@@ -189,7 +127,8 @@ pub trait SqlGenerator {
 
     fn get_upsert_sql(&self, entity: &dyn Entity) -> String {
         let table_name = entity.get_table_name();
-        let field_names = entity.get_fields_name();
+        let mut field_names = entity.get_primary_fields_name();
+        field_names.extend(entity.get_body_fields_name());
         let fields = wrap_fields(&field_names, self.get_wrap_char());
         let primary_field_names = entity.get_primary_fields_name();
         let primary_fields = wrap_fields(&primary_field_names, self.get_wrap_char());
@@ -216,16 +155,16 @@ pub trait SqlGenerator {
         self.post_process(upsert_sql)
     }
 
-    fn get_update_sql(&self, entity: &dyn Entity) -> String {
-        let table_name = entity.get_table_name();
-        let body_field_names = entity.get_body_fields_name();
+    fn get_update_sql(&self, mutation: &dyn Mutation, primary: &dyn Primary) -> String {
+        let table_name = primary.get_table_name();
+        let body_field_names = mutation.get_fields_name();
         let body_fields = wrap_locate_fields(
             &body_field_names,
             self.get_wrap_char(),
             self.get_place_holder(),
         );
-        let primary_field_names = entity.get_primary_fields_name();
-        let primary_fields = wrap_locate_fields(
+        let primary_field_names = primary.get_primary_field_names();
+        let primary_fields = wrap_locate_str_fields(
             &primary_field_names,
             self.get_wrap_char(),
             self.get_place_holder(),
@@ -244,8 +183,13 @@ pub trait SqlGenerator {
 
     fn get_change_sql(&self, mutation: &dyn Mutation, location: &dyn Location) -> String {
         let table_name = location.get_table_name();
-        let update_clause =
-            mutation.get_update_clause(self.get_wrap_char(), self.get_place_holder());
+        let mutation_fields = mutation.get_fields_name();
+        let update_clause = wrap_locate_fields(
+            &mutation_fields,
+            self.get_wrap_char(),
+            self.get_place_holder(),
+        );
+
         let where_clause = location.get_where_clause(self.get_wrap_char(), self.get_place_holder());
         let update_sql = format!(
             "UPDATE {}{}{} SET {} WHERE {}",
@@ -288,4 +232,66 @@ pub trait SqlGenerator {
         .to_string();
         self.post_process(delete_sql)
     }
+}
+#[inline]
+fn wrap_fields(fields: &[String], wrap_char: char) -> String {
+    fields
+        .iter()
+        .map(|e| format!("{}{}{}", wrap_char, e, wrap_char))
+        .collect::<Vec<String>>()
+        .join(",")
+}
+
+#[inline]
+fn wrap_locate_fields(fields: &[String], wrap_char: char, place_holder: char) -> String {
+    fields
+        .iter()
+        .map(|e| format!("{}{}{} = {}", wrap_char, e, wrap_char, place_holder))
+        .collect::<Vec<String>>()
+        .join(",")
+}
+
+#[inline]
+fn wrap_str_fields(fields: &[&str], wrap_char: char) -> String {
+    fields
+        .iter()
+        .map(|e| format!("{}{}{}", wrap_char, e, wrap_char))
+        .collect::<Vec<String>>()
+        .join(",")
+}
+
+#[inline]
+fn wrap_locate_str_fields(fields: &[&str], wrap_char: char, place_holder: char) -> String {
+    fields
+        .iter()
+        .map(|e| format!("{}{}{} = {}", wrap_char, e, wrap_char, place_holder))
+        .collect::<Vec<String>>()
+        .join(",")
+}
+
+#[inline]
+fn wrap_pg_locate_str_fields(fields: &[&str], wrap_char: char) -> String {
+    fields
+        .iter()
+        .enumerate()
+        .map(|(i, e)| format!("{}{}{} = ${}", wrap_char, e, wrap_char, i + 1))
+        .collect::<Vec<String>>()
+        .join(",")
+}
+
+#[inline]
+fn generate_question_marks(fields: &[&str]) -> String {
+    fields
+        .iter()
+        .map(|_| "?".to_string())
+        .collect::<Vec<String>>()
+        .join(", ")
+}
+#[inline]
+fn generate_question_mark_list(fields: &[String]) -> String {
+    fields
+        .iter()
+        .map(|_| "?".to_string())
+        .collect::<Vec<String>>()
+        .join(", ")
 }

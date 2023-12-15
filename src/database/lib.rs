@@ -18,13 +18,12 @@ pub trait Database: CommandExecutor + SqlExecutor {
         return Ok(transaction);
     }
 
-    async fn remove<S, SE>(
+    async fn remove<SE>(
         &mut self,
         primary: &dyn Primary,
-        selection: &S,
+        selection: &dyn Selection,
     ) -> LunaOrmResult<Option<SE>>
     where
-        S: Selection + Sync,
         SE: SelectedEntity + Send + Unpin,
     {
         let mut trx = self.get_pool()?.begin().await?;

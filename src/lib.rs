@@ -15,8 +15,6 @@ pub type LunaOrmResult<T> = std::result::Result<T, error::LunaOrmError>;
 pub mod prelude {
     pub use crate::command_executor::CommandExecutor;
     pub use crate::database::*;
-    pub use crate::mapper::GenericDaoMapper;
-    pub use crate::mapper::GenericDaoMapperImpl;
     pub use crate::sql_executor::SqlExecutor;
     pub use crate::sql_generator::*;
     pub use crate::transaction::Transaction;

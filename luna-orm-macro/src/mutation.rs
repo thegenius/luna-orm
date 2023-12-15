@@ -27,12 +27,6 @@ pub fn impl_mutation_macro(input: TokenStream) -> TokenStream {
                 ]
             }
 
-            fn into_any_arguments<'p>(self) -> AnyArguments<'p> {
-                let mut arguments = AnyArguments::default();
-                #(#args_push_clause ;)*
-                return arguments;
-            }
-
             fn any_arguments<'p>(&self) -> AnyArguments<'p> {
                 let mut arguments = AnyArguments::default();
                 #(#args_push_ref_clause ;)*

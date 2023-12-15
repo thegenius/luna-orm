@@ -9,6 +9,7 @@ use sqlx::Any;
 use sqlx::any::AnyRow;
 use sqlx::Executor;
 
+/*
 #[async_trait]
 pub trait GenericDaoMapper {
     async fn select<'e, EX, P, S, SE>(
@@ -174,7 +175,7 @@ pub trait GenericDaoMapper {
             "SELECT {} FROM {} WHERE {}",
             selected_fields, table_name, where_clause
         );
-        let args = location.into_any_arguments();
+        let args = location.any_arguments();
         let sqlx_query =
             sqlx::query_with(search_stmt, args).try_map(|row: AnyRow| SE::from_any_row(row));
         let entity_list = sqlx_query.fetch_all(executor).await?;
@@ -199,7 +200,7 @@ pub trait GenericDaoMapper {
             "SELECT {} FROM {} WHERE {}",
             selected_fields, table_name, where_clause
         );
-        let args = location.into_any_arguments();
+        let args = location.any_arguments();
         let sqlx_query =
             sqlx::query_with(search_stmt, args).try_map(|row: AnyRow| SE::from_any_row(row));
         let entity_list = sqlx_query.fetch_all(executor).await?;
@@ -223,7 +224,7 @@ pub trait GenericDaoMapper {
         let table_name = location.table_name('`');
         let where_clause = location.get_where_clause('`', '?');
         let delete_stmt = &format!("DELETE FROM {} WHERE {}", table_name, where_clause);
-        let args = location.into_any_arguments();
+        let args = location.any_arguments();
         let sqlx_query = sqlx::query_with(delete_stmt, args);
         let result = sqlx_query.execute(executor).await?;
         return Ok(result.rows_affected() as usize);
@@ -246,8 +247,8 @@ pub trait GenericDaoMapper {
             "UPDATE {} SET {} WHERE {}",
             table_name, update_clause, where_clause
         );
-        let mutation_args = mutation.into_any_arguments();
-        let location_args = location.into_any_arguments();
+        let mutation_args = mutation.any_arguments();
+        let location_args = location.any_arguments();
         let args = merge_any_arguments(mutation_args, location_args);
         let sqlx_query = sqlx::query_with(change_stmt, args);
         let result = sqlx_query.execute(executor).await?;
@@ -257,3 +258,4 @@ pub trait GenericDaoMapper {
 
 pub struct GenericDaoMapperImpl {}
 impl GenericDaoMapper for GenericDaoMapperImpl {}
+*/

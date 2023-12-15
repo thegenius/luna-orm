@@ -35,6 +35,7 @@ pub fn impl_primary_macro(input: TokenStream) -> TokenStream {
                 &[ #(#fields_name_str)* ]
             }
 
+            /*
             fn name(&self) -> String {
                 String::from(#table_name)
             }
@@ -42,6 +43,7 @@ pub fn impl_primary_macro(input: TokenStream) -> TokenStream {
             fn get_fields_name(&self) -> Vec<String> {
                 vec![ #(#fields_name, )* ]
             }
+            */
 
             fn any_arguments(&self) -> sqlx::any::AnyArguments<'_> {
                 let mut arguments = AnyArguments::default();
