@@ -63,6 +63,11 @@ pub fn impl_location_macro(input: TokenStream) -> TokenStream {
                 ]
             }
 
+
+            fn check_valid_order_by(&self, fields: &[String]) -> bool {
+                true
+            }
+
             fn get_where_clause(&self, wrap_char: char, place_holder: char) -> String {
                 let mut sql = String::default();
                 #(#where_clause_members )*

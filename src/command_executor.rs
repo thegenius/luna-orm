@@ -1,3 +1,4 @@
+use crate::error::LunaOrmError;
 use crate::sql_executor::SqlExecutor;
 use crate::sql_generator::SqlGenerator;
 use crate::LunaOrmResult;
@@ -78,6 +79,11 @@ pub trait CommandExecutor: SqlExecutor {
         let sql = self
             .get_generator()
             .get_search_sql(selection, location, order_by);
+        let order_by_fields = order_by.get_order_by_fields();
+        let valid_order_by = location.check_valid_order_by(&order_by_fields);
+        if !valid_order_by {
+            return Err(LunaOrmError::OrderByFieldsError);
+        }
         let args = location.any_arguments();
         let result: Vec<SE> = self.fetch_all(&sql, args).await?;
         return Ok(result);
@@ -93,6 +99,11 @@ pub trait CommandExecutor: SqlExecutor {
     where
         SE: SelectedEntity + Send + Unpin,
     {
+        let order_by_fields = order_by.get_order_by_fields();
+        let valid_order_by = location.check_valid_order_by(&order_by_fields);
+        if !valid_order_by {
+            return Err(LunaOrmError::OrderByFieldsError);
+        }
         let args = location.any_arguments();
         let count_sql = self.get_generator().get_search_count_sql(location);
         let record_count: Option<RecordCount> = self.fetch_optional(&count_sql, args).await?;

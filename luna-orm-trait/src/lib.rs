@@ -38,6 +38,8 @@ pub trait Location: Sync {
     fn get_fields_name(&self) -> Vec<String>;
 
     fn get_where_clause(&self, wrap_char: char, place_holder: char) -> String;
+
+    fn check_valid_order_by(&self, fields: &[String]) -> bool;
 }
 
 pub trait Entity: Sync {
