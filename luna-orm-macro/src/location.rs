@@ -3,6 +3,7 @@ use quote::quote;
 use quote::quote_spanned;
 
 use crate::utils::*;
+use luna_orm_trait::array_str_equal;
 use proc_macro2::{Ident, Span};
 use syn::Attribute;
 use syn::Field;
@@ -22,16 +23,6 @@ pub fn impl_location_macro(input: TokenStream) -> TokenStream {
     let cloned_named = fields.named.clone();
     let arguments_ref_expanded_members = build_args_add_option_ref_clause(&fields);
 
-    let arguments_expanded_members = cloned_named.into_iter().map(|field| {
-        let field_name = field.ident.unwrap();
-        let span = field_name.span();
-        quote_spanned! { span =>
-            if let Some(#field_name) = self.#field_name {
-                arguments.add(#field_name.val);
-            }
-        }
-    });
-
     let cloned_named = fields.named.clone();
     let where_clause_members = cloned_named.into_iter().map(|field| {
         let field_name = field.ident.unwrap();
@@ -47,6 +38,27 @@ pub fn impl_location_macro(input: TokenStream) -> TokenStream {
     });
 
     let table_name = extract_table_name(&ident, &attrs);
+    let unique_indexes = extract_unique_index(&attrs);
+
+    let unique_index_check = if unique_indexes.is_empty() {
+        quote!(fields.len() == 0)
+    } else {
+        let mut check_token_stream = quote!();
+        for unique_index in unique_indexes {
+            let check_token = quote!(
+                if array_str_equal(&[#(#unique_index,)*], fields) {
+                    return true;
+                }
+            );
+            check_token_stream.extend(check_token);
+        }
+        check_token_stream.extend(quote!(
+
+            dbg!(&fields);
+            return false;
+        ));
+        check_token_stream
+    };
 
     let output = quote! {
 
@@ -65,7 +77,7 @@ pub fn impl_location_macro(input: TokenStream) -> TokenStream {
 
 
             fn check_valid_order_by(&self, fields: &[String]) -> bool {
-                true
+                #unique_index_check
             }
 
             fn get_where_clause(&self, wrap_char: char, place_holder: char) -> String {
@@ -82,6 +94,6 @@ pub fn impl_location_macro(input: TokenStream) -> TokenStream {
         }
     };
 
-    //panic!("{}", output);
+    // panic!("{}", output);
     output.into()
 }

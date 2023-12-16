@@ -7,10 +7,10 @@ pub struct HelloSelection {
     content: Option<bool>,
 }
 
-#[derive(OrderBy, Default, Clone)]
-pub struct HelloOrderBy {
-    id: bool,
-    content: bool,
+#[derive(OrderBy, Clone)]
+pub enum HelloOrderBy {
+    Id,
+    IdContent,
 }
 #[derive(Primary, Default, Clone)]
 #[TableName = "article"]
@@ -39,6 +39,8 @@ pub struct HelloMutation {
 
 #[derive(Location, Clone, Debug)]
 #[TableName = "article"]
+#[UniqueIndex = "id, content"]
+#[UniqueIndex = "id"]
 pub struct HelloLocation {
     id: Option<LocationExpr<i32>>,
     content: Option<LocationExpr<String>>,
@@ -101,10 +103,7 @@ pub async fn test_database() -> LunaOrmResult<()> {
         page_size: 1,
         page_num: 0,
     };
-    let order_by = HelloOrderBy {
-        id: true,
-        content: false,
-    };
+    let order_by = HelloOrderBy::IdContent;
     let result: PagedList<HelloSelectedEntity> = db
         .search_paged(&location, &order_by, &selection, &page)
         .await?;

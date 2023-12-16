@@ -1,8 +1,10 @@
 use proc_macro2::{self, Ident, Span, TokenStream};
 use quote::quote_spanned;
 use syn::{
-    token, Attribute, Data, DataEnum, DataStruct, DataUnion, Error, Field, Fields, FieldsNamed,
-    LitStr, Path, Result,
+    punctuated::Punctuated,
+    token::{self, Comma},
+    Attribute, Data, DataEnum, DataStruct, DataUnion, Error, Field, Fields, FieldsNamed, LitStr,
+    Path, Result, Variant,
 };
 
 pub fn map_fields<F>(field_list: &FieldsNamed, wrap_fn: &F) -> Vec<proc_macro2::TokenStream>
@@ -56,6 +58,27 @@ pub fn build_args_add_option_ref_clause(fields: &FieldsNamed) -> Vec<proc_macro2
     map_fields(fields, &|f: Field| {
         map_field(f, FieldMapType::ArgsAddOptionRef)
     })
+}
+
+pub fn extract_enum(data: &Data) -> Result<&DataEnum> {
+    match data {
+        Data::Enum(data_enum) => Ok(data_enum),
+
+        _ => Err(Error::new(
+            Span::call_site(),
+            "Expected a `struct` with named fields",
+        )),
+    }
+}
+
+pub fn extract_enum_variants(data: &Data) -> Result<Vec<Ident>> {
+    let data_enum = extract_enum(data)?;
+    let mut variant_names = Vec::new();
+    for variant in &data_enum.variants {
+        let variant_name: Ident = variant.ident.clone();
+        variant_names.push(variant_name);
+    }
+    Ok(variant_names)
 }
 
 pub fn extract_fields(data: &Data) -> Result<FieldsNamed> {
@@ -209,6 +232,17 @@ pub fn extract_val_from_attrs(attrs: &Vec<Attribute>, name: &str) -> Option<Stri
     return None;
 }
 
+pub fn extract_val_vev_from_attrs(attrs: &Vec<Attribute>, name: &str) -> Vec<String> {
+    let mut result: Vec<String> = Vec::new();
+    for attr in attrs {
+        let val_opt = extract_val_from_attr(attr, name);
+        if val_opt.is_some() {
+            result.push(val_opt.unwrap());
+        }
+    }
+    return result;
+}
+
 pub fn check_has_attr(attrs: &Vec<Attribute>, name: &str) -> bool {
     for attr in attrs {
         let is_attr = check_is_attr(attr, name);
@@ -223,6 +257,15 @@ pub fn extract_table_name(_ident: &Ident, attrs: &Vec<Attribute>) -> String {
     let mut name = stringify!(#ident).to_string();
     name = extract_val_from_attrs(attrs, "TableName").unwrap_or(name);
     return name;
+}
+
+pub fn extract_unique_index(attrs: &Vec<Attribute>) -> Vec<Vec<String>> {
+    let indexes = extract_val_vev_from_attrs(attrs, "UniqueIndex");
+    let result: Vec<Vec<String>> = indexes
+        .iter()
+        .map(|s| s.split(',').map(|e| e.trim().to_string()).collect())
+        .collect();
+    return result;
 }
 
 pub fn extract_annotated_fields(fields: &FieldsNamed, name: &str) -> Vec<Field> {

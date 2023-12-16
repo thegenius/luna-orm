@@ -23,7 +23,7 @@ pub fn expand_primary_macro(input: TokenStream) -> TokenStream {
     impl_primary_macro(input)
 }
 
-#[proc_macro_derive(Location, attributes(TableName))]
+#[proc_macro_derive(Location, attributes(TableName, UniqueIndex))]
 pub fn expand_location_macro(input: TokenStream) -> TokenStream {
     impl_location_macro(input)
 }

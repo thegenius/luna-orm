@@ -11,8 +11,10 @@ use serde::{Deserialize, Serialize};
 mod field;
 mod location;
 mod request;
+mod utils;
 pub use location::*;
 pub use request::WriteCommand;
+pub use utils::array_str_equal;
 
 pub type SqlxError = sqlx::Error;
 
