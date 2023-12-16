@@ -76,7 +76,7 @@ pub fn impl_location_macro(input: TokenStream) -> TokenStream {
             }
 
 
-            fn check_valid_order_by(&self, fields: &[String]) -> bool {
+            fn check_valid_order_by(&self, fields: &[&str]) -> bool {
                 #unique_index_check
             }
 

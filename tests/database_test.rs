@@ -11,7 +11,9 @@ pub struct HelloSelection {
 pub enum HelloOrderBy {
     Id,
     IdContent,
+    ContentId,
 }
+
 #[derive(Primary, Default, Clone)]
 #[TableName = "article"]
 pub struct HelloPrimary {
@@ -103,7 +105,7 @@ pub async fn test_database() -> LunaOrmResult<()> {
         page_size: 1,
         page_num: 0,
     };
-    let order_by = HelloOrderBy::IdContent;
+    let order_by = HelloOrderBy::ContentId;
     let result: PagedList<HelloSelectedEntity> = db
         .search_paged(&location, &order_by, &selection, &page)
         .await?;

@@ -102,7 +102,7 @@ pub trait SqlGenerator {
             .to_string();
             self.post_process(select_sql)
         } else {
-            let order_by_fields = wrap_fields(&order_by_field_names, self.get_wrap_char());
+            let order_by_fields = wrap_str_fields(&order_by_field_names, self.get_wrap_char());
             let select_sql = format!(
                 "SELECT {} FROM {}{}{} WHERE {} ORDER BY {}",
                 selected_fields,
@@ -145,7 +145,7 @@ pub trait SqlGenerator {
             .to_string();
             self.post_process(select_sql)
         } else {
-            let order_by_fields = wrap_fields(&order_by_field_names, self.get_wrap_char());
+            let order_by_fields = wrap_str_fields(&order_by_field_names, self.get_wrap_char());
             let select_sql = format!(
                 "SELECT {} FROM {}{}{} WHERE {} ORDER BY {} LIMIT {},{}",
                 selected_fields,

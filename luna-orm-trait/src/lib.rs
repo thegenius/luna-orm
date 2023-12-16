@@ -41,7 +41,7 @@ pub trait Location: Sync {
 
     fn get_where_clause(&self, wrap_char: char, place_holder: char) -> String;
 
-    fn check_valid_order_by(&self, fields: &[String]) -> bool;
+    fn check_valid_order_by(&self, fields: &[&str]) -> bool;
 }
 
 pub trait Entity: Sync {
@@ -67,7 +67,7 @@ pub trait Selection: Sync {
 }
 
 pub trait OrderBy: Sync {
-    fn get_order_by_fields(&self) -> Vec<String>;
+    fn get_order_by_fields(&self) -> &'static [&'static str];
 }
 
 pub trait SelectedEntity {

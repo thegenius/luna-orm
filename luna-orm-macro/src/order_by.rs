@@ -25,14 +25,14 @@ pub fn impl_order_by_macro(input: TokenStream) -> TokenStream {
             order_by_variant_string.split("_").collect::<Vec<&str>>();
 
         let match_arm = quote!(
-            #ident::#variant_ident => vec![ #(#order_by_field_list.to_string() ,)* ],
+            #ident::#variant_ident => &[ #(#order_by_field_list,)* ],
         );
         match_token_stream.extend(match_arm);
     }
 
     let output = quote! {
         impl OrderBy for #ident {
-            fn get_order_by_fields(&self) -> Vec<String> {
+            fn get_order_by_fields(&self) -> &'static [&'static str] {
                 match self {
                     #match_token_stream
                 }
