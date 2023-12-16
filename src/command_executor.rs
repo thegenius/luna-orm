@@ -70,7 +70,7 @@ pub trait CommandExecutor: SqlExecutor {
     async fn search<SE>(
         &mut self,
         location: &dyn Location,
-        order_by: &dyn OrderBy,
+        order_by: Option<&dyn OrderBy>,
         selection: &dyn Selection,
     ) -> LunaOrmResult<Vec<SE>>
     where
@@ -79,10 +79,12 @@ pub trait CommandExecutor: SqlExecutor {
         let sql = self
             .get_generator()
             .get_search_sql(selection, location, order_by);
-        let order_by_fields = order_by.get_order_by_fields();
-        let valid_order_by = location.check_valid_order_by(&order_by_fields);
-        if !valid_order_by {
-            return Err(LunaOrmError::OrderByFieldsError);
+        if order_by.is_some() {
+            let order_by_fields = order_by.unwrap().get_order_by_fields();
+            let valid_order_by = location.check_valid_order_by(order_by_fields);
+            if !valid_order_by {
+                return Err(LunaOrmError::OrderByFieldsError);
+            }
         }
         let args = location.any_arguments();
         let result: Vec<SE> = self.fetch_all(&sql, args).await?;
@@ -92,17 +94,19 @@ pub trait CommandExecutor: SqlExecutor {
     async fn search_paged<SE>(
         &mut self,
         location: &dyn Location,
-        order_by: &dyn OrderBy,
+        order_by: Option<&dyn OrderBy>,
         selection: &dyn Selection,
         page: &Pagination,
     ) -> LunaOrmResult<PagedList<SE>>
     where
         SE: SelectedEntity + Send + Unpin,
     {
-        let order_by_fields = order_by.get_order_by_fields();
-        let valid_order_by = location.check_valid_order_by(&order_by_fields);
-        if !valid_order_by {
-            return Err(LunaOrmError::OrderByFieldsError);
+        if order_by.is_some() {
+            let order_by_fields = order_by.unwrap().get_order_by_fields();
+            let valid_order_by = location.check_valid_order_by(order_by_fields);
+            if !valid_order_by {
+                return Err(LunaOrmError::OrderByFieldsError);
+            }
         }
         let args = location.any_arguments();
         let count_sql = self.get_generator().get_search_count_sql(location);

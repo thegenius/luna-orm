@@ -83,14 +83,13 @@ pub trait SqlGenerator {
         &self,
         selection: &dyn Selection,
         location: &dyn Location,
-        order_by: &dyn OrderBy,
+        order_by: Option<&dyn OrderBy>,
     ) -> String {
         let selected_field_names = selection.get_selected_fields();
         let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());
         let table_name = location.get_table_name();
         let where_clause = location.get_where_clause(self.get_wrap_char(), self.get_place_holder());
-        let order_by_field_names = order_by.get_order_by_fields();
-        if order_by_field_names.is_empty() {
+        if order_by.is_none() {
             let select_sql = format!(
                 "SELECT {} FROM {}{}{} WHERE {}",
                 selected_fields,
@@ -102,6 +101,7 @@ pub trait SqlGenerator {
             .to_string();
             self.post_process(select_sql)
         } else {
+            let order_by_field_names = order_by.unwrap().get_order_by_fields();
             let order_by_fields = wrap_str_fields(&order_by_field_names, self.get_wrap_char());
             let select_sql = format!(
                 "SELECT {} FROM {}{}{} WHERE {} ORDER BY {}",
@@ -121,7 +121,7 @@ pub trait SqlGenerator {
         &self,
         selection: &dyn Selection,
         location: &dyn Location,
-        order_by: &dyn OrderBy,
+        order_by: Option<&dyn OrderBy>,
         page: &Pagination,
     ) -> String {
         let selected_field_names = selection.get_selected_fields();
@@ -130,8 +130,7 @@ pub trait SqlGenerator {
         let where_clause = location.get_where_clause(self.get_wrap_char(), self.get_place_holder());
         let offset = page.page_size * page.page_num;
         let count = page.page_size;
-        let order_by_field_names = order_by.get_order_by_fields();
-        if order_by_field_names.is_empty() {
+        if order_by.is_none() {
             let select_sql = format!(
                 "SELECT {} FROM {}{}{} WHERE {} LIMIT {},{}",
                 selected_fields,
@@ -145,7 +144,8 @@ pub trait SqlGenerator {
             .to_string();
             self.post_process(select_sql)
         } else {
-            let order_by_fields = wrap_str_fields(&order_by_field_names, self.get_wrap_char());
+            let order_by_field_names = order_by.unwrap().get_order_by_fields();
+            let order_by_fields = wrap_str_fields(order_by_field_names, self.get_wrap_char());
             let select_sql = format!(
                 "SELECT {} FROM {}{}{} WHERE {} ORDER BY {} LIMIT {},{}",
                 selected_fields,

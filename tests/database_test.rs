@@ -107,7 +107,7 @@ pub async fn test_database() -> LunaOrmResult<()> {
     };
     let order_by = HelloOrderBy::ContentId;
     let result: PagedList<HelloSelectedEntity> = db
-        .search_paged(&location, &order_by, &selection, &page)
+        .search_paged(&location, Some(&order_by), &selection, &page)
         .await?;
     assert_eq!(result.page.total, 3);
     assert_eq!(result.data.len(), 1);
