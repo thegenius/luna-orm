@@ -20,6 +20,13 @@ impl<T> LocationExpr<T> {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+pub struct SelectedLocationExpr<T> {
+    pub selected: bool,
+    pub val: T,
+    pub cmp: CmpOperator,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub enum CmpOperator {
     #[serde(alias = "=")]
     Eq,
@@ -62,8 +69,8 @@ where
 
 #[typetag::serde(tag = "table")]
 pub trait LocatedQuery {
-    fn get_selection(&self) -> &dyn SelectionWithSend;
-    fn get_location(&self) -> &dyn LocationWithSend;
+    fn get_selection(&self) -> &dyn Selection;
+    fn get_location(&self) -> &dyn Location;
 }
 
 /*

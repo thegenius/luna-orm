@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 
 mod field;
 mod location;
+mod parser;
 mod request;
 mod utils;
 pub use location::*;
@@ -27,7 +28,7 @@ pub trait Primary: Sync {
 }
 
 pub trait Mutation: Sync {
-    fn any_arguments<'p>(&self) -> AnyArguments<'p>;
+    fn any_arguments(&self) -> AnyArguments<'_>;
 
     fn get_fields_name(&self) -> Vec<String>;
 }
@@ -35,7 +36,7 @@ pub trait Mutation: Sync {
 pub trait Location: Sync {
     fn get_table_name(&self) -> &'static str;
 
-    fn any_arguments<'p>(&self) -> AnyArguments<'p>;
+    fn any_arguments(&self) -> AnyArguments<'_>;
 
     fn get_fields_name(&self) -> Vec<String>;
 
@@ -51,11 +52,15 @@ pub trait Entity: Sync {
 
     fn get_body_fields_name(&self) -> Vec<String>;
 
-    fn any_arguments_of_insert<'p>(&self) -> AnyArguments<'p>;
+    fn get_primary_args(&self) -> AnyArguments<'_>;
 
-    fn any_arguments_of_upsert<'p>(&self) -> AnyArguments<'p>;
+    fn get_body_args(&self) -> AnyArguments<'_>;
 
-    fn any_arguments_of_update<'p>(&self) -> AnyArguments<'p>;
+    fn any_arguments_of_insert(&self) -> AnyArguments<'_>;
+
+    fn any_arguments_of_upsert(&self) -> AnyArguments<'_>;
+
+    fn any_arguments_of_update(&self) -> AnyArguments<'_>;
 
     fn from_any_row(row: AnyRow) -> Result<Self, SqlxError>
     where
