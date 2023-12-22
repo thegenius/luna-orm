@@ -1,5 +1,5 @@
 
-# LUNA-ORM is under rapid development, api may change, you should not use it in PRODUCTION env.
+# :warning: LUNA-ORM is under rapid development, api may change, you should not use it in PRODUCTION env.
 For now, just have a basic taste, waiting for the version 1.0  
 At that time, the api will be stable, and backward compatible will be promised.
 
@@ -46,7 +46,7 @@ pub async fn main() -> LunaOrmResult<()> {
 
   // optional: you may need to create the table for the first time.
   // db.execute_plain(
-  //      "CREATE TABLE IF NOT EXISTS `article`(`id` INT PRIMARY KEY, `age` INT, `name` VARCHAR(64))",
+  //      "CREATE TABLE IF NOT EXISTS `user`(`id` INT PRIMARY KEY, `age` INT, `name` VARCHAR(64))",
   // )
   
   // 2. create a DB instance.
