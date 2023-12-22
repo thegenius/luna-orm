@@ -1,18 +1,18 @@
 
 # LUNA-ORM is under rapid development, api may change, you should not use it in PRODUCTION env.
-For now, just have a basic taste, waiting for the version 1.0
+For now, just have a basic taste, waiting for the version 1.0  
 At that time, the api will be stable, and backward compatible will be promised.
 
 # LUNA-ORM
 
 LUNA-ORM is an async orm framework based on SQLx.
-- ** Intuitive ** : Elegant API, the most simple orm in this world.
-- ** Saving Lives ** : Most useful api is default, no need to waste your life.
-- ** Smooth Transaction ** : Transaction is almost same as normal.
-- ** Template SQL ** : You can execute your own sql with no pain.
-- ** Dynamic Parameters ** : Handle complex dynamic sql with default.
-- ** Truly Asynchronous ** : Based on SQLx, luna-orm is fully async.
-- ** Error Sound ** : Every error has its meaning. 
+- **Intuitive ** : Elegant API, the most simple orm in this world.
+- **Saving Lives ** : Most useful api is default, no need to waste your life.
+- **Smooth Transaction ** : Transaction is almost same as normal.
+- **Template SQL ** : You can execute your own sql with no pain.
+- **Dynamic Parameters ** : Handle complex dynamic sql with default.
+- **Truly Asynchronous ** : Based on SQLx, luna-orm is fully async.
+- **Error Sound ** : Every error has its meaning. 
 
 ## INSTALL
 ```toml
