@@ -5,7 +5,7 @@ At that time, the api will be stable, and backward compatible will be promised.
 
 # LUNA-ORM
 
-LUNA-ORM is an async orm framework based on SQLx.
+LUNA-ORM is an async orm framework based on SQLx. Built with :heart:
 -  **Intuitive** : Simple API, the most simple orm in this world.
 -  **Saving Lives** : Most useful api is implemented by default, no need to waste your life.
 -  **Smooth Transaction** : Transaction is almost same as normal.
