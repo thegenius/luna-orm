@@ -23,17 +23,10 @@ luna-orm = { version = "0.3" }
 ## Intuitive
 Everything should just works as you want.
 
+
+### Create a database instance.
 ```rust
 use luna_orm::preclude::*;
-
-#[derive(Entity, Clone, Debug)]
-#[TableName = "user"]
-pub struct HelloEntity {
-    #[PrimaryKey]
-    id: i32,
-    name: String,
-    age: Option<i32>,
-}
 
 #[tokio::main]
 pub async fn main() -> LunaOrmResult<()> {
@@ -44,29 +37,41 @@ pub async fn main() -> LunaOrmResult<()> {
         db_file: "test.db".to_string(),
     };
 
+  // 2. create a DB instance.
+  let mut db: DB<SqliteDatabase> = SqliteDatabase::build(config).await.unwrap().into();
+
   // optional: you may need to create the table for the first time.
   // db.execute_plain(
   //      "CREATE TABLE IF NOT EXISTS `user`(`id` INT PRIMARY KEY, `age` INT, `name` VARCHAR(64))",
   // )
   
-  // 2. create a DB instance.
-  let mut db: DB<SqliteDatabase> = SqliteDatabase::build(config).await.unwrap().into();
+  Ok(())
+}
+ 
+```
+### Insert an entity
 
-  // 3. create an entity and juse insert it, that's it!
-  let entity = HelloEntity {
+```rust
+// 1. Declare an Entity, Derive macro Entity, give a TableName
+#[derive(Entity, Clone, Debug)]
+#[TableName = "user"]
+pub struct HelloEntity {
+    #[PrimaryKey]
+    id: i32,
+    name: String,
+    age: Option<i32>,
+}
+
+
+// 2. create an entity.
+let entity = HelloEntity {
       id: 1,
       name: "Allen".to_string(),
       age: Some(23)
-  }; 
-  let result = db.insert(entity).await?;
-  
-  Ok(())
-}
-
-  
+}; 
+// 3. insert it, this is so intuitive, you don't need to warry about anything, it jsut works.
+let result = db.insert(entity).await?;
 ```
-
-
 
 ## Saving Lives
 Almost 90% command has been implemented by default, this may saving your lives.
