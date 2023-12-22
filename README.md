@@ -1,3 +1,8 @@
+
+# LUNA-ORM is under rapid development, api may change, you should not use it in PRODUCTION env.
+For now, just have a basic taste, waiting for the version 1.0
+At that time, the api will be stable, and backward compatible will be promised.
+
 # LUNA-ORM
 
 LUNA-ORM is an async orm framework based on SQLx.
