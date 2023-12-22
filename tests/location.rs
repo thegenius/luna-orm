@@ -11,12 +11,16 @@ use luna_orm::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json;
 
+fn false_value() -> bool {
+    false
+}
+
 #[derive(Selection, Serialize, Deserialize, Clone, Debug)]
 pub struct UserSelection {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    name: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    age: Option<bool>,
+    #[serde(default = "false_value")]
+    name: bool,
+    #[serde(default = "false_value")]
+    age: bool,
 }
 
 #[derive(Location, Serialize, Deserialize, Clone, Debug)]
@@ -29,10 +33,10 @@ pub struct UserLocation {
 
 #[derive(Selection, Serialize, Deserialize, Clone, Debug)]
 pub struct ClassSelection {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    student_name: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    class_name: Option<bool>,
+    #[serde(default)]
+    student_name: bool,
+    #[serde(default)]
+    class_name: bool,
 }
 
 #[derive(Location, Serialize, Deserialize, Clone, Debug)]
@@ -65,15 +69,15 @@ pub struct JoinedQuery {
 
 #[tokio::test]
 pub async fn test_location() {
-    let content = "{ \"student_name\": true, \"class_name\": null }";
+    let content = "{ \"student_name\": true, \"class_name\": false }";
     let result: Result<ClassSelection, _> = serde_json::from_str(content);
     assert_eq!(result.is_ok(), true);
     let ClassSelection {
         student_name,
         class_name,
     } = result.unwrap();
-    assert_eq!(student_name, Some(true));
-    assert_eq!(class_name, None);
+    assert_eq!(student_name, true);
+    assert_eq!(class_name, false);
 
     let content = "{ \"student_name\": true }";
     let result: Result<ClassSelection, _> = serde_json::from_str(content);
@@ -82,8 +86,8 @@ pub async fn test_location() {
         student_name,
         class_name,
     } = result.unwrap();
-    assert_eq!(student_name, Some(true));
-    assert_eq!(class_name, None);
+    assert_eq!(student_name, true);
+    assert_eq!(class_name, false);
 
     let content = "{ \"student_name\": {\"cmp\": \"=\", \"val\": \"hello\"} }";
     let result: Result<ClassLocation, _> = serde_json::from_str(content);

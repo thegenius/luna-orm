@@ -1,4 +1,7 @@
+use crate::field_utils::*;
+use crate::type_check::field_is_option;
 use proc_macro2::{self, Ident, Span, TokenStream};
+use quote::quote;
 use quote::quote_spanned;
 use syn::{
     punctuated::Punctuated,
@@ -7,32 +10,27 @@ use syn::{
     Path, Result, Variant,
 };
 
-pub fn map_fields<F>(field_list: &FieldsNamed, wrap_fn: &F) -> Vec<proc_macro2::TokenStream>
-where
-    F: Fn(Field) -> proc_macro2::TokenStream,
-{
-    let cloned_names = field_list.named.clone();
-    cloned_names
-        .into_iter()
-        .map(wrap_fn)
-        .collect::<Vec<TokenStream>>()
-}
-
-pub fn map_field_vec<F>(field_list: &Vec<Field>, wrap_fn: &F) -> Vec<proc_macro2::TokenStream>
-where
-    F: Fn(Field) -> proc_macro2::TokenStream,
-{
-    let cloned_names = field_list.clone();
-    cloned_names
-        .into_iter()
-        .map(wrap_fn)
-        .collect::<Vec<TokenStream>>()
-}
-
 pub fn build_fields_name(fields: &Vec<Field>) -> Vec<proc_macro2::TokenStream> {
     map_field_vec(fields, &|field: Field| {
         map_field(field, FieldMapType::String)
     })
+}
+
+pub fn build_fields_name_with_option(fields: &Vec<Field>) -> Vec<proc_macro2::TokenStream> {
+    let mut result: Vec<proc_macro2::TokenStream> = Vec::new();
+    result.push(quote!(
+        let mut fields: Vec<String> = Vec::new();
+    ));
+    let push_stmt = map_field_vec(fields, &|field: Field| {
+        if field_is_option(&field) {
+            map_field(field, FieldMapType::OptionNamePush)
+        } else {
+            map_field(field, FieldMapType::NamePush)
+        }
+    });
+    result.extend(push_stmt);
+    result.push(quote!(fields));
+    return result;
 }
 
 pub fn build_args_add_clause(fields: &Vec<Field>, cloned: bool) -> Vec<proc_macro2::TokenStream> {
@@ -58,6 +56,27 @@ pub fn build_args_add_option_ref_clause(fields: &FieldsNamed) -> Vec<proc_macro2
     map_fields(fields, &|f: Field| {
         map_field(f, FieldMapType::ArgsAddOptionRef)
     })
+}
+
+pub fn build_args_add_option_location_ref_clause(
+    fields: &FieldsNamed,
+) -> Vec<proc_macro2::TokenStream> {
+    map_fields(fields, &|f: Field| {
+        map_field(f, FieldMapType::ArgsAddOptionLocationRef)
+    })
+}
+
+pub fn gen_args_add_maybe_option(fields: &Vec<Field>) -> Vec<proc_macro2::TokenStream> {
+    let mut result: Vec<proc_macro2::TokenStream> = Vec::new();
+    let add_clause = map_field_vec(fields, &|field: Field| {
+        if field_is_option(&field) {
+            map_field(field, FieldMapType::ArgsAddOptionRef)
+        } else {
+            map_field(field, FieldMapType::ArgsAddRef)
+        }
+    });
+    result.extend(add_clause);
+    result
 }
 
 pub fn extract_enum(data: &Data) -> Result<&DataEnum> {
@@ -111,74 +130,13 @@ pub fn extract_fields(data: &Data) -> Result<FieldsNamed> {
 
 pub fn extract_selected_fields_name(fields: &FieldsNamed) -> Vec<proc_macro2::TokenStream> {
     map_fields(fields, &|field: Field| {
-        map_field(field, FieldMapType::OptionBoolPush)
+        map_field(field, FieldMapType::BoolPush)
     })
 }
 pub fn extract_order_by_fields_name(fields: &FieldsNamed) -> Vec<proc_macro2::TokenStream> {
     map_fields(fields, &|field: Field| {
         map_field(field, FieldMapType::BoolPush)
     })
-}
-
-enum FieldMapType {
-    Str,
-    String,
-    OptionBoolPush,
-    BoolPush,
-    ArgsAdd,
-    ArgsAddRef,
-    ArgsAddOptionRef,
-    ArgsAddClone,
-}
-
-fn map_field(field: Field, map_type: FieldMapType) -> TokenStream {
-    let field_name = field.ident.unwrap();
-    let span = field_name.span();
-    let field_name_stringified = LitStr::new(&field_name.to_string(), span);
-    match map_type {
-        FieldMapType::Str => {
-            quote_spanned! { span=> #field_name_stringified }
-        }
-        FieldMapType::String => {
-            quote_spanned! { span=> #field_name_stringified.to_string() }
-        }
-        FieldMapType::OptionBoolPush => {
-            quote_spanned! { span=>
-                if let Some(true) = self.#field_name {
-                    fields.push(#field_name_stringified.to_string());
-                }
-            }
-        }
-        FieldMapType::BoolPush => {
-            quote_spanned! { span=>
-                if self.#field_name {
-                    fields.push(#field_name_stringified.to_string());
-                }
-            }
-        }
-        FieldMapType::ArgsAdd => {
-            quote_spanned! { span =>
-                arguments.add(self.#field_name);
-            }
-        }
-        FieldMapType::ArgsAddRef => {
-            quote_spanned! { span =>
-                luna_orm_trait::add_arg(&mut arguments, &self.#field_name);
-            }
-        }
-        FieldMapType::ArgsAddOptionRef => {
-            quote_spanned! { span =>
-                if let Some(#field_name) = &self.#field_name {
-                    luna_orm_trait::add_arg(&mut arguments, &#field_name.val);
-                }
-            }
-        }
-        FieldMapType::ArgsAddClone => {
-            quote_spanned! { span=>
-                arguments.add(self.#field_name.clone());
-            }
-        }
-    }
 }
 
 pub fn extract_fields_name_str(fields: &FieldsNamed) -> Vec<proc_macro2::TokenStream> {
@@ -257,6 +215,13 @@ pub fn extract_table_name(_ident: &Ident, attrs: &Vec<Attribute>) -> String {
     let mut name = stringify!(#ident).to_string();
     name = extract_val_from_attrs(attrs, "TableName").unwrap_or(name);
     return name;
+}
+
+pub fn extract_template_sql(attrs: &Vec<Attribute>) -> Option<String> {
+    extract_val_from_attrs(attrs, "TemplateSql")
+}
+pub fn extract_template_count_sql(attrs: &Vec<Attribute>) -> Option<String> {
+    extract_val_from_attrs(attrs, "TemplateCountSql")
 }
 
 pub fn extract_unique_index(attrs: &Vec<Attribute>) -> Vec<Vec<String>> {

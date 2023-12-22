@@ -13,4 +13,7 @@ pub enum LunaOrmError {
 
     #[error("method not implement error")]
     NotImplement,
+
+    #[error("paged template sql can't execute with no count sql")]
+    PagedTemplateHasNoCountSql,
 }

@@ -2,6 +2,10 @@ use proc_macro::{self, TokenStream};
 use quote::quote;
 use quote::quote_spanned;
 
+use crate::field_utils::map_field;
+use crate::field_utils::map_fields;
+use crate::field_utils::FieldMapType;
+use crate::type_check::field_is_option;
 use crate::utils::*;
 use proc_macro2::{Ident, Span};
 use syn::Attribute;
@@ -15,7 +19,9 @@ pub fn impl_selected_entity_macro(input: TokenStream) -> TokenStream {
 
     let fields = extract_fields(&data).unwrap();
 
-    let clone_named = fields.named.clone();
+    //let clone_named = fields.named.clone();
+
+    /*
     let get_statement_members = clone_named.into_iter().map(|field| {
         let field_name = field.ident.unwrap();
         let span = field_name.span();
@@ -24,6 +30,15 @@ pub fn impl_selected_entity_macro(input: TokenStream) -> TokenStream {
         let span = field_name.span();
         quote_spanned! { span =>
             let #field_name: #field_type = row.try_get(#field_name_str).ok();
+        }
+    });
+    */
+
+    let get_statement_members = map_fields(&fields, &|field: Field| {
+        if field_is_option(&field) {
+            map_field(field, FieldMapType::RowGetOption)
+        } else {
+            map_field(field, FieldMapType::RowGet)
         }
     });
 

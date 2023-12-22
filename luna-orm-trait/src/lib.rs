@@ -14,6 +14,7 @@ mod parser;
 mod request;
 mod utils;
 pub use location::*;
+pub use parser::ParsedTemplateSql;
 pub use request::WriteCommand;
 pub use utils::array_str_equal;
 
@@ -79,6 +80,22 @@ pub trait SelectedEntity {
     fn from_any_row(row: AnyRow) -> Result<Self, SqlxError>
     where
         Self: Sized;
+}
+
+pub enum CountSql {
+    Empty,
+    PlainSql(String),
+    VariabledSql(String),
+}
+
+pub trait TemplateRecord: Sync {
+    fn get_sql(&self, page: Option<&Pagination>) -> String;
+
+    fn get_count_sql(&self) -> CountSql;
+
+    fn get_variables(&self) -> Vec<String>;
+
+    fn any_arguments(&self) -> AnyArguments<'_>;
 }
 
 pub struct RecordCount {

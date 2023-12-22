@@ -21,7 +21,7 @@ pub fn impl_location_macro(input: TokenStream) -> TokenStream {
     // let args_push_clause = build_args_push_clause(&fields);
     let fields_name = extract_fields_name(&fields);
     let cloned_named = fields.named.clone();
-    let arguments_ref_expanded_members = build_args_add_option_ref_clause(&fields);
+    let arguments_ref_expanded_members = build_args_add_option_location_ref_clause(&fields);
 
     let cloned_named = fields.named.clone();
     let where_clause_members = cloned_named.into_iter().map(|field| {
@@ -86,7 +86,7 @@ pub fn impl_location_macro(input: TokenStream) -> TokenStream {
                 return sql;
             }
 
-            fn any_arguments<'p>(&self) -> AnyArguments<'p> {
+            fn any_arguments(&self) -> AnyArguments<'_> {
                 let mut arguments = AnyArguments::default();
                 #(#arguments_ref_expanded_members ;)*
                 return arguments;

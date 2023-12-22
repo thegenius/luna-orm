@@ -1,13 +1,11 @@
-use crate::database::lib::DatabaseType;
-
 use crate::database::lib::Database;
+use crate::database::lib::DatabaseType;
+use crate::database::DB;
 use crate::{error::LunaOrmError, LunaOrmResult};
-
 
 use sqlx::any::AnyConnectOptions;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePool, SqliteSynchronous};
 use sqlx::AnyPool;
-
 
 use std::fs;
 use std::path::Path;
@@ -17,11 +15,7 @@ use crate::command_executor::CommandExecutor;
 use crate::sql_executor::SqlExecutor;
 use crate::sql_generator::DefaultSqlGenerator;
 
-
-
 use path_absolutize::*;
-
-
 
 pub struct SqliteLocalConfig {
     pub work_dir: String,
@@ -51,6 +45,12 @@ impl CommandExecutor for SqliteDatabase {
 impl Database for SqliteDatabase {
     fn get_type(&self) -> &DatabaseType {
         &self.database_type
+    }
+}
+
+impl From<SqliteDatabase> for DB<SqliteDatabase> {
+    fn from(value: SqliteDatabase) -> Self {
+        Self(value)
     }
 }
 

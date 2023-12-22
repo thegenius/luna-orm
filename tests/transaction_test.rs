@@ -3,8 +3,8 @@ use luna_orm::LunaOrmResult;
 
 #[derive(Selection, Default, Clone)]
 pub struct HelloSelection {
-    id: Option<bool>,
-    content: Option<bool>,
+    id: bool,
+    content: bool,
 }
 
 #[derive(Primary, Default, Clone)]
@@ -29,7 +29,7 @@ pub struct HelloEntity {
 
 #[derive(Mutation, Clone, Debug)]
 pub struct HelloMutation {
-    content: String,
+    content: Option<String>,
 }
 
 #[derive(Location, Clone, Debug)]
@@ -85,8 +85,8 @@ async fn inner_test_transaction(db: &DB<SqliteDatabase>) -> LunaOrmResult<()> {
 
     let primary = HelloPrimary { id: 23 };
     let selection = HelloSelection {
-        id: None,
-        content: Some(true),
+        id: false,
+        content: true,
     };
 
     //let mut trx = db.transaction().await?;
@@ -100,8 +100,8 @@ async fn inner_test_transaction(db: &DB<SqliteDatabase>) -> LunaOrmResult<()> {
 
     let primary = HelloPrimary { id: 23 };
     let selection = HelloSelection {
-        id: None,
-        content: Some(true),
+        id: false,
+        content: true,
     };
     let result: Option<HelloSelectedEntity> = trx.select(&primary, &selection).await?;
     assert_eq!(result, None);
@@ -122,8 +122,8 @@ async fn test_transaction_rollback(db: &DB<SqliteDatabase>) -> LunaOrmResult<()>
 
     let primary = HelloPrimary { id: 23 };
     let selection = HelloSelection {
-        id: None,
-        content: Some(true),
+        id: false,
+        content: true,
     };
     trx.rollback().await?;
 
@@ -169,8 +169,8 @@ pub async fn test_transaction_rollback2(db: &mut DB<SqliteDatabase>) -> LunaOrmR
 
     let primary = HelloPrimary { id: 23 };
     let selection = HelloSelection {
-        id: None,
-        content: Some(true),
+        id: false,
+        content: true,
     };
     let result: Option<HelloSelectedEntity> = db.select(&primary, &selection).await?;
     assert_eq!(result, None);
@@ -184,8 +184,8 @@ pub async fn test_transaction_commit(db: &mut DB<SqliteDatabase>) -> LunaOrmResu
 
     let primary = HelloPrimary { id: 23 };
     let selection = HelloSelection {
-        id: None,
-        content: Some(true),
+        id: false,
+        content: true,
     };
     let result: Option<HelloSelectedEntity> = db.select(&primary, &selection).await?;
 

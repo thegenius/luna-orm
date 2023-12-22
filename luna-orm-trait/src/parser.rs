@@ -46,6 +46,12 @@ pub struct ParsedTemplateSql {
 }
 
 impl ParsedTemplateSql {
+    pub fn build(template_sql: &str) -> Result<Self, nom::Err<nom::error::Error<&str>>> {
+        let (_, parsed) = parse_template_sql(template_sql)?;
+        let parsed_template = ParsedTemplateSql::new(parsed);
+        Ok(parsed_template)
+    }
+
     pub fn new(values: Vec<TemplateValue>) -> Self {
         let has_question_mark: bool = values
             .iter()
@@ -56,13 +62,7 @@ impl ParsedTemplateSql {
 
         let variables: Vec<String> = values
             .iter()
-            .filter(|e| {
-                if let TemplateValue::Variable(_) = e {
-                    true
-                } else {
-                    false
-                }
-            })
+            .filter(|e| matches!(e, TemplateValue::Variable(_)))
             .map(|e| e.to_string())
             .collect();
 
@@ -190,6 +190,11 @@ pub fn parse_segment<'a, E: ParseError<&'a str>>(
         preceded(multispace0, tag("*")),
         preceded(multispace0, tag("=")),
         preceded(multispace0, tag("?")),
+        preceded(multispace0, tag("<")),
+        preceded(multispace0, tag(">")),
+        preceded(multispace0, tag("%")),
+        preceded(multispace0, tag("(")),
+        preceded(multispace0, tag(")")),
     ))(input)?;
     return Ok((remaining, TemplateValue::Segment(parsed.to_string())));
 }

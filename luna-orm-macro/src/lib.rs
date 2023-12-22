@@ -2,12 +2,15 @@
 use proc_macro::TokenStream;
 
 mod entity;
+mod field_utils;
 mod location;
 mod mutation;
 mod order_by;
 mod primary;
 mod selected_entity;
 mod selection;
+mod template_record;
+mod type_check;
 mod utils;
 
 use entity::impl_entity_macro;
@@ -17,6 +20,7 @@ use order_by::impl_order_by_macro;
 use primary::impl_primary_macro;
 use selected_entity::impl_selected_entity_macro;
 use selection::impl_selection_macro;
+use template_record::impl_template_record_by_macro;
 
 #[proc_macro_derive(Primary, attributes(TableName))]
 pub fn expand_primary_macro(input: TokenStream) -> TokenStream {
@@ -51,4 +55,9 @@ pub fn expand_entity_macro(input: TokenStream) -> TokenStream {
 #[proc_macro_derive(OrderBy)]
 pub fn expand_order_by_macro(input: TokenStream) -> TokenStream {
     impl_order_by_macro(input)
+}
+
+#[proc_macro_derive(TemplateRecord, attributes(TemplateSql, TemplateCountSql))]
+pub fn expand_template_record_by_macro(input: TokenStream) -> TokenStream {
+    impl_template_record_by_macro(input)
 }

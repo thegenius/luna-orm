@@ -23,15 +23,15 @@ fn it_works() {
     let body_fields = describe.get_body_fields_name();
     assert_eq!(body_fields, vec!["content".to_string()]);
 
-    let arguments: AnyArguments = describe.clone().any_arguments_of_update();
+    let arguments: AnyArguments = describe.any_arguments_of_update();
     let len = arguments.values.0.len();
     assert_eq!(len, 3);
 
-    let arguments: AnyArguments = describe.clone().any_arguments_of_insert();
+    let arguments: AnyArguments = describe.any_arguments_of_insert();
     let len = arguments.values.0.len();
     assert_eq!(len, 3);
 
-    let arguments: AnyArguments = describe.clone().any_arguments_of_upsert();
+    let arguments: AnyArguments = describe.any_arguments_of_upsert();
     let len = arguments.values.0.len();
     assert_eq!(len, 4);
 }

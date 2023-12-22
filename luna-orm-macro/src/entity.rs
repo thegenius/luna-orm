@@ -2,6 +2,9 @@ use proc_macro::{self, TokenStream};
 use quote::quote;
 use quote::quote_spanned;
 
+use crate::field_utils::*;
+use crate::type_check;
+use crate::type_check::field_is_option;
 use crate::utils::*;
 use proc_macro2::{Ident, Span};
 use syn::Attribute;
@@ -26,27 +29,22 @@ pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
     let primary_fields_name = build_fields_name(&primary_fields);
 
     let body_fields = extract_not_annotated_fields(&fields, "PrimaryKey");
-    let body_fields_name = build_fields_name(&body_fields);
+    //let body_fields_name = build_fields_name(&body_fields);
+    let body_fields_name = build_fields_name_with_option(&body_fields);
 
     let name = extract_table_name(&ident, &attrs);
-    let primary_args_add: Vec<proc_macro2::TokenStream> =
-        build_args_add_clause(&primary_fields, false);
 
     let primary_args_add_ref: Vec<proc_macro2::TokenStream> =
-        build_args_add_ref_clause_by_vec(&primary_fields);
+        gen_args_add_maybe_option(&primary_fields);
 
-    let body_args_add: Vec<proc_macro2::TokenStream> = build_args_add_clause(&body_fields, false);
-    let body_args_add_cloned: Vec<proc_macro2::TokenStream> =
-        build_args_add_clause(&body_fields, true);
-
-    let body_args_add_ref: Vec<proc_macro2::TokenStream> =
-        build_args_add_ref_clause_by_vec(&body_fields);
+    let body_args_add_ref: Vec<proc_macro2::TokenStream> = gen_args_add_maybe_option(&body_fields);
 
     let mut full_fields: Vec<Field> = Vec::new();
     full_fields.extend(primary_fields);
     full_fields.extend(body_fields);
 
     let clone_full_fields = full_fields.clone();
+    /*
     let from_row_get_statement_members = clone_full_fields.into_iter().map(|field| {
         let field_name = field.ident.unwrap();
         let span = field_name.span();
@@ -55,6 +53,15 @@ pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
         let span = field_name.span();
         quote_spanned! { span =>
             let #field_name: #field_type = row.try_get(#field_name_str)?;
+        }
+    });
+    */
+
+    let from_row_get_statement_members = map_fields(&fields, &|field: Field| {
+        if field_is_option(&field) {
+            map_field(field, FieldMapType::RowGetOption)
+        } else {
+            map_field(field, FieldMapType::RowGet)
         }
     });
 
@@ -67,8 +74,19 @@ pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
         }
     });
 
+    let cloned_fields = full_fields.clone();
+    let option_fields: Vec<String> = cloned_fields
+        .iter()
+        .filter(|f| type_check::field_is_option(f))
+        .map(|f| f.ident.as_ref().unwrap().to_string())
+        .collect();
+
     let output = quote! {
     impl Entity for #ident {
+
+        //fn get_option_fields(&self) -> &'static str {
+        //    vec![ #(#option_fields, )*  ]
+        //}
 
         fn get_table_name(&self) -> &'static str {
                 #name
@@ -87,19 +105,29 @@ pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
         }
 
         fn get_body_fields_name(&self) -> Vec<String> {
-            vec![
-                #(#body_fields_name, )*
-            ]
+                #(#body_fields_name)*
         }
 
-        fn any_arguments_of_insert<'p>(&self) -> AnyArguments<'p> {
+        fn get_primary_args(&self) -> AnyArguments<'_> {
+            let mut arguments = AnyArguments::default();
+            #(#primary_args_add_ref; )*
+            return arguments;
+        }
+
+        fn get_body_args(&self) -> AnyArguments<'_> {
+            let mut arguments = AnyArguments::default();
+            #(#body_args_add_ref; )*
+            return arguments;
+        }
+
+        fn any_arguments_of_insert(&self) -> AnyArguments<'_> {
             let mut arguments = AnyArguments::default();
             #(#primary_args_add_ref; )*
             #(#body_args_add_ref; )*
             return arguments;
         }
 
-        fn any_arguments_of_upsert<'p>(&self) -> AnyArguments<'p> {
+        fn any_arguments_of_upsert(&self) -> AnyArguments<'_> {
             let mut arguments = AnyArguments::default();
             #(#primary_args_add_ref; )*
             #(#body_args_add_ref; )*
@@ -107,7 +135,7 @@ pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
             return arguments;
         }
 
-        fn any_arguments_of_update<'p>(&self) -> AnyArguments<'p> {
+        fn any_arguments_of_update(&self) -> AnyArguments<'_> {
             let mut arguments = AnyArguments::default();
             #(#body_args_add_ref; )*
             #(#primary_args_add_ref; )*
@@ -115,6 +143,6 @@ pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
         }
     }
     };
-    // panic!("{}", output);
+    //panic!("{}", output);
     output.into()
 }

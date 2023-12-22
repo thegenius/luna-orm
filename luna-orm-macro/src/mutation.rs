@@ -15,8 +15,8 @@ pub fn impl_mutation_macro(input: TokenStream) -> TokenStream {
     let DeriveInput { ident, data, .. } = parse_macro_input!(input);
 
     let fields = extract_fields(&data).unwrap();
-    let args_push_clause = build_args_push_clause(&fields);
-    let args_push_ref_clause = build_args_add_ref_clause(&fields);
+    //let args_push_clause = build_args_push_clause(&fields);
+    let args_push_ref_clause = build_args_add_option_ref_clause(&fields);
     let fields_name = extract_fields_name(&fields);
 
     let output = quote! {
@@ -27,7 +27,7 @@ pub fn impl_mutation_macro(input: TokenStream) -> TokenStream {
                 ]
             }
 
-            fn any_arguments<'p>(&self) -> AnyArguments<'p> {
+            fn any_arguments(&self) -> AnyArguments<'_> {
                 let mut arguments = AnyArguments::default();
                 #(#args_push_ref_clause ;)*
                 return arguments;

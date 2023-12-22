@@ -1,20 +1,11 @@
 use luna_orm::prelude::*;
 
-
-
-
-
 use sqlx::AnyPool;
-
-
-
-
-
 
 #[derive(Selection, Default, Clone)]
 pub struct HelloSelection {
-    id: Option<bool>,
-    content: Option<bool>,
+    id: bool,
+    content: bool,
 }
 
 #[derive(Primary, Default, Clone)]
@@ -35,11 +26,12 @@ pub struct HelloEntity {
     #[PrimaryKey]
     id: i32,
     content: String,
+    age: Option<i32>,
 }
 
 #[derive(Mutation, Clone, Debug)]
 pub struct HelloMutation {
-    content: String,
+    content: Option<String>,
 }
 
 #[derive(Location, Clone, Debug)]

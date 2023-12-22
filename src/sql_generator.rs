@@ -1,4 +1,6 @@
 use async_trait::async_trait;
+use luna_orm_trait::FromClause;
+use luna_orm_trait::JoinedConditions;
 use luna_orm_trait::{Entity, Location, Mutation, OrderBy, Pagination, Primary, Selection};
 
 pub struct DefaultSqlGenerator {}
@@ -117,6 +119,12 @@ pub trait SqlGenerator {
         }
     }
 
+    fn get_limit_sql(&self, page: &Pagination) -> String {
+        let offset = page.page_size * page.page_num;
+        let count = page.page_size;
+        return format!("{}, {}", offset, count);
+    }
+
     fn get_paged_search_sql(
         &self,
         selection: &dyn Selection,
@@ -160,6 +168,37 @@ pub trait SqlGenerator {
             .to_string();
             self.post_process(select_sql)
         }
+    }
+
+    fn get_page_joined_search_sql(
+        &self,
+        joined_conds: &JoinedConditions,
+        locations: &Vec<&dyn Location>,
+        order_by: Option<&dyn OrderBy>,
+        selections: &Vec<&dyn Selection>,
+        page: &Pagination,
+    ) -> String {
+        let mut selected_field_names: Vec<String> = Vec::new();
+        for selection in selections {
+            let fields = selection.get_selected_fields();
+            selected_field_names.extend(fields);
+        }
+        let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());
+
+        let mut location_stmts: Vec<String> = Vec::new();
+        for location in locations {
+            let where_clause =
+                location.get_where_clause(self.get_wrap_char(), self.get_place_holder());
+            location_stmts.push(where_clause);
+        }
+        let where_clause = location_stmts.join(",");
+        let from_clause = joined_conds.get_from_clause();
+        let sql: String = format!(
+            "SELECT {} FROM {} WHERE {}",
+            selected_fields, from_clause, where_clause
+        )
+        .to_string();
+        self.post_process(sql)
     }
 
     fn get_insert_sql(&self, entity: &dyn Entity) -> String {
