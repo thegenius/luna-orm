@@ -3,6 +3,7 @@ use luna_orm_trait::FromClause;
 use luna_orm_trait::JoinedConditions;
 use luna_orm_trait::{Entity, Location, Mutation, OrderBy, Pagination, Primary, Selection};
 
+#[derive(Default)]
 pub struct DefaultSqlGenerator {}
 impl DefaultSqlGenerator {
     pub fn new() -> Self {
@@ -11,6 +12,56 @@ impl DefaultSqlGenerator {
 }
 impl SqlGenerator for DefaultSqlGenerator {}
 
+#[derive(Default)]
+pub struct MySqlGenerator {}
+impl MySqlGenerator {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+impl SqlGenerator for MySqlGenerator {
+    fn get_upsert_sql(&self, entity: &dyn Entity) -> String {
+        let table_name = entity.get_table_name();
+        let mut field_names = entity.get_primary_fields_name();
+        field_names.extend(entity.get_body_fields_name());
+        let fields = wrap_fields(&field_names, self.get_wrap_char());
+        let primary_field_names = entity.get_primary_fields_name();
+        let primary_fields = wrap_fields(&primary_field_names, self.get_wrap_char());
+        let marks = generate_question_mark_list(&field_names);
+        let body_field_names = entity.get_body_fields_name();
+        let assign_clause = wrap_locate_fields(
+            &body_field_names,
+            self.get_wrap_char(),
+            self.get_place_holder(),
+        );
+
+        let upsert_sql = format!(
+            "INSERT INTO {}{}{} ({}) VALUES({})
+            ON DUPLICATE KEY UPDATE SET {}",
+            self.get_wrap_char(),
+            table_name,
+            self.get_wrap_char(),
+            fields,
+            marks,
+            assign_clause
+        )
+        .to_string();
+        self.post_process(upsert_sql)
+    }
+}
+
+#[derive(Default)]
+pub struct PostgresGenerator {}
+impl PostgresGenerator {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+impl SqlGenerator for PostgresGenerator {
+    fn post_process(&self, origin: String) -> String {
+        self.pg_post_process(origin)
+    }
+}
 #[async_trait]
 pub trait SqlGenerator {
     // const WRAP_CHAR: char = '`'; can not made trait to trait object

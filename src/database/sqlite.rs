@@ -22,6 +22,15 @@ pub struct SqliteLocalConfig {
     pub db_file: String,
 }
 
+impl SqliteLocalConfig {
+    pub fn new(work_dir: &str, db_file: &str) -> Self {
+        Self {
+            work_dir: work_dir.to_string(),
+            db_file: db_file.to_string(),
+        }
+    }
+}
+
 pub struct SqliteDatabase {
     database_type: DatabaseType,
     pool: AnyPool,
