@@ -7,8 +7,8 @@ description = "ORM based on sqlx"
 homepage = "https://github.com/thegenius/luna-orm"
 
 [dependencies]
-luna-orm-trait = { path = "luna-orm-trait", version = "0.2.0" }
-luna-orm-macro = { path = "luna-orm-macro", version = "0.2.0" }
+luna-orm-trait = { path = "luna-orm-trait", version = "0.3.0" }
+luna-orm-macro = { path = "luna-orm-macro", version = "0.3.0" }
 thiserror = {workspace = true}
 sqlx = {workspace = true}
 async-trait = {workspace = true}
