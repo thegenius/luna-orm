@@ -3,6 +3,8 @@
 For now, just have a basic taste, waiting for the version 1.0  
 At that time, the api will be stable, and backward compatible will be promised.
 
+![Static Badge](https://img.shields.io/badge/hello)
+
 # LUNA-ORM
 
 **LUNA-ORM** is an async orm framework based on SQLx. Built with :heart:
