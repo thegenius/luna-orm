@@ -27,7 +27,9 @@ members = [
   ".",
   "luna-orm-trait", 
   "luna-orm-macro",
-  "examples/sqlite"
+  "examples/sqlite",
+  "examples/mysql",
+  "examples/crud",
 ]
 
 [workspace.package]
