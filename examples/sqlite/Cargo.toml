@@ -7,4 +7,5 @@ version.workspace = true
 
 [dependencies]
 luna-orm = "0.3.1"
+sqlx = { version = "0.7", features = [ "runtime-tokio" ] }
 tokio = { version = "1.35.1", features = ["full"] }
