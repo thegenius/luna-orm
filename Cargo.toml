@@ -26,7 +26,8 @@ sqlx = {version = "0.7.3", features = ["runtime-tokio", "mysql",  "sqlite", "mac
 members = [
   ".",
   "luna-orm-trait", 
-  "luna-orm-macro"
+  "luna-orm-macro",
+  "examples/sqlite"
 ]
 
 [workspace.package]

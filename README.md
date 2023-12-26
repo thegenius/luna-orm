@@ -28,7 +28,7 @@ Everything should just works as you want.
 
 ### Create a database instance.
 ```rust
-use luna_orm::preclude::*;
+use luna_orm::prelude::*;
 
 #[tokio::main]
 pub async fn main() -> LunaOrmResult<()> {
