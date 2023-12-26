@@ -19,6 +19,8 @@ At that time, the api will be stable, and backward compatible will be promised.
 ## INSTALL
 ```toml
 luna-orm = { version = "0.3.1" }
+luna-orm-trait = { version = "0.3.1" }
+luna-orm-macro = { version = "0.3.1" }
   
 ```
 
@@ -29,6 +31,7 @@ Everything should just works as you want.
 ### Create a database instance.
 ```rust
 use luna_orm::prelude::*;
+use luna_orm::LunaOrmResult;
 
 #[tokio::main]
 pub async fn main() -> LunaOrmResult<()> {
@@ -72,7 +75,7 @@ let entity = HelloEntity {
       age: Some(23)
 }; 
 // 3. insert it, this is so intuitive, you don't need to warry about anything, it jsut works.
-let result = db.insert(entity).await?;
+let result = db.insert(&entity).await?;
 ```
 
 ## Saving Lives
