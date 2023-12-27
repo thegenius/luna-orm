@@ -3,7 +3,11 @@ use quote::quote;
 use quote::quote_spanned;
 
 use crate::field_utils::*;
+use crate::location::generate_location;
+use crate::mutation::generate_mutation;
 use crate::primary::generate_primary;
+use crate::selected_entity::generate_selected_entity;
+use crate::selection::generate_selection;
 use crate::type_check;
 use crate::type_check::field_is_option;
 use crate::utils::*;
@@ -15,7 +19,7 @@ use syn::{
     FieldsNamed, LitStr, Path, Result,
 };
 
-pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
+pub fn impl_auto_entity_macro(input: TokenStream) -> TokenStream {
     let DeriveInput {
         attrs, ident, data, ..
     } = parse_macro_input!(input);
@@ -37,6 +41,7 @@ pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
     let name = extract_table_name(&ident, &attrs);
 
     let generated_primary = generate_primary(&name, &primary_fields);
+    let generated_mutation = generate_mutation(&name, &body_fields);
 
     let primary_args_add_ref: Vec<proc_macro2::TokenStream> =
         gen_args_add_maybe_option(&primary_fields);
@@ -48,6 +53,10 @@ pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
     full_fields.extend(body_fields);
 
     let clone_full_fields = full_fields.clone();
+    let generated_selection = generate_selection(&name, &clone_full_fields);
+    let generated_selected_entity = generate_selected_entity(&name, &clone_full_fields);
+    let unique_indexes = extract_unique_index(&attrs);
+    let generated_location = generate_location(&name, &clone_full_fields, unique_indexes);
 
     let from_row_get_statement_members = map_fields(&fields, &|field: Field| {
         if field_is_option(&field) {
@@ -135,7 +144,11 @@ pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
         }
     }
     };
-    //output.extend(generated_primary);
+    output.extend(generated_primary);
+    output.extend(generated_selection);
+    output.extend(generated_selected_entity);
+    output.extend(generated_mutation);
+    output.extend(generated_location);
     //panic!("{}", output);
     output.into()
 }

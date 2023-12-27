@@ -1,6 +1,7 @@
 use luna_orm::prelude::*;
 
 #[derive(Entity, Clone)]
+#[TableName = "test"]
 pub struct TestDescribe {
     #[PrimaryKey]
     id: i32,

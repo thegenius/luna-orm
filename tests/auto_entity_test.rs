@@ -1,13 +1,6 @@
 use luna_orm::prelude::*;
 use luna_orm::LunaOrmResult;
 
-#[derive(Selection, Default, Clone)]
-pub struct HelloSelection {
-    id: bool,
-    content: bool,
-    age: bool,
-}
-
 #[derive(OrderBy, Clone)]
 pub enum HelloOrderBy {
     Id,
@@ -15,21 +8,10 @@ pub enum HelloOrderBy {
     ContentId,
 }
 
-#[derive(Primary, Default, Clone)]
+#[derive(AutoEntity, Clone, Debug)]
 #[TableName = "article"]
-pub struct HelloPrimary {
-    id: i32,
-}
-
-#[derive(SelectedEntity, Debug, Clone, PartialEq, Eq)]
-pub struct HelloSelectedEntity {
-    id: Option<i32>,
-    content: Option<String>,
-    age: Option<i32>,
-}
-
-#[derive(Entity, Clone, Debug)]
-#[TableName = "article"]
+#[UniqueIndex = "id, content"]
+#[UniqueIndex = "id"]
 pub struct HelloEntity {
     #[PrimaryKey]
     id: i32,
@@ -37,11 +19,7 @@ pub struct HelloEntity {
     age: Option<i32>,
 }
 
-#[derive(Mutation, Clone, Debug)]
-pub struct HelloMutation {
-    content: Option<String>,
-}
-
+/*
 #[derive(Location, Clone, Debug)]
 #[TableName = "article"]
 #[UniqueIndex = "id, content"]
@@ -50,6 +28,7 @@ pub struct HelloLocation {
     id: Option<LocationExpr<i32>>,
     content: Option<LocationExpr<String>>,
 }
+*/
 
 #[derive(TemplateRecord)]
 #[TemplateSql = "update article set content = #{content} where id = #{id}"]
@@ -79,15 +58,15 @@ async fn test_insert(
     let result = db.insert(&entity).await?;
     assert!(result);
 
-    let primary = HelloPrimary { id };
+    let primary = ArticlePrimary { id };
     //let primary2 = TestttPrimary { id };
-    let selection = HelloSelection {
+    let selection = ArticleSelection {
         id: true,
         content: true,
         age: true,
     };
-    let result: Option<HelloSelectedEntity> = db.select(&primary, &selection).await?;
-    let selected_entity = HelloSelectedEntity {
+    let result: Option<ArticleSelectedEntity> = db.select(&primary, &selection).await?;
+    let selected_entity = ArticleSelectedEntity {
         id: Some(id),
         content: Some(content.to_string()),
         age,
@@ -110,17 +89,54 @@ async fn test_upsert(
     let result = db.upsert(&entity).await?;
     assert!(result);
 
-    let primary = HelloPrimary { id };
-    let selection = HelloSelection {
+    let primary = ArticlePrimary { id };
+    let selection = ArticleSelection {
         id: true,
         content: true,
         age: true,
     };
-    let result: Option<HelloSelectedEntity> = db.select(&primary, &selection).await?;
-    let selected_entity = HelloSelectedEntity {
+    let result: Option<ArticleSelectedEntity> = db.select(&primary, &selection).await?;
+    let selected_entity = ArticleSelectedEntity {
         id: Some(id),
         content: Some(content.to_string()),
         age,
+    };
+    assert_eq!(result, Some(selected_entity));
+    Ok(())
+}
+
+async fn test_update(
+    db: &mut DB<SqliteDatabase>,
+    id: i32,
+    content: &str,
+    age: i32,
+) -> LunaOrmResult<()> {
+    let entity = HelloEntity {
+        id,
+        content: content.to_string(),
+        age: Some(age),
+    };
+    let result = db.upsert(&entity).await?;
+    assert!(result);
+    let mutation = ArticleMutation {
+        content: None,
+        age: Some(age + 1),
+    };
+
+    let primary = ArticlePrimary { id };
+    let result = db.update(&mutation, &primary).await?;
+    assert!(result);
+
+    let selection = ArticleSelection {
+        id: true,
+        content: true,
+        age: true,
+    };
+    let result: Option<ArticleSelectedEntity> = db.select(&primary, &selection).await?;
+    let selected_entity = ArticleSelectedEntity {
+        id: Some(id),
+        content: Some(content.to_string()),
+        age: Some(age + 1),
     };
     assert_eq!(result, Some(selected_entity));
     Ok(())
@@ -139,11 +155,11 @@ async fn test_execute_template(db: &mut DB<SqliteDatabase>) -> LunaOrmResult<()>
         page_size: 1,
         page_num: 1,
     };
-    let result: PagedList<HelloSelectedEntity> =
+    let result: PagedList<ArticleSelectedEntity> =
         db.search_paged_by_template(&select_template, &page).await?;
     assert_eq!(result.page.total, 3);
     let result_list = result.data;
-    let selected_entity = HelloSelectedEntity {
+    let selected_entity = ArticleSelectedEntity {
         id: Some(2),
         content: Some("template".to_string()),
         age: Some(22),
@@ -173,27 +189,31 @@ pub async fn test_database() -> LunaOrmResult<()> {
     test_upsert(&mut db, 2, "test", Some(22)).await?;
     test_insert(&mut db, 3, "test", Some(23)).await?;
 
-    let selection = HelloSelection {
+    let selection = ArticleSelection {
         id: true,
         content: true,
         age: true,
     };
 
-    let location: HelloLocation = HelloLocation {
+    let location: ArticleLocation = ArticleLocation {
         id: Some(LocationExpr::new(CmpOperator::GreaterThan, 0)),
         content: None,
+        age: None,
     };
     let page = Pagination {
         page_size: 1,
         page_num: 0,
     };
     let order_by = HelloOrderBy::ContentId;
-    let result: PagedList<HelloSelectedEntity> = db
+    let result: PagedList<ArticleSelectedEntity> = db
         .search_paged(&location, Some(&order_by), &selection, &page)
         .await?;
     assert_eq!(result.page.total, 3);
     assert_eq!(result.data.len(), 1);
 
     test_execute_template(&mut db).await?;
+
+    test_update(&mut db, 4, "test", 24).await?;
+    test_update(&mut db, 5, "test", 25).await?;
     return Ok(());
 }

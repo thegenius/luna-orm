@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use proc_macro::TokenStream;
 
+mod auto_entity;
 mod entity;
 mod field_utils;
 mod location;
@@ -11,8 +12,10 @@ mod selected_entity;
 mod selection;
 mod template_record;
 mod type_check;
+mod type_extract;
 mod utils;
 
+use auto_entity::impl_auto_entity_macro;
 use entity::impl_entity_macro;
 use location::impl_location_macro;
 use mutation::impl_mutation_macro;
@@ -60,4 +63,9 @@ pub fn expand_order_by_macro(input: TokenStream) -> TokenStream {
 #[proc_macro_derive(TemplateRecord, attributes(TemplateSql, TemplateCountSql))]
 pub fn expand_template_record_by_macro(input: TokenStream) -> TokenStream {
     impl_template_record_by_macro(input)
+}
+
+#[proc_macro_derive(AutoEntity, attributes(TableName, PrimaryKey, UniqueIndex))]
+pub fn expand_auto_entity_macro(input: TokenStream) -> TokenStream {
+    impl_auto_entity_macro(input)
 }
