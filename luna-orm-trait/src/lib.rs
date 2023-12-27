@@ -158,7 +158,8 @@ where
     }
 }
 
-pub fn merge_any_arguments<'p>(
+//pub fn merge_any_arguments<'p>(
+pub fn luna_merge_args<'p>(
     mut args_a: AnyArguments<'p>,
     args_b: AnyArguments<'p>,
 ) -> AnyArguments<'p> {
@@ -166,7 +167,8 @@ pub fn merge_any_arguments<'p>(
     args_a
 }
 
-pub fn add_arg<'q, T>(args: &mut AnyArguments<'q>, value: &T)
+//pub fn add_arg<'q, T>(args: &mut AnyArguments<'q>, value: &T)
+pub fn luna_add_arg<'q, T>(args: &mut AnyArguments<'q>, value: &T)
 where
     T: 'q + Send + Encode<'q, Any> + Type<Any>,
 {

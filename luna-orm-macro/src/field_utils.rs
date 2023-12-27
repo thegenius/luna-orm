@@ -88,20 +88,20 @@ pub fn map_field(field: Field, map_type: FieldMapType) -> TokenStream {
         }
         FieldMapType::ArgsAddRef => {
             quote_spanned! { span =>
-                luna_orm_trait::add_arg(&mut arguments, &self.#field_name);
+                luna_add_arg(&mut arguments, &self.#field_name);
             }
         }
         FieldMapType::ArgsAddOptionRef => {
             quote_spanned! { span =>
                 if let Some(#field_name) = &self.#field_name {
-                    luna_orm_trait::add_arg(&mut arguments, &#field_name);
+                    luna_add_arg(&mut arguments, &#field_name);
                 }
             }
         }
         FieldMapType::ArgsAddOptionLocationRef => {
             quote_spanned! { span =>
                 if let Some(#field_name) = &self.#field_name {
-                    luna_orm_trait::add_arg(&mut arguments, &#field_name.val);
+                    luna_add_arg(&mut arguments, &#field_name.val);
                 }
             }
         }

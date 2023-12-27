@@ -6,6 +6,7 @@ use sqlx::{AnyExecutor, Arguments};
 pub struct HelloPrimary {
     name: String,
 }
+use luna_orm_trait::luna_add_arg;
 
 /*
 impl Primary for HelloPrimary {
@@ -32,7 +33,7 @@ impl Primary for HelloPrimary {
     fn any_arguments(&self) -> sqlx::any::AnyArguments<'_> {
         let mut args = AnyArguments::default();
         //<Encode<'_, Any>>::encode_by_ref(self.name, args.values);
-        luna_orm_trait::add_arg(&mut args, &self.name);
+        luna_add_arg(&mut args, &self.name);
         args
     }
 }

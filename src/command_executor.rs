@@ -55,7 +55,7 @@ pub trait CommandExecutor: SqlExecutor {
         let sql = self.get_generator().get_update_sql(mutation, primary);
         let mut args = mutation.any_arguments();
         let where_args = primary.any_arguments();
-        args = merge_any_arguments(args, where_args);
+        args = luna_merge_args(args, where_args);
         let result = self.execute(&sql, args).await?;
         return Ok(result.rows_affected() > 0);
     }
@@ -184,7 +184,7 @@ pub trait CommandExecutor: SqlExecutor {
         let sql = self.get_generator().get_change_sql(mutation, location);
         let mut args = mutation.any_arguments();
         let where_args = location.any_arguments();
-        args = merge_any_arguments(args, where_args);
+        args = luna_merge_args(args, where_args);
         let result = self.execute(&sql, args).await?;
         return Ok(result.rows_affected() as usize);
     }

@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use luna_orm_trait::merge_any_arguments;
 use luna_orm_trait::SqlxError;
 use luna_orm_trait::{
     Entity, Location, Mutation, PageInfo, PagedList, Primary, SelectedEntity, Selection,

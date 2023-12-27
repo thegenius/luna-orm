@@ -56,7 +56,7 @@ pub fn impl_template_record_by_macro(input: TokenStream) -> TokenStream {
             let span = Span::call_site();
             let ident = Ident::new(variable, span);
             quote!(
-                luna_orm_trait::add_arg(&mut arguments, &self.#ident);
+                luna_add_arg(&mut arguments, &self.#ident);
             )
         })
         .collect::<Vec<proc_macro2::TokenStream>>();
