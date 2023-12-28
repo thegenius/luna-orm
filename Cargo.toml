@@ -30,6 +30,7 @@ members = [
   "examples/sqlite",
   "examples/mysql",
   "examples/crud",
+  "examples/transaction",
 ]
 
 [workspace.package]
