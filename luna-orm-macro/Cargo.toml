@@ -17,5 +17,5 @@ syn = { version = "1.0", features = ["full"] }
 proc-macro2 = "1.0"
 case = "1.0"
 
-luna-orm-trait = { path = "../luna-orm-trait", version = "0.3.3" }
+luna-orm-trait = { path = "../luna-orm-trait", version = "0.3.4" }
 sqlx = { workspace = true }
