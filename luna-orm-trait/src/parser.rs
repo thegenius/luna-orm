@@ -188,6 +188,8 @@ pub fn parse_segment<'a, E: ParseError<&'a str>>(
     let (remaining, parsed) = alt((
         preceded(multispace0, alphanumeric1),
         preceded(multispace0, tag("*")),
+        preceded(multispace0, tag(",")),
+        preceded(multispace0, tag(";")),
         preceded(multispace0, tag("=")),
         preceded(multispace0, tag("?")),
         preceded(multispace0, tag("<")),

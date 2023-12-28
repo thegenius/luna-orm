@@ -59,7 +59,7 @@ pub struct HelloTemplate {
 }
 
 #[derive(TemplateRecord)]
-#[TemplateSql = "select * FROM article where id > #{id}"]
+#[TemplateSql = "select id,age,content FROM article where id > #{id}"]
 #[TemplateCountSql = "select count(*) as count FROM article where id > #{id}"]
 pub struct HelloSelectTemplate {
     id: i32,
