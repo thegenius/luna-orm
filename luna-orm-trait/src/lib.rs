@@ -20,7 +20,7 @@ pub use utils::array_str_equal;
 
 pub type SqlxError = sqlx::Error;
 
-pub trait AutoEntity {}
+pub trait Schema {}
 
 pub trait Primary: Sync {
     fn get_table_name(&self) -> &'static str;

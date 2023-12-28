@@ -8,7 +8,7 @@ pub enum HelloOrderBy {
     ContentId,
 }
 
-#[derive(AutoEntity, Clone, Debug)]
+#[derive(Schema, Clone, Debug)]
 #[TableName = "article"]
 #[UniqueIndex = "id, content"]
 #[UniqueIndex = "id"]
