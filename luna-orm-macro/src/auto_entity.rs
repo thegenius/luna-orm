@@ -38,6 +38,8 @@ pub fn impl_auto_entity_macro(input: TokenStream) -> TokenStream {
     //let body_fields_name = build_fields_name(&body_fields);
     let body_fields_name = build_fields_name_with_option(&body_fields);
 
+    let generated_fields = extract_annotated_fields(&fields, "Generated");
+    let generated_fields_name = build_fields_name(&generated_fields);
     let name = extract_table_name(&ident, &attrs);
 
     let generated_primary = generate_primary(&name, &primary_fields);
@@ -85,9 +87,9 @@ pub fn impl_auto_entity_macro(input: TokenStream) -> TokenStream {
     let mut output = quote! {
     impl Entity for #ident {
 
-        //fn get_option_fields(&self) -> &'static str {
-        //    vec![ #(#option_fields, )*  ]
-        //}
+        fn get_generated_fields_name(&self) -> &'static [&'static str] {
+            &[ #(#generated_fields_name, )*  ]
+        }
 
         fn get_table_name(&self) -> &'static str {
                 #name

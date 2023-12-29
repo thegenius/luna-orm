@@ -51,6 +51,8 @@ pub trait Location: Sync {
 pub trait Entity: Sync {
     fn get_table_name(&self) -> &'static str;
 
+    fn get_generated_fields_name(&self) -> &'static [&'static str];
+
     fn get_primary_fields_name(&self) -> Vec<String>;
 
     fn get_body_fields_name(&self) -> Vec<String>;

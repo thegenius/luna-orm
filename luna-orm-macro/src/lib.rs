@@ -65,7 +65,7 @@ pub fn expand_template_record_by_macro(input: TokenStream) -> TokenStream {
     impl_template_record_by_macro(input)
 }
 
-#[proc_macro_derive(Schema, attributes(TableName, PrimaryKey, UniqueIndex))]
+#[proc_macro_derive(Schema, attributes(TableName, PrimaryKey, UniqueIndex, Generated))]
 pub fn expand_auto_entity_macro(input: TokenStream) -> TokenStream {
     impl_auto_entity_macro(input)
 }
