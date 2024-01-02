@@ -3,10 +3,10 @@ use crate::sql_executor::SqlExecutor;
 use crate::sql_generator::SqlGenerator;
 use crate::LunaOrmResult;
 
-use async_trait::async_trait;
+//use async_trait::async_trait;
 use luna_orm_trait::*;
 
-#[async_trait]
+//#[async_trait]
 pub trait CommandExecutor: SqlExecutor {
     type G: SqlGenerator + Sync;
 

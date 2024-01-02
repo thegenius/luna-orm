@@ -1,4 +1,4 @@
-use async_trait::async_trait;
+//use async_trait::async_trait;
 use luna_orm_trait::FromClause;
 use luna_orm_trait::JoinedConditions;
 use luna_orm_trait::{Entity, Location, Mutation, OrderBy, Pagination, Primary, Selection};
@@ -62,7 +62,7 @@ impl SqlGenerator for PostgresGenerator {
         self.pg_post_process(origin)
     }
 }
-#[async_trait]
+//#[async_trait]
 pub trait SqlGenerator {
     // const WRAP_CHAR: char = '`'; can not made trait to trait object
     #[inline(always)]

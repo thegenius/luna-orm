@@ -7,7 +7,7 @@ use sqlx::any::AnyRow;
 
 use crate::command_executor::CommandExecutor;
 use crate::sql_executor::SqlExecutor;
-use async_trait::async_trait;
+//use async_trait::async_trait;
 use luna_orm_trait::{
     Entity, Location, Mutation, Primary, SelectedEntity, Selection, WriteCommand,
 };
@@ -30,7 +30,7 @@ where
     }
 }
 
-#[async_trait]
+//#[async_trait]
 impl<'a, G> SqlExecutor for Transaction<'a, G>
 where
     G: SqlGenerator + Sync,

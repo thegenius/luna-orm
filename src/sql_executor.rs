@@ -1,7 +1,7 @@
 use crate::error::LunaOrmError;
 use crate::LunaOrmResult;
 
-use async_trait::async_trait;
+//use async_trait::async_trait;
 use luna_orm_trait::*;
 
 use sqlx::any::AnyArguments;
@@ -9,7 +9,7 @@ use sqlx::any::AnyQueryResult;
 use sqlx::any::AnyRow;
 use sqlx::AnyPool;
 
-#[async_trait]
+//#[async_trait]
 pub trait SqlExecutor {
     fn get_pool(&self) -> LunaOrmResult<&AnyPool> {
         Err(LunaOrmError::NotImplement)

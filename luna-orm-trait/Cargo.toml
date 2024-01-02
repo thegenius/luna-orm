@@ -10,7 +10,7 @@ homepage = "https://github.com/thegenius/luna-orm"
 
 [dependencies]
 sqlx = { workspace = true }
-async-trait = { workspace = true }
+#async-trait = { workspace = true }
 serde = { workspace = true }
 serde_with = {workspace = true}
 typetag = {workspace = true}

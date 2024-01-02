@@ -5,9 +5,9 @@ use crate::transaction::Transaction;
 use crate::LunaOrmResult;
 use std::ops::{Deref, DerefMut};
 
-use async_trait::async_trait;
+//use async_trait::async_trait;
 
-#[async_trait]
+//#[async_trait]
 pub trait Database: CommandExecutor + SqlExecutor {
     fn get_type(&self) -> &DatabaseType;
 
