@@ -4,6 +4,7 @@ use proc_macro::TokenStream;
 mod auto_entity;
 mod entity;
 mod field_utils;
+mod fields_parser;
 mod location;
 mod mutation;
 mod order_by;
@@ -65,7 +66,10 @@ pub fn expand_template_record_by_macro(input: TokenStream) -> TokenStream {
     impl_template_record_by_macro(input)
 }
 
-#[proc_macro_derive(Schema, attributes(TableName, PrimaryKey, UniqueIndex, Generated))]
+#[proc_macro_derive(
+    Schema,
+    attributes(TableName, PrimaryKey, UniqueIndex, AutoIncrement, Generated)
+)]
 pub fn expand_auto_entity_macro(input: TokenStream) -> TokenStream {
     impl_auto_entity_macro(input)
 }

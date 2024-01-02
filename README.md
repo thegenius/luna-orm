@@ -210,3 +210,8 @@ let result: PagedList<HelloSelectedEntity> =
 
 ## Error Sound
 
+
+## MSRV: Minimum Supported Rust Version
+1.75.0  
+LUNA-ORM use async trait.
+
