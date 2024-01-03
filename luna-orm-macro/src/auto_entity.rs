@@ -58,7 +58,7 @@ pub fn impl_auto_entity_macro(input: TokenStream) -> TokenStream {
     let generated_selection = generate_selection(&name, &clone_full_fields);
     let generated_selected_entity = generate_selected_entity(&name, &clone_full_fields);
     let unique_indexes = extract_unique_index(&attrs);
-    let generated_location = generate_location(&name, &clone_full_fields, unique_indexes);
+    let generated_location = generate_location(&name, &clone_full_fields, &attrs);
 
     let from_row_get_statement_members = map_fields(&fields, &|field: Field| {
         if field_is_option(&field) {

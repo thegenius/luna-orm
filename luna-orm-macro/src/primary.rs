@@ -1,48 +1,27 @@
 use case::CaseExt;
 use proc_macro::{self, TokenStream};
 use quote::quote;
-use quote::quote_spanned;
 
-use crate::field_utils::{map_field, map_field_vec, FieldMapType};
-
-use crate::type_check::*;
-use crate::type_extract::*;
+use crate::fields_parser::FieldsParser;
 use crate::utils::*;
 
 use proc_macro2::{Ident, Span};
-use syn::Attribute;
 use syn::Field;
-use syn::{
-    parse_macro_input, token, Data, DataEnum, DataStruct, DataUnion, DeriveInput, Error, Fields,
-    FieldsNamed, LitStr, Path, Result,
-};
+use syn::{parse_macro_input, DeriveInput};
 
 pub fn impl_primary_macro(input: TokenStream) -> TokenStream {
     let DeriveInput {
         attrs, ident, data, ..
     } = parse_macro_input!(input);
     let fields = extract_fields(&data).unwrap();
-    let args_add_clause = build_args_add_ref_clause(&fields);
-    let fields_name_str = extract_fields_name_str(&fields);
+    let fields = fields.named.into_iter().collect::<Vec<Field>>();
     let table_name = extract_table_name(&ident, &attrs);
+    let impl_token = generate_impl(&table_name, &fields);
 
     let output = quote! {
 
         impl Primary for #ident {
-
-            fn get_table_name(&self) -> &'static str {
-                #table_name
-            }
-
-            fn get_primary_field_names(&self) -> &'static [&'static str] {
-                &[ #(#fields_name_str)* ]
-            }
-
-            fn any_arguments(&self) -> sqlx::any::AnyArguments<'_> {
-                let mut arguments = AnyArguments::default();
-                #(#args_add_clause;)*
-                return arguments;
-            }
+            #impl_token
         }
     };
 
@@ -53,26 +32,13 @@ pub fn impl_primary_macro(input: TokenStream) -> TokenStream {
 pub fn generate_primary(table_name: &str, fields: &Vec<Field>) -> proc_macro2::TokenStream {
     let primary_name = format!("{}Primary", table_name.to_camel());
     let primary_ident = Ident::new(&primary_name, Span::call_site());
-    let fields_tokens = map_field_vec(fields, &|field| {
-        let field_ident = field.ident;
-        if type_is_option(&field.ty) {
-            let inner_type = get_option_inner_type(&field.ty).unwrap();
-            quote!(
-                #field_ident: #inner_type
-            )
-        } else {
-            let field_ty = field.ty;
-            quote!(
-                #field_ident: #field_ty
-            )
-        }
-    });
+    let fields_tokens = FieldsParser::from_vec(fields).get_not_option_fields();
     let impl_token = generate_impl(table_name, fields);
 
     let output = quote!(
         #[derive(Default, Clone)]
         pub struct #primary_ident {
-            #(#fields_tokens, )*
+            #fields_tokens
         }
 
         impl Primary for #primary_ident {
@@ -81,27 +47,25 @@ pub fn generate_primary(table_name: &str, fields: &Vec<Field>) -> proc_macro2::T
     );
 
     //panic!("{}", output);
-    output.into()
+    output
 }
 
 fn generate_impl(table_name: &str, fields: &Vec<Field>) -> proc_macro2::TokenStream {
-    let args_add_clause = map_field_vec(fields, &|f: Field| map_field(f, FieldMapType::ArgsAddRef));
-    let fields_name_str =
-        map_field_vec(fields, &|field: Field| map_field(field, FieldMapType::Str));
+    let parser = FieldsParser::from_vec(fields);
+    let fields_name = parser.get_name_array();
+    let args_add_stmt = parser.get_args();
     let output = quote!(
             fn get_table_name(&self) -> &'static str {
                 #table_name
             }
 
             fn get_primary_field_names(&self) -> &'static [&'static str] {
-                &[ #(#fields_name_str)* ]
+                #fields_name
             }
 
             fn any_arguments(&self) -> sqlx::any::AnyArguments<'_> {
-                let mut arguments = AnyArguments::default();
-                #(#args_add_clause;)*
-                return arguments;
+                #args_add_stmt
             }
     );
-    output.into()
+    output
 }

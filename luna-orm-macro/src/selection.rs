@@ -1,64 +1,48 @@
 use proc_macro::{self, TokenStream};
 use quote::quote;
-use quote::quote_spanned;
 
-use crate::field_utils::{map_field, map_field_vec, FieldMapType};
-use crate::type_check::*;
-use crate::type_extract::*;
+use crate::fields_parser::FieldsParser;
 use crate::utils::*;
 use case::CaseExt;
 use proc_macro2::{Ident, Span};
-use syn::Attribute;
 use syn::Field;
-use syn::{
-    parse_macro_input, token, Data, DataEnum, DataStruct, DataUnion, DeriveInput, Error, Fields,
-    FieldsNamed, LitStr, Path, Result,
-};
-pub fn impl_selection_macro(input: TokenStream) -> TokenStream {
-    let DeriveInput { ident, data, .. } = parse_macro_input!(input);
+use syn::{parse_macro_input, DeriveInput};
 
-    let fields = extract_fields(&data).unwrap();
-    let fields_name = extract_selected_fields_name(&fields);
-
-    let output = quote! {
+pub fn generate_impl(ident: &Ident, fields: &Vec<Field>) -> proc_macro2::TokenStream {
+    let parser = FieldsParser::from_vec(fields);
+    let fields_name = parser.get_bool_name_vec();
+    quote! {
         impl Selection for #ident {
             fn get_selected_fields(&self) -> Vec<String> {
-                let mut fields = Vec::new();
-                #(#fields_name)*
-                return fields;
+                #fields_name
             }
         }
-    };
-    output.into()
+    }
+}
+
+pub fn impl_selection_macro(input: TokenStream) -> TokenStream {
+    let DeriveInput { ident, data, .. } = parse_macro_input!(input);
+    let fields = extract_fields(&data).unwrap();
+    let fields = fields.named.into_iter().collect();
+    let output = generate_impl(&ident, &fields).into();
+    //panic!("{}", output);
+    output
 }
 
 pub fn generate_selection(table_name: &str, fields: &Vec<Field>) -> proc_macro2::TokenStream {
     let selection_name = format!("{}Selection", table_name.to_camel());
     let selection_ident = Ident::new(&selection_name, Span::call_site());
-    let fields_tokens = map_field_vec(fields, &|field| {
-        let field_ident = field.ident;
-        quote!(
-            #field_ident: bool
-        )
-    });
 
-    let fields_name = map_field_vec(fields, &|field: Field| {
-        map_field(field, FieldMapType::BoolPush)
-    });
+    let fields_tokens = FieldsParser::from_vec(fields).get_bool_fields();
+    let generated_impl = generate_impl(&selection_ident, fields);
 
     let output = quote!(
         #[derive(Default, Clone)]
         pub struct #selection_ident {
-            #(#fields_tokens, )*
+            #fields_tokens
         }
 
-        impl Selection for #selection_ident {
-            fn get_selected_fields(&self) -> Vec<String> {
-                let mut fields = Vec::new();
-                #(#fields_name)*
-                return fields;
-            }
-        }
+        #generated_impl
     );
 
     //panic!("{}", output);

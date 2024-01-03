@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![forbid(unsafe_code)]
 //#![feature(trait_upcasting)]
 //#![allow(incomplete_features)]
 

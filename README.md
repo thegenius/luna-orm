@@ -215,3 +215,5 @@ let result: PagedList<HelloSelectedEntity> =
 1.75.0  
 LUNA-ORM use async trait.
 
+## Safety
+This lib uses #![forbid(unsafe_code)]
