@@ -76,8 +76,11 @@ let entity = HelloEntity {
 let result = db.insert(&entity).await?;
 ```
 
-## Saving Lives
-Almost 90% command has been implemented by default, this may saving your lives.
+## Time Saving
+Almost 90% command has been implemented by default, this may saving your time.i
+
+## Concept
+![](https://github.com/thegenius/luna-orm/blob/main/docs/concept.png)
 
 ### If you want to insert
 ```rust
