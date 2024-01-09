@@ -3,7 +3,7 @@
 For now, just have a basic taste, waiting for the version 1.0  
 At that time, the api will be stable, and backward compatible will be promised.
 
-[![Static Badge](https://img.shields.io/badge/crates-0.3.1-green)](https://crates.io/crates/luna-orm)
+[![Static Badge](https://img.shields.io/badge/crates-0.3.5-green)](https://crates.io/crates/luna-orm)
 
 # LUNA-ORM
 
