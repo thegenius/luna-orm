@@ -22,15 +22,12 @@ impl MySqlGenerator {
 impl SqlGenerator for MySqlGenerator {
     fn get_upsert_sql(&self, entity: &dyn Entity) -> String {
         let table_name = entity.get_table_name();
-        let mut field_names = entity.get_primary_fields_name();
-        field_names.extend(entity.get_body_fields_name());
+        let field_names = entity.get_insert_fields();
         let fields = wrap_fields(&field_names, self.get_wrap_char());
-        let primary_field_names = entity.get_primary_fields_name();
-        let primary_fields = wrap_fields(&primary_field_names, self.get_wrap_char());
         let marks = generate_question_mark_list(&field_names);
-        let body_field_names = entity.get_body_fields_name();
+        let set_field_names = entity.get_upsert_set_fields();
         let assign_clause = wrap_locate_fields(
-            &body_field_names,
+            &set_field_names,
             self.get_wrap_char(),
             self.get_place_holder(),
         );
@@ -127,6 +124,21 @@ pub trait SqlGenerator {
             table_name,
             self.get_wrap_char(),
             where_clause
+        )
+        .to_string();
+        self.post_process(select_sql)
+    }
+
+    fn get_search_all_sql(&self, selection: &dyn Selection) -> String {
+        let table_name = selection.get_table_name();
+        let selected_field_names = selection.get_selected_fields();
+        let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());
+        let select_sql = format!(
+            "SELECT {} FROM {}{}{}",
+            selected_fields,
+            self.get_wrap_char(),
+            table_name,
+            self.get_wrap_char(),
         )
         .to_string();
         self.post_process(select_sql)
@@ -254,8 +266,7 @@ pub trait SqlGenerator {
 
     fn get_insert_sql(&self, entity: &dyn Entity) -> String {
         let table_name = entity.get_table_name();
-        let mut field_names = entity.get_primary_fields_name();
-        field_names.extend(entity.get_body_fields_name());
+        let field_names = entity.get_insert_fields();
         let fields = wrap_fields(&field_names, self.get_wrap_char());
         let marks = generate_question_mark_list(&field_names);
         let insert_sql = format!(
@@ -272,28 +283,25 @@ pub trait SqlGenerator {
 
     fn get_upsert_sql(&self, entity: &dyn Entity) -> String {
         let table_name = entity.get_table_name();
-        let mut field_names = entity.get_primary_fields_name();
-        field_names.extend(entity.get_body_fields_name());
+
+        let field_names = entity.get_insert_fields();
         let fields = wrap_fields(&field_names, self.get_wrap_char());
-        let primary_field_names = entity.get_primary_fields_name();
-        let primary_fields = wrap_fields(&primary_field_names, self.get_wrap_char());
         let marks = generate_question_mark_list(&field_names);
-        let body_field_names = entity.get_body_fields_name();
+        let set_field_names = entity.get_upsert_set_fields();
         let assign_clause = wrap_locate_fields(
-            &body_field_names,
+            &set_field_names,
             self.get_wrap_char(),
             self.get_place_holder(),
         );
 
         let upsert_sql = format!(
             "INSERT INTO {}{}{} ({}) VALUES({})
-            ON CONFLICT({}) DO UPDATE SET {}",
+            ON CONFLICT DO UPDATE SET {}",
             self.get_wrap_char(),
             table_name,
             self.get_wrap_char(),
             fields,
             marks,
-            primary_fields,
             assign_clause
         )
         .to_string();

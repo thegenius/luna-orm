@@ -211,8 +211,8 @@ pub fn check_has_attr(attrs: &Vec<Attribute>, name: &str) -> bool {
     return false;
 }
 
-pub fn extract_table_name(_ident: &Ident, attrs: &Vec<Attribute>) -> String {
-    let mut name = stringify!(#ident).to_string();
+pub fn extract_table_name(ident: &Ident, attrs: &Vec<Attribute>) -> String {
+    let mut name = ident.to_string();
     name = extract_val_from_attrs(attrs, "TableName").unwrap_or(name);
     return name;
 }

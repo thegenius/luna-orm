@@ -1,19 +1,78 @@
+use crate::fields_parser::FieldsParser;
+use crate::type_check::type_is_option;
+use crate::utils::check_has_attr;
+use crate::utils::*;
 use proc_macro::{self, TokenStream};
 use quote::quote;
-use quote::quote_spanned;
+use syn::{parse_macro_input, Attribute, DeriveInput, Field, FieldsNamed, Ident};
 
-use crate::field_utils::*;
-use crate::primary::generate_primary;
-use crate::type_check;
-use crate::type_check::field_is_option;
-use crate::utils::*;
-use proc_macro2::{Ident, Span};
-use syn::Attribute;
-use syn::Field;
-use syn::{
-    parse_macro_input, token, Data, DataEnum, DataStruct, DataUnion, DeriveInput, Error, Fields,
-    FieldsNamed, LitStr, Path, Result,
-};
+fn validate_fields(fields: &FieldsNamed) {
+    let primary_fields = FieldsParser::from_named(fields).filter_annotated_fields("PrimaryKey");
+    if primary_fields.is_empty() {
+        panic!("Entity must has at least one PrimaryKey!")
+    }
+
+    for field in primary_fields {
+        let is_generated = check_has_attr(&field.attrs, "Generated");
+        let is_auto = check_has_attr(&field.attrs, "AutoIncrement");
+        if type_is_option(&field.ty) {
+            if (!is_generated) && (!is_auto) {
+                panic!(
+                    "Primary Key with Option type must annotated with Generated or AutoIncrement"
+                )
+            }
+        } else if (is_generated) || (is_auto) {
+            panic!("Primary Key annotated with Generated or AutoIncrement must be Option")
+        }
+    }
+}
+
+pub fn generate_entity_impl(
+    ident: &Ident,
+    attrs: &Vec<Attribute>,
+    fields: &FieldsNamed,
+) -> proc_macro2::TokenStream {
+    validate_fields(fields);
+
+    let table_name = extract_table_name(ident, attrs);
+
+    let insert_fields = FieldsParser::from_named(fields).get_insert_fields();
+    let insert_fields_name = FieldsParser::from_vec(&insert_fields).get_maybe_option_name_vec();
+
+    let upsert_set_fields = FieldsParser::from_named(fields).get_upsert_set_fields();
+    let upsert_set_fields_name =
+        FieldsParser::from_vec(&upsert_set_fields).get_maybe_option_name_vec();
+
+    let insert_args = FieldsParser::from_named(fields).get_insert_args();
+    let upsert_args = FieldsParser::from_named(fields).get_upsert_args();
+
+    let output = quote! {
+        impl Entity for #ident {
+
+            fn get_table_name(&self) -> &'static str {
+                #table_name
+            }
+
+            fn get_insert_fields(&self) -> Vec<String> {
+                #insert_fields_name
+            }
+
+            fn get_upsert_set_fields(&self) -> Vec<String> {
+                #upsert_set_fields_name
+            }
+
+            fn any_arguments_of_insert(&self) -> AnyArguments<'_> {
+                #insert_args
+            }
+
+            fn any_arguments_of_upsert(&self) -> AnyArguments<'_> {
+                #upsert_args
+            }
+        }
+    };
+
+    output
+}
 
 pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
     let DeriveInput {
@@ -21,123 +80,7 @@ pub fn impl_entity_macro(input: TokenStream) -> TokenStream {
     } = parse_macro_input!(input);
 
     let fields = extract_fields(&data).unwrap();
-
-    let _fields_name = extract_fields_name(&fields);
-    let primary_fields = extract_annotated_fields(&fields, "PrimaryKey");
-    if primary_fields.is_empty() {
-        panic!("Entity must has at least one PrimaryKey!")
-    }
-
-    let primary_fields_name = build_fields_name(&primary_fields);
-
-    let body_fields = extract_not_annotated_fields(&fields, "PrimaryKey");
-    //let body_fields_name = build_fields_name(&body_fields);
-    let body_fields_name = build_fields_name_with_option(&body_fields);
-    let generated_fields = extract_annotated_fields(&fields, "Generated");
-
-    let name = extract_table_name(&ident, &attrs);
-
-    let generated_primary = generate_primary(&name, &primary_fields);
-    let generated_fields_name = build_fields_name(&generated_fields);
-
-    let primary_args_add_ref: Vec<proc_macro2::TokenStream> =
-        gen_args_add_maybe_option(&primary_fields);
-
-    let body_args_add_ref: Vec<proc_macro2::TokenStream> = gen_args_add_maybe_option(&body_fields);
-
-    let mut full_fields: Vec<Field> = Vec::new();
-    full_fields.extend(primary_fields);
-    full_fields.extend(body_fields);
-
-    let clone_full_fields = full_fields.clone();
-
-    let from_row_get_statement_members = map_fields(&fields, &|field: Field| {
-        if field_is_option(&field) {
-            map_field(field, FieldMapType::RowGetOption)
-        } else {
-            map_field(field, FieldMapType::RowGet)
-        }
-    });
-
-    let clone_full_fields = full_fields.clone();
-    let from_row_field_members = clone_full_fields.into_iter().map(|field| {
-        let field_name = field.ident.unwrap();
-        let span = field_name.span();
-        quote_spanned! { span =>
-            #field_name
-        }
-    });
-
-    let cloned_fields = full_fields.clone();
-    let option_fields: Vec<String> = cloned_fields
-        .iter()
-        .filter(|f| type_check::field_is_option(f))
-        .map(|f| f.ident.as_ref().unwrap().to_string())
-        .collect();
-
-    let mut output = quote! {
-    impl Entity for #ident {
-
-        fn get_generated_fields_name(&self) -> &'static [&'static str] {
-            &[ #(#generated_fields_name, )*  ]
-        }
-
-        fn get_table_name(&self) -> &'static str {
-                #name
-        }
-
-        fn from_any_row(row: AnyRow) -> Result<Self, SqlxError> where Self: Sized {
-            #(#from_row_get_statement_members ;)*
-            let result = #ident{ #(#from_row_field_members ,)*  };
-            return Ok(result);
-        }
-
-        fn get_primary_fields_name(&self) -> Vec<String> {
-            vec![
-                #(#primary_fields_name, )*
-            ]
-        }
-
-        fn get_body_fields_name(&self) -> Vec<String> {
-                #(#body_fields_name)*
-        }
-
-        fn get_primary_args(&self) -> AnyArguments<'_> {
-            let mut arguments = AnyArguments::default();
-            #(#primary_args_add_ref; )*
-            return arguments;
-        }
-
-        fn get_body_args(&self) -> AnyArguments<'_> {
-            let mut arguments = AnyArguments::default();
-            #(#body_args_add_ref; )*
-            return arguments;
-        }
-
-        fn any_arguments_of_insert(&self) -> AnyArguments<'_> {
-            let mut arguments = AnyArguments::default();
-            #(#primary_args_add_ref; )*
-            #(#body_args_add_ref; )*
-            return arguments;
-        }
-
-        fn any_arguments_of_upsert(&self) -> AnyArguments<'_> {
-            let mut arguments = AnyArguments::default();
-            #(#primary_args_add_ref; )*
-            #(#body_args_add_ref; )*
-            #(#body_args_add_ref; )*
-            return arguments;
-        }
-
-        fn any_arguments_of_update(&self) -> AnyArguments<'_> {
-            let mut arguments = AnyArguments::default();
-            #(#body_args_add_ref; )*
-            #(#primary_args_add_ref; )*
-            return arguments;
-        }
-    }
-    };
-    //output.extend(generated_primary);
+    let output = generate_entity_impl(&ident, &attrs, &fields);
     //panic!("{}", output);
     output.into()
 }

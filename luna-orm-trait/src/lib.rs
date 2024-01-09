@@ -51,28 +51,18 @@ pub trait Location: Sync {
 pub trait Entity: Sync {
     fn get_table_name(&self) -> &'static str;
 
-    fn get_generated_fields_name(&self) -> &'static [&'static str];
+    fn get_insert_fields(&self) -> Vec<String>;
 
-    fn get_primary_fields_name(&self) -> Vec<String>;
-
-    fn get_body_fields_name(&self) -> Vec<String>;
-
-    fn get_primary_args(&self) -> AnyArguments<'_>;
-
-    fn get_body_args(&self) -> AnyArguments<'_>;
+    fn get_upsert_set_fields(&self) -> Vec<String>;
 
     fn any_arguments_of_insert(&self) -> AnyArguments<'_>;
 
     fn any_arguments_of_upsert(&self) -> AnyArguments<'_>;
-
-    fn any_arguments_of_update(&self) -> AnyArguments<'_>;
-
-    fn from_any_row(row: AnyRow) -> Result<Self, SqlxError>
-    where
-        Self: Sized;
 }
 
 pub trait Selection: Sync {
+    fn get_table_name(&self) -> &'static str;
+
     fn get_selected_fields(&self) -> Vec<String>;
 }
 

@@ -9,10 +9,17 @@ use syn::Field;
 use syn::{parse_macro_input, DeriveInput};
 
 pub fn generate_impl(ident: &Ident, fields: &Vec<Field>) -> proc_macro2::TokenStream {
+    let ident_name = ident.to_string();
+    let entity_name = ident_name.strip_suffix("Selection").unwrap_or(&ident_name);
+    let table_name = entity_name.to_lowercase();
+
     let parser = FieldsParser::from_vec(fields);
     let fields_name = parser.get_bool_name_vec();
     quote! {
         impl Selection for #ident {
+            fn get_table_name(&self) -> &'static str {
+                #table_name
+            }
             fn get_selected_fields(&self) -> Vec<String> {
                 #fields_name
             }

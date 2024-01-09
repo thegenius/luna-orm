@@ -18,7 +18,7 @@ At that time, the api will be stable, and backward compatible will be promised.
 
 ## INSTALL
 ```toml
-luna-orm = { version = "0.3.4" }
+luna-orm = { version = "0.3.5" }
   
 ```
 

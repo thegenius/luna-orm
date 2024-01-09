@@ -55,7 +55,7 @@ pub fn map_field(field: Field, map_type: FieldMapType) -> TokenStream {
 
         FieldMapType::OptionNamePush => {
             quote_spanned! { span=>
-                if let Some(_) = self.#field_name {
+                if self.#field_name.is_some() {
                     fields.push(#field_name_stringified.to_string());
                 }
             }

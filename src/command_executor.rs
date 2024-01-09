@@ -67,6 +67,15 @@ pub trait CommandExecutor: SqlExecutor {
         return Ok(result.rows_affected() > 0);
     }
 
+    async fn search_all<SE>(&mut self, selection: &dyn Selection) -> LunaOrmResult<Vec<SE>>
+    where
+        SE: SelectedEntity + Send + Unpin,
+    {
+        let sql = self.get_generator().get_search_all_sql(selection);
+        let result: Vec<SE> = self.fetch_all_plain(&sql).await?;
+        return Ok(result);
+    }
+
     async fn search<SE>(
         &mut self,
         location: &dyn Location,

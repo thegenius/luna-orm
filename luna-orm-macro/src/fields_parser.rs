@@ -3,6 +3,8 @@ use crate::field_utils::map_field_vec;
 use crate::field_utils::FieldMapType;
 use crate::type_check::type_is_option;
 use crate::type_extract::get_option_inner_type;
+use crate::utils::check_has_attr;
+
 use proc_macro2::TokenStream;
 use quote::{quote, quote_spanned};
 use syn::Field;
@@ -34,6 +36,40 @@ impl FieldsParser {
             .into_iter()
             .map(map_fn)
             .collect::<Vec<TokenStream>>()
+    }
+
+    pub fn filter_annotated_fields(&self, annotation_str: &str) -> Vec<Field> {
+        let mut result: Vec<Field> = Vec::new();
+        for field in self.fields.iter() {
+            let has_attr = check_has_attr(&field.attrs, annotation_str);
+            if has_attr {
+                result.push(field.clone());
+            }
+        }
+        result
+    }
+
+    pub fn filter_not_annotated_fields(&self, annotation_str: &str) -> Vec<Field> {
+        let mut result: Vec<Field> = Vec::new();
+        for field in self.fields.iter() {
+            let has_attr = check_has_attr(&field.attrs, annotation_str);
+            if !has_attr {
+                result.push(field.clone());
+            }
+        }
+        result
+    }
+
+    pub fn filter_not_auto_generated(&self) -> Vec<Field> {
+        let mut result: Vec<Field> = Vec::new();
+        for field in self.fields.iter() {
+            let is_generated = check_has_attr(&field.attrs, "Generated");
+            let is_auto = check_has_attr(&field.attrs, "AutoIncrement");
+            if (!is_generated) && (!is_auto) {
+                result.push(field.clone());
+            }
+        }
+        result
     }
 
     // get struct of bool
@@ -136,7 +172,23 @@ impl FieldsParser {
         });
         quote!(
             let mut fields = Vec::new();
-            #(#tokens)*
+            #(#tokens;)*
+            return fields;
+        )
+    }
+
+    pub fn get_maybe_option_name_vec(&self) -> TokenStream {
+        let tokens = map_field_vec(&self.fields, &|field: Field| {
+            let field_type = &field.ty;
+            if type_is_option(field_type) {
+                map_field(field, FieldMapType::OptionNamePush)
+            } else {
+                map_field(field, FieldMapType::NamePush)
+            }
+        });
+        quote!(
+            let mut fields = Vec::new();
+            #(#tokens;)*
             return fields;
         )
     }
@@ -184,6 +236,30 @@ impl FieldsParser {
         }
     }
 
+    pub fn get_maybe_option_args(&self) -> TokenStream {
+        let args_add_clause = map_field_vec(&self.fields, &|field: Field| {
+            let field_name = field.ident.unwrap();
+            let span = field_name.span();
+            let field_type = field.ty;
+            if type_is_option(&field_type) {
+                quote_spanned! { span =>
+                    if let Some(#field_name) = &self.#field_name {
+                        luna_add_arg(&mut arguments, &#field_name);
+                    }
+                }
+            } else {
+                quote_spanned! { span =>
+                    luna_add_arg(&mut arguments, &self.#field_name);
+                }
+            }
+        });
+        quote! {
+            let mut arguments = AnyArguments::default();
+            #(#args_add_clause)*
+            arguments
+        }
+    }
+
     pub fn get_option_location_args(&self) -> TokenStream {
         let args_add_clause = map_field_vec(&self.fields, &|field: Field| {
             let field_name = field.ident.unwrap();
@@ -199,6 +275,59 @@ impl FieldsParser {
             #(#args_add_clause)*
             arguments
         }
+    }
+
+    pub fn get_sorted_fields(&self) -> Vec<Field> {
+        let primary_fields =
+            FieldsParser::from_vec(&self.fields).filter_annotated_fields("PrimaryKey");
+        let body_fields =
+            FieldsParser::from_vec(&self.fields).filter_not_annotated_fields("PrimaryKey");
+        let mut all_fields: Vec<Field> = Vec::new();
+        all_fields.extend(primary_fields);
+        all_fields.extend(body_fields);
+        all_fields
+    }
+
+    pub fn get_insert_fields(&self) -> Vec<Field> {
+        let primary_fields =
+            FieldsParser::from_vec(&self.fields).filter_annotated_fields("PrimaryKey");
+        let body_fields =
+            FieldsParser::from_vec(&self.fields).filter_not_annotated_fields("PrimaryKey");
+        let mut all_fields: Vec<Field> = Vec::new();
+        all_fields.extend(primary_fields);
+        all_fields.extend(body_fields);
+        all_fields = FieldsParser::from_vec(&all_fields).filter_not_auto_generated();
+        all_fields
+    }
+
+    pub fn get_upsert_fields(&self) -> Vec<Field> {
+        let primary_fields =
+            FieldsParser::from_vec(&self.fields).filter_annotated_fields("PrimaryKey");
+        let body_fields =
+            FieldsParser::from_vec(&self.fields).filter_not_annotated_fields("PrimaryKey");
+        let mut all_fields: Vec<Field> = Vec::new();
+        all_fields.extend(primary_fields);
+        all_fields.extend(body_fields.clone());
+        all_fields.extend(body_fields);
+        all_fields = FieldsParser::from_vec(&all_fields).filter_not_auto_generated();
+        all_fields
+    }
+
+    pub fn get_upsert_set_fields(&self) -> Vec<Field> {
+        let mut body_fields =
+            FieldsParser::from_vec(&self.fields).filter_not_annotated_fields("PrimaryKey");
+        body_fields = FieldsParser::from_vec(&body_fields).filter_not_auto_generated();
+        body_fields
+    }
+
+    pub fn get_insert_args(&self) -> TokenStream {
+        let all_fields = FieldsParser::from_vec(&self.fields).get_insert_fields();
+        FieldsParser::from_vec(&all_fields).get_maybe_option_args()
+    }
+
+    pub fn get_upsert_args(&self) -> TokenStream {
+        let all_fields = FieldsParser::from_vec(&self.fields).get_upsert_fields();
+        FieldsParser::from_vec(&all_fields).get_maybe_option_args()
     }
 
     pub fn get_where_clause(&self) -> TokenStream {
