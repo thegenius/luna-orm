@@ -4,10 +4,8 @@ use crate::sql_executor::SqlExecutor;
 use crate::transaction::Transaction;
 use crate::LunaOrmResult;
 use std::ops::{Deref, DerefMut};
+use tracing::debug;
 
-//use async_trait::async_trait;
-
-//#[async_trait]
 pub trait Database: CommandExecutor + SqlExecutor + std::fmt::Debug {
     fn get_type(&self) -> &DatabaseType;
 
@@ -26,13 +24,16 @@ pub trait Database: CommandExecutor + SqlExecutor + std::fmt::Debug {
     where
         SE: SelectedEntity + Send + Unpin,
     {
+        debug!(target: "luna_orm", command = "remove",  primary = ?primary, selection = ?selection);
         let mut trx = self.get_pool()?.begin().await?;
         let selected_entity: Option<SE> = self.select(primary, selection).await?;
         let sql = self.get_generator().get_delete_sql(primary);
+        debug!(target: "luna_orm", command = "remove",  sql = sql);
         let args = primary.any_arguments();
         let result = sqlx::query_with(&sql, args).execute(&mut *trx).await?;
         trx.commit().await?;
 
+        debug!(target: "luna_orm", command = "remove",  result = ?result);
         if result.rows_affected() > 0 {
             return Ok(selected_entity);
         } else {
@@ -41,6 +42,7 @@ pub trait Database: CommandExecutor + SqlExecutor + std::fmt::Debug {
     }
 
     async fn transact(&mut self, commands: &[WriteCommand]) -> LunaOrmResult<bool> {
+        debug!(target: "luna_orm", command = "transact",  commands = ?commands);
         let trx = self.get_pool()?.begin().await?;
         for command in commands {
             match command {
@@ -65,6 +67,7 @@ pub trait Database: CommandExecutor + SqlExecutor + std::fmt::Debug {
             }
         }
         trx.commit().await?;
+        debug!(target: "luna_orm", command = "transact",  result = true);
         Ok(true)
     }
 }

@@ -4,6 +4,7 @@ use crate::LunaOrmResult;
 use sqlx::any::AnyArguments;
 use sqlx::any::AnyQueryResult;
 use sqlx::any::AnyRow;
+use tracing::debug;
 
 use crate::command_executor::CommandExecutor;
 use crate::sql_executor::SqlExecutor;
@@ -20,14 +21,6 @@ where
     transaction: sqlx::Transaction<'a, sqlx::Any>,
     sql_generator: &'a G,
 }
-
-/*
-impl<'a, G> std::fmt::Debug for Transaction<'a, G> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.transaction.fmt()
-    }
-}
-*/
 
 impl<'a, G> CommandExecutor for Transaction<'a, G>
 where
@@ -101,7 +94,9 @@ where
     }
 
     pub async fn query(&mut self, sql: &str) -> Result<usize, LunaOrmError> {
+        debug!(target: "luna_orm", command = "query",  sql = sql);
         let result = sqlx::query(sql).execute(&mut *self.transaction).await?;
+        debug!(target: "luna_orm", command = "query",  result = ?result);
         Ok(result.rows_affected() as usize)
     }
 
@@ -113,13 +108,16 @@ where
     where
         SE: SelectedEntity + Send + Unpin,
     {
+        debug!(target: "luna_orm", command = "remove",  primary = ?primary, selection = ?selection);
         let selected_entity: Option<SE> = self.select(primary, selection).await?;
         let sql = self.get_generator().get_delete_sql(primary);
+        debug!(target: "luna_orm", command = "remove",  sql = sql);
         let args = primary.any_arguments();
         let result = sqlx::query_with(&sql, args)
             .execute(&mut *self.transaction)
             .await?;
 
+        debug!(target: "luna_orm", command = "remove",  result = ?result);
         if result.rows_affected() > 0 {
             Ok(selected_entity)
         } else {
@@ -128,6 +126,7 @@ where
     }
 
     async fn transact(&mut self, commands: &[WriteCommand]) -> LunaOrmResult<bool> {
+        debug!(target: "luna_orm", command = "transact",  commands = ?commands);
         for command in commands {
             match command {
                 WriteCommand::Insert { entity } => {
@@ -150,6 +149,7 @@ where
                 }
             }
         }
+        debug!(target: "luna_orm", command = "transact",  result = true);
         Ok(true)
     }
 }

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 //#[derive(Serialize, Deserialize)]
 //#[serde(untagged)]
+#[derive(Debug)]
 pub enum WriteCommand {
     Insert {
         entity: Box<dyn Entity>,
