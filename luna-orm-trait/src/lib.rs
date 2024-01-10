@@ -12,17 +12,20 @@ mod field;
 mod location;
 mod parser;
 mod request;
+mod timer;
 mod utils;
 pub use location::*;
 pub use parser::ParsedTemplateSql;
 pub use request::WriteCommand;
+use std::fmt::Debug;
+pub use timer::Timer;
 pub use utils::array_str_equal;
 
 pub type SqlxError = sqlx::Error;
 
 pub trait Schema {}
 
-pub trait Primary: Sync {
+pub trait Primary: Sync + Debug {
     fn get_table_name(&self) -> &'static str;
 
     fn get_primary_field_names(&self) -> &'static [&'static str];
@@ -30,13 +33,13 @@ pub trait Primary: Sync {
     fn any_arguments(&self) -> AnyArguments<'_>;
 }
 
-pub trait Mutation: Sync {
+pub trait Mutation: Sync + Debug {
     fn any_arguments(&self) -> AnyArguments<'_>;
 
     fn get_fields_name(&self) -> Vec<String>;
 }
 
-pub trait Location: Sync {
+pub trait Location: Sync + Debug {
     fn get_table_name(&self) -> &'static str;
 
     fn any_arguments(&self) -> AnyArguments<'_>;
@@ -48,7 +51,7 @@ pub trait Location: Sync {
     fn check_valid_order_by(&self, fields: &[&str]) -> bool;
 }
 
-pub trait Entity: Sync {
+pub trait Entity: Sync + Debug {
     fn get_table_name(&self) -> &'static str;
 
     fn get_insert_fields(&self) -> Vec<String>;
@@ -60,17 +63,17 @@ pub trait Entity: Sync {
     fn any_arguments_of_upsert(&self) -> AnyArguments<'_>;
 }
 
-pub trait Selection: Sync {
+pub trait Selection: Sync + Debug {
     fn get_table_name(&self) -> &'static str;
 
     fn get_selected_fields(&self) -> Vec<String>;
 }
 
-pub trait OrderBy: Sync {
+pub trait OrderBy: Sync + Debug {
     fn get_order_by_fields(&self) -> &'static [&'static str];
 }
 
-pub trait SelectedEntity {
+pub trait SelectedEntity: Debug {
     fn from_any_row(row: AnyRow) -> Result<Self, SqlxError>
     where
         Self: Sized;
@@ -82,7 +85,7 @@ pub enum CountSql {
     VariabledSql(String),
 }
 
-pub trait TemplateRecord: Sync {
+pub trait TemplateRecord: Sync + Debug {
     fn get_sql(&self, page: Option<&Pagination>) -> String;
 
     fn get_count_sql(&self) -> CountSql;
@@ -92,6 +95,7 @@ pub trait TemplateRecord: Sync {
     fn any_arguments(&self) -> AnyArguments<'_>;
 }
 
+#[derive(Clone, Debug)]
 pub struct RecordCount {
     pub count: i64,
 }

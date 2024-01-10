@@ -9,6 +9,7 @@ homepage = "https://github.com/thegenius/luna-orm"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+tracing = {workspace = true}
 sqlx = { workspace = true }
 #async-trait = { workspace = true }
 serde = { workspace = true }

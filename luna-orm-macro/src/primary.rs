@@ -36,7 +36,7 @@ pub fn generate_primary(table_name: &str, fields: &Vec<Field>) -> proc_macro2::T
     let impl_token = generate_impl(table_name, fields);
 
     let output = quote!(
-        #[derive(Default, Clone)]
+        #[derive(Default, Debug, Clone)]
         pub struct #primary_ident {
             #fields_tokens
         }

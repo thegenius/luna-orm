@@ -19,7 +19,7 @@ pub struct ClassesEntity {
     name: String,
 }
 
-#[derive(Selection, Default, Clone)]
+#[derive(Selection, Debug, Default, Clone)]
 pub struct UserSelection {
     id: bool,
     classes_id: bool,
@@ -27,7 +27,7 @@ pub struct UserSelection {
     age: bool,
 }
 
-#[derive(Selection, Default, Clone)]
+#[derive(Selection, Debug, Default, Clone)]
 pub struct ClassesSelection {
     id: bool,
     name: bool,

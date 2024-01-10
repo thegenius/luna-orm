@@ -12,17 +12,26 @@ use luna_orm_trait::{
     Entity, Location, Mutation, Primary, SelectedEntity, Selection, WriteCommand,
 };
 
+#[derive(Debug)]
 pub struct Transaction<'a, G>
 where
-    G: SqlGenerator + Sync,
+    G: SqlGenerator + Sync + std::fmt::Debug,
 {
     transaction: sqlx::Transaction<'a, sqlx::Any>,
     sql_generator: &'a G,
 }
 
+/*
+impl<'a, G> std::fmt::Debug for Transaction<'a, G> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.transaction.fmt()
+    }
+}
+*/
+
 impl<'a, G> CommandExecutor for Transaction<'a, G>
 where
-    G: SqlGenerator + Sync,
+    G: SqlGenerator + Sync + std::fmt::Debug,
 {
     type G = G;
     fn get_generator(&self) -> &Self::G {
@@ -30,10 +39,9 @@ where
     }
 }
 
-//#[async_trait]
 impl<'a, G> SqlExecutor for Transaction<'a, G>
 where
-    G: SqlGenerator + Sync,
+    G: SqlGenerator + Sync + std::fmt::Debug,
 {
     async fn fetch_optional<SE>(
         &mut self,
@@ -73,7 +81,7 @@ where
 
 impl<'a, G> Transaction<'a, G>
 where
-    G: SqlGenerator + Sync,
+    G: SqlGenerator + Sync + std::fmt::Debug,
 {
     pub fn new(trx: sqlx::Transaction<'a, sqlx::Any>, sql_generator: &'a G) -> Self {
         Self {

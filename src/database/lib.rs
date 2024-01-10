@@ -8,7 +8,7 @@ use std::ops::{Deref, DerefMut};
 //use async_trait::async_trait;
 
 //#[async_trait]
-pub trait Database: CommandExecutor + SqlExecutor {
+pub trait Database: CommandExecutor + SqlExecutor + std::fmt::Debug {
     fn get_type(&self) -> &DatabaseType;
 
     async fn transaction<'a>(&'a self) -> LunaOrmResult<Transaction<'a, Self::G>> {
@@ -69,6 +69,7 @@ pub trait Database: CommandExecutor + SqlExecutor {
     }
 }
 
+#[derive(Debug)]
 pub enum DatabaseType {
     SqliteLocal,
     MySql,

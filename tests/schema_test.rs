@@ -1,7 +1,7 @@
 use luna_orm::prelude::*;
 use luna_orm::LunaOrmResult;
 
-#[derive(OrderBy, Clone)]
+#[derive(OrderBy, Debug, Clone)]
 pub enum HelloOrderBy {
     Id,
     IdContent,
@@ -30,14 +30,14 @@ pub struct HelloLocation {
 }
 */
 
-#[derive(TemplateRecord)]
+#[derive(TemplateRecord, Debug)]
 #[TemplateSql = "update article set content = #{content} where id = #{id}"]
 pub struct HelloTemplate {
     id: i32,
     content: String,
 }
 
-#[derive(TemplateRecord)]
+#[derive(TemplateRecord, Debug)]
 #[TemplateSql = "select * FROM article where id > #{id}"]
 #[TemplateCountSql = "select count(*) as count FROM article where id > #{id}"]
 pub struct HelloSelectTemplate {

@@ -4,21 +4,15 @@ use crate::database::DB;
 use crate::{error::LunaOrmError, LunaOrmResult};
 
 use sqlx::any::AnyConnectOptions;
-use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePool, SqliteSynchronous};
 use sqlx::AnyPool;
-use sqlx::MySqlPool;
-use sqlx::{MySql, MySqlConnection};
 
-use std::fs;
-use std::path::Path;
 use std::str::FromStr;
 
 use crate::command_executor::CommandExecutor;
 use crate::sql_executor::SqlExecutor;
 use crate::sql_generator::MySqlGenerator;
 
-use path_absolutize::*;
-
+#[derive(Debug)]
 pub struct MysqlDatabase {
     database_type: DatabaseType,
     pool: AnyPool,

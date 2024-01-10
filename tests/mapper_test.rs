@@ -2,13 +2,13 @@ use luna_orm::prelude::*;
 
 use sqlx::AnyPool;
 
-#[derive(Selection, Default, Clone)]
+#[derive(Selection, Debug, Default, Clone)]
 pub struct HelloSelection {
     id: bool,
     content: bool,
 }
 
-#[derive(Primary, Default, Clone)]
+#[derive(Primary, Default, Debug, Clone)]
 #[TableName = "article"]
 pub struct HelloPrimary {
     id: i32,

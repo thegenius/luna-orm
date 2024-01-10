@@ -12,6 +12,7 @@ use crate::command_executor::CommandExecutor;
 use crate::sql_executor::SqlExecutor;
 use crate::sql_generator::PostgresGenerator;
 
+#[derive(Debug)]
 pub struct PostgresDatabase {
     database_type: DatabaseType,
     pool: AnyPool,

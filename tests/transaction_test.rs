@@ -1,13 +1,13 @@
 use luna_orm::prelude::*;
 use luna_orm::LunaOrmResult;
 
-#[derive(Selection, Default, Clone)]
+#[derive(Selection, Default, Debug, Clone)]
 pub struct HelloSelection {
     id: bool,
     content: bool,
 }
 
-#[derive(Primary, Default, Clone)]
+#[derive(Primary, Default, Debug, Clone)]
 #[TableName = "article"]
 pub struct HelloPrimary {
     id: i32,
@@ -138,7 +138,7 @@ async fn test_transaction_rollback(db: &DB<SqliteDatabase>) -> LunaOrmResult<()>
     return Ok(());
 }
 
-async fn expect_rollback_transaction<'a, G: SqlGenerator + Sync>(
+async fn expect_rollback_transaction<'a, G: SqlGenerator + Sync + std::fmt::Debug>(
     mut trx: Transaction<'a, G>,
 ) -> LunaOrmResult<()> {
     let entity = HelloEntity {
@@ -150,7 +150,7 @@ async fn expect_rollback_transaction<'a, G: SqlGenerator + Sync>(
     return Ok(());
 }
 
-async fn expect_commit_transaction<'a, G: SqlGenerator + Sync>(
+async fn expect_commit_transaction<'a, G: SqlGenerator + Sync + std::fmt::Debug>(
     mut trx: Transaction<'a, G>,
 ) -> LunaOrmResult<()> {
     let entity = HelloEntity {

@@ -44,7 +44,7 @@ pub fn generate_selection(table_name: &str, fields: &Vec<Field>) -> proc_macro2:
     let generated_impl = generate_impl(&selection_ident, fields);
 
     let output = quote!(
-        #[derive(Default, Clone)]
+        #[derive(Default, Debug, Clone)]
         pub struct #selection_ident {
             #fields_tokens
         }

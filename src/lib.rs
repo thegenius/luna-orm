@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(async_fn_in_trait)]
 #![forbid(unsafe_code)]
 //#![feature(trait_upcasting)]
 //#![allow(incomplete_features)]

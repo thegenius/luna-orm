@@ -1,21 +1,21 @@
 use luna_orm::prelude::*;
 use luna_orm::LunaOrmResult;
 
-#[derive(Selection, Default, Clone)]
+#[derive(Selection, Debug, Default, Clone)]
 pub struct HelloSelection {
     id: bool,
     content: bool,
     age: bool,
 }
 
-#[derive(OrderBy, Clone)]
+#[derive(OrderBy, Debug, Clone)]
 pub enum HelloOrderBy {
     Id,
     IdContent,
     ContentId,
 }
 
-#[derive(Primary, Default, Clone)]
+#[derive(Primary, Default, Debug, Clone)]
 #[TableName = "article"]
 pub struct HelloPrimary {
     id: i32,
@@ -51,14 +51,14 @@ pub struct HelloLocation {
     content: Option<LocationExpr<String>>,
 }
 
-#[derive(TemplateRecord)]
+#[derive(TemplateRecord, Debug)]
 #[TemplateSql = "update article set content = #{content} where id = #{id}"]
 pub struct HelloTemplate {
     id: i32,
     content: String,
 }
 
-#[derive(TemplateRecord)]
+#[derive(TemplateRecord, Debug)]
 #[TemplateSql = "select id,age,content FROM article where id > #{id}"]
 #[TemplateCountSql = "select count(*) as count FROM article where id > #{id}"]
 pub struct HelloSelectTemplate {

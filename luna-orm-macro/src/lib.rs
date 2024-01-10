@@ -12,6 +12,7 @@ mod primary;
 mod selected_entity;
 mod selection;
 mod template_record;
+mod timer;
 mod type_check;
 mod type_extract;
 mod utils;
@@ -25,6 +26,7 @@ use primary::impl_primary_macro;
 use selected_entity::impl_selected_entity_macro;
 use selection::impl_selection_macro;
 use template_record::impl_template_record_by_macro;
+use timer::impl_timed_func;
 
 #[proc_macro_derive(Primary, attributes(TableName))]
 pub fn expand_primary_macro(input: TokenStream) -> TokenStream {
@@ -72,4 +74,12 @@ pub fn expand_template_record_by_macro(input: TokenStream) -> TokenStream {
 )]
 pub fn expand_auto_entity_macro(input: TokenStream) -> TokenStream {
     impl_auto_entity_macro(input)
+}
+
+#[proc_macro_attribute]
+pub fn timed(
+    metadata: proc_macro::TokenStream,
+    input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    impl_timed_func(metadata, input)
 }

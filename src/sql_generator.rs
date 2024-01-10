@@ -3,7 +3,7 @@ use luna_orm_trait::FromClause;
 use luna_orm_trait::JoinedConditions;
 use luna_orm_trait::{Entity, Location, Mutation, OrderBy, Pagination, Primary, Selection};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct DefaultSqlGenerator {}
 impl DefaultSqlGenerator {
     pub fn new() -> Self {
@@ -12,7 +12,7 @@ impl DefaultSqlGenerator {
 }
 impl SqlGenerator for DefaultSqlGenerator {}
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct MySqlGenerator {}
 impl MySqlGenerator {
     pub fn new() -> Self {
@@ -47,7 +47,7 @@ impl SqlGenerator for MySqlGenerator {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct PostgresGenerator {}
 impl PostgresGenerator {
     pub fn new() -> Self {
@@ -59,7 +59,7 @@ impl SqlGenerator for PostgresGenerator {
         self.pg_post_process(origin)
     }
 }
-//#[async_trait]
+
 pub trait SqlGenerator {
     // const WRAP_CHAR: char = '`'; can not made trait to trait object
     #[inline(always)]

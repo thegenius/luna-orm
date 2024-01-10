@@ -34,6 +34,7 @@ impl SqliteLocalConfig {
     }
 }
 
+#[derive(Debug)]
 pub struct SqliteDatabase {
     database_type: DatabaseType,
     pool: AnyPool,
