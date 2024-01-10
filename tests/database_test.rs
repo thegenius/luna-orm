@@ -155,10 +155,7 @@ async fn test_execute_template(db: &mut DB<SqliteDatabase>) -> LunaOrmResult<()>
 
 #[tokio::test]
 pub async fn test_database() -> LunaOrmResult<()> {
-    let config = SqliteLocalConfig {
-        work_dir: "./workspace".to_string(),
-        db_file: "test.db".to_string(),
-    };
+    let config = SqliteLocalConfig::new("./workspace", "test.db");
     let mut db: SqliteDatabase = SqliteDatabase::build(config).await.unwrap();
     let mut db: DB<SqliteDatabase> = DB(db);
     db.execute_plain("DROP TABLE IF EXISTS `article`")

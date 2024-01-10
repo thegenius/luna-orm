@@ -2,10 +2,7 @@ use luna_orm::prelude::*;
 use luna_orm::LunaOrmResult;
 
 pub async fn setup_database() -> LunaOrmResult<DB<SqliteDatabase>> {
-    let config = SqliteLocalConfig {
-        work_dir: "./workspace".to_string(),
-        db_file: "test.db".to_string(),
-    };
+    let config = SqliteLocalConfig::new("./workspace", "test.db");
     let db: SqliteDatabase = SqliteDatabase::build(config).await.unwrap();
     let mut db: DB<SqliteDatabase> = DB(db);
     db.execute_plain("DROP TABLE IF EXISTS `article`")

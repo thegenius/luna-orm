@@ -3,10 +3,7 @@ use luna_orm::LunaOrmResult;
 
 #[tokio::main]
 async fn main() -> LunaOrmResult<()> {
-    let config = SqliteLocalConfig {
-        work_dir: "./workspace".to_string(),
-        db_file: "test.db".to_string(),
-    };
+    let config = SqliteLocalConfig::new("./workspace", "test.db");
 
     // 2. create a DB instance.
     let mut db: DB<SqliteDatabase> = SqliteDatabase::build(config).await.unwrap().into();
