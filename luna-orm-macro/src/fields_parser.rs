@@ -320,6 +320,17 @@ impl FieldsParser {
         body_fields
     }
 
+    pub fn get_auto_increment_field(&self) -> Option<Field> {
+        let auto_increment_fields =
+            FieldsParser::from_vec(&self.fields).filter_annotated_fields("AutoIncrement");
+        let first_one = auto_increment_fields.first();
+        if first_one.is_none() {
+            return None;
+        } else {
+            return Some(first_one.unwrap().to_owned());
+        }
+    }
+
     pub fn get_insert_args(&self) -> TokenStream {
         let all_fields = FieldsParser::from_vec(&self.fields).get_insert_fields();
         FieldsParser::from_vec(&all_fields).get_maybe_option_args()

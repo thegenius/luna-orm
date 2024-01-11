@@ -30,7 +30,7 @@ pub trait CommandExecutor: SqlExecutor + Debug {
         return Ok(result);
     }
 
-    async fn create<'a>(&mut self, entity: &'a dyn Entity) -> LunaOrmResult<&'a dyn Entity> {
+    async fn create<'a>(&mut self, entity: &'a mut dyn Entity) -> LunaOrmResult<&'a dyn Entity> {
         debug!(target: "luna_orm", command = "insert",  entity = ?entity);
         let sql = self.get_generator().get_insert_sql(entity);
         debug!(target: "luna_orm", command = "insert", sql = sql);

@@ -7,7 +7,7 @@ pub struct UserEntity {
 
     #[PrimaryKey]
     #[AutoIncrement]
-    id: Option<i32>,
+    id: Option<i64>,
 
     name: String,
 }

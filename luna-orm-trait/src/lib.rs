@@ -58,6 +58,10 @@ pub trait Entity: Sync + Debug {
 
     fn get_upsert_set_fields(&self) -> Vec<String>;
 
+    fn get_auto_increment_field(&self) -> Option<&'static str>;
+
+    fn set_auto_increment_field(&mut self, value: Option<i64>) -> bool;
+
     fn any_arguments_of_insert(&self) -> AnyArguments<'_>;
 
     fn any_arguments_of_upsert(&self) -> AnyArguments<'_>;

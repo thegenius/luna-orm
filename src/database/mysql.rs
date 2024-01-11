@@ -6,11 +6,13 @@ use crate::{error::LunaOrmError, LunaOrmResult};
 use sqlx::any::AnyConnectOptions;
 use sqlx::AnyPool;
 
-use std::str::FromStr;
-
 use crate::command_executor::CommandExecutor;
 use crate::sql_executor::SqlExecutor;
 use crate::sql_generator::MySqlGenerator;
+use crate::sql_generator::SqlGenerator;
+use luna_orm_trait::Entity;
+use std::str::FromStr;
+use tracing::debug;
 
 #[derive(Debug)]
 pub struct MysqlDatabase {
@@ -30,6 +32,17 @@ impl CommandExecutor for MysqlDatabase {
 
     fn get_generator(&self) -> &Self::G {
         &self.sql_generator
+    }
+
+    async fn create<'a>(&mut self, entity: &'a mut dyn Entity) -> LunaOrmResult<&'a dyn Entity> {
+        debug!(target: "luna_orm", command = "insert",  entity = ?entity);
+        let sql = self.get_generator().get_insert_sql(entity);
+        debug!(target: "luna_orm", command = "insert", sql = sql);
+        let args = entity.any_arguments_of_insert();
+        let result = self.execute(&sql, args).await?;
+        entity.set_auto_increment_field(result.last_insert_id());
+        debug!(target: "luna_orm", command = "insert", result = ?entity);
+        return Ok(entity);
     }
 }
 

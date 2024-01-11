@@ -1,10 +1,13 @@
+use crate::field_utils::{map_field, FieldMapType};
 use crate::fields_parser::FieldsParser;
+use crate::type_check::type_has_one_of_names;
 use crate::type_check::type_is_option;
+use crate::type_extract::get_option_inner_type;
 use crate::utils::check_has_attr;
 use crate::utils::*;
 use proc_macro::{self, TokenStream};
 use quote::quote;
-use syn::{parse_macro_input, Attribute, DeriveInput, Field, FieldsNamed, Ident};
+use syn::{parse_macro_input, token::Else, Attribute, DeriveInput, Field, FieldsNamed, Ident};
 
 fn validate_fields(fields: &FieldsNamed) {
     let primary_fields = FieldsParser::from_named(fields).filter_annotated_fields("PrimaryKey");
@@ -25,6 +28,22 @@ fn validate_fields(fields: &FieldsNamed) {
             panic!("Primary Key annotated with Generated or AutoIncrement must be Option")
         }
     }
+
+    let auto_fields = FieldsParser::from_named(fields).filter_annotated_fields("AutoIncrement");
+    if auto_fields.len() > 1 {
+        panic!("There is more than one AutoIncrement field");
+    }
+    if auto_fields.len() == 1 {
+        let auto_field = auto_fields.first().unwrap();
+        if !type_is_option(&auto_field.ty) {
+            panic!("AutoIncrement Field should be Option<i64>");
+        }
+        let auto_field_inner_type = get_option_inner_type(&auto_field.ty);
+        let auto_field_inner_type = auto_field_inner_type.unwrap();
+        if !type_has_one_of_names(auto_field_inner_type, &["i64"]) {
+            panic!("AutoIncrement Field should be Option<i64>");
+        }
+    }
 }
 
 pub fn generate_entity_impl(
@@ -43,6 +62,28 @@ pub fn generate_entity_impl(
     let upsert_set_fields_name =
         FieldsParser::from_vec(&upsert_set_fields).get_maybe_option_name_vec();
 
+    let auto_field_opt = FieldsParser::from_named(fields).get_auto_increment_field();
+    let auto_field_token = if auto_field_opt.is_none() {
+        quote! { None }
+    } else {
+        let auto_field = auto_field_opt.clone().unwrap();
+        let auto_field_name = map_field(auto_field, FieldMapType::Str);
+        quote! {
+            Some(#auto_field_name)
+        }
+    };
+
+    let set_auto_field_token = if auto_field_opt.is_none() {
+        quote! { false }
+    } else {
+        let auto_field = auto_field_opt.unwrap();
+        let auto_field_name = auto_field.ident.unwrap();
+        quote! {
+            self.#auto_field_name = value;
+            true
+        }
+    };
+
     let insert_args = FieldsParser::from_named(fields).get_insert_args();
     let upsert_args = FieldsParser::from_named(fields).get_upsert_args();
 
@@ -59,6 +100,14 @@ pub fn generate_entity_impl(
 
             fn get_upsert_set_fields(&self) -> Vec<String> {
                 #upsert_set_fields_name
+            }
+
+            fn get_auto_increment_field(&self) -> Option<&'static str> {
+                #auto_field_token
+            }
+
+            fn set_auto_increment_field(&mut self, value: Option<i64>) -> bool {
+                #set_auto_field_token
             }
 
             fn any_arguments_of_insert(&self) -> AnyArguments<'_> {
