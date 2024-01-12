@@ -30,14 +30,19 @@ pub trait CommandExecutor: SqlExecutor + Debug {
         return Ok(result);
     }
 
-    async fn create<'a>(&mut self, entity: &'a mut dyn Entity) -> LunaOrmResult<&'a dyn Entity> {
-        debug!(target: "luna_orm", command = "insert",  entity = ?entity);
-        let sql = self.get_generator().get_insert_sql(entity);
-        debug!(target: "luna_orm", command = "insert", sql = sql);
+    async fn create<'a>(&mut self, entity: &'a mut dyn Entity) -> LunaOrmResult<bool> {
+        debug!(target: "luna_orm2", command = "create",  entity = ?entity);
+        let sql = self.get_generator().get_create_sql(entity);
+        debug!(target: "luna_orm", command = "create", sql = sql);
         let args = entity.any_arguments_of_insert();
-        self.execute(&sql, args).await?;
-        debug!(target: "luna_orm", command = "insert", result = ?entity);
-        return Ok(entity);
+        if entity.get_auto_increment_field().is_some() {
+            let last_row_id: LastRowId = self.fetch_one(&sql, args).await?;
+            entity.set_auto_increment_field(Some(last_row_id.id));
+        } else {
+            self.execute(&sql, args).await?;
+        }
+        debug!(target: "luna_orm", command = "create", result = ?entity);
+        return Ok(true);
     }
 
     #[timed]

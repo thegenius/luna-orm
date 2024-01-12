@@ -1,3 +1,18 @@
+//!
+//! # LUNA-ORM
+//! luna-orm is build for time saving
+//!
+//! **LUNA-ORM** is an async orm framework based on SQLx. Built with :heart:
+//! -  **Intuitive** : Simple API, the most simple orm in this world.
+//! -  **Time Saving** : Most useful API is implemented by default, no need to waste your life.
+//! -  **Smooth Transaction** : Transaction is almost same as normal.
+//! -  **Template SQL** : You can execute your own sql with no pain.
+//! -  **Dynamic Parameters** : Handle complex dynamic sql with default.
+//! -  **Truly Asynchronous** : Based on SQLx, luna-orm is fully async.
+//! -  **Error Soundly** : Every error has its meaning.
+//!
+//!
+
 #![allow(dead_code)]
 #![allow(async_fn_in_trait)]
 #![forbid(unsafe_code)]

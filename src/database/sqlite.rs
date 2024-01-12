@@ -3,7 +3,9 @@ use crate::database::lib::DatabaseType;
 use crate::database::DB;
 use crate::{error::LunaOrmError, LunaOrmResult};
 
+use luna_orm_trait::LastRowId;
 use sqlx::any::AnyConnectOptions;
+use sqlx::any::AnyPoolOptions;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePool, SqliteSynchronous};
 use sqlx::AnyPool;
 
@@ -14,6 +16,12 @@ use std::str::FromStr;
 use crate::command_executor::CommandExecutor;
 use crate::sql_executor::SqlExecutor;
 use crate::sql_generator::DefaultSqlGenerator;
+use crate::sql_generator::SqlGenerator;
+use luna_orm_trait::Entity;
+use luna_orm_trait::SelectedEntity;
+use sqlx::any::AnyArguments;
+use sqlx::any::AnyRow;
+use tracing::debug;
 
 use path_absolutize::*;
 
@@ -34,7 +42,7 @@ impl SqliteLocalConfig {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SqliteDatabase {
     database_type: DatabaseType,
     pool: AnyPool,
@@ -52,6 +60,28 @@ impl CommandExecutor for SqliteDatabase {
 
     fn get_generator(&self) -> &Self::G {
         &self.sql_generator
+    }
+
+    // sqlx sqlite driver has bug #2099, it returns result before the actual commit on insert returning clause
+    // the work around is create a transaction
+    async fn create<'a>(&mut self, entity: &'a mut dyn Entity) -> LunaOrmResult<bool> {
+        debug!(target: "luna_orm2", command = "create",  entity = ?entity);
+        let sql = self.get_generator().get_create_sql(entity);
+        debug!(target: "luna_orm", command = "create", sql = sql);
+        let args = entity.any_arguments_of_insert();
+        if entity.get_auto_increment_field().is_some() {
+            let last_row_id: LastRowId = self.fetch_one(&sql, args).await?;
+            entity.set_auto_increment_field(Some(last_row_id.id));
+        } else {
+            self.execute(&sql, args).await?;
+        }
+        debug!(target: "luna_orm", command = "create", result = ?entity);
+
+        // the work around
+        let trx = self.pool.begin().await?;
+        // query the record
+        trx.commit().await?;
+        return Ok(true);
     }
 }
 
@@ -107,4 +137,16 @@ impl SqliteDatabase {
         };
         return Ok(database);
     }
+
+    /*
+    pub async fn from_sqlite_pool(pool: SqlitePool) -> Self {
+        let generator = DefaultSqlGenerator::new();
+
+        Self {
+            database_type: DatabaseType::SqliteLocal,
+            pool:
+            sql_generator: generator,
+        }
+    }
+    */
 }

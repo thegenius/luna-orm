@@ -3,7 +3,7 @@ use luna_orm_trait::FromClause;
 use luna_orm_trait::JoinedConditions;
 use luna_orm_trait::{Entity, Location, Mutation, OrderBy, Pagination, Primary, Selection};
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct DefaultSqlGenerator {}
 impl DefaultSqlGenerator {
     pub fn new() -> Self {
@@ -12,7 +12,7 @@ impl DefaultSqlGenerator {
 }
 impl SqlGenerator for DefaultSqlGenerator {}
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct MySqlGenerator {}
 impl MySqlGenerator {
     pub fn new() -> Self {
@@ -45,9 +45,26 @@ impl SqlGenerator for MySqlGenerator {
         .to_string();
         self.post_process(upsert_sql)
     }
+
+    fn get_create_sql(&self, entity: &dyn Entity) -> String {
+        let table_name = entity.get_table_name();
+        let field_names = entity.get_insert_fields();
+        let fields = wrap_fields(&field_names, self.get_wrap_char());
+        let marks = generate_question_mark_list(&field_names);
+        let insert_sql = format!(
+            "INSERT INTO {}{}{} ({}) VALUES({})",
+            self.get_wrap_char(),
+            table_name,
+            self.get_wrap_char(),
+            fields,
+            marks
+        )
+        .to_string();
+        self.post_process(insert_sql)
+    }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct PostgresGenerator {}
 impl PostgresGenerator {
     pub fn new() -> Self {
@@ -88,6 +105,10 @@ pub trait SqlGenerator {
     #[inline(always)]
     fn post_process(&self, origin: String) -> String {
         origin
+    }
+
+    fn get_last_row_id_sql(&self) -> &'static str {
+        "SELECT last_insert_rowid() as `last_row_id`"
     }
 
     fn get_select_sql(&self, selection: &dyn Selection, primay: &dyn Primary) -> String {
@@ -279,6 +300,40 @@ pub trait SqlGenerator {
         )
         .to_string();
         self.post_process(insert_sql)
+    }
+
+    fn get_create_sql(&self, entity: &dyn Entity) -> String {
+        let table_name = entity.get_table_name();
+        let field_names = entity.get_insert_fields();
+        let fields = wrap_fields(&field_names, self.get_wrap_char());
+        let marks = generate_question_mark_list(&field_names);
+        let auto_field_name = entity.get_auto_increment_field();
+        let create_sql = if auto_field_name.is_some() {
+            let auto_field_name = auto_field_name.unwrap();
+            format!(
+                "INSERT INTO {}{}{} ({}) VALUES({}) RETURNING {}{}{} AS last_row_id",
+                self.get_wrap_char(),
+                table_name,
+                self.get_wrap_char(),
+                fields,
+                marks,
+                self.get_wrap_char(),
+                auto_field_name,
+                self.get_wrap_char()
+            )
+            .to_string()
+        } else {
+            format!(
+                "INSERT INTO {}{}{} ({}) VALUES({})",
+                self.get_wrap_char(),
+                table_name,
+                self.get_wrap_char(),
+                fields,
+                marks
+            )
+            .to_string()
+        };
+        self.post_process(create_sql)
     }
 
     fn get_upsert_sql(&self, entity: &dyn Entity) -> String {

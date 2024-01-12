@@ -1,5 +1,8 @@
 use luna_orm::prelude::*;
+mod common;
+use common::mutex::get_test_mutex;
 use luna_orm::LunaOrmResult;
+use sqlx::sqlx_macros;
 
 #[derive(Selection, Debug, Default, Clone)]
 pub struct HelloSelection {
@@ -153,8 +156,10 @@ async fn test_execute_template(db: &mut DB<SqliteDatabase>) -> LunaOrmResult<()>
     Ok(())
 }
 
-#[tokio::test]
+#[sqlx_macros::test]
 pub async fn test_database() -> LunaOrmResult<()> {
+    let test_mutex = get_test_mutex();
+    let test_lock = test_mutex.lock();
     let config = SqliteLocalConfig::new("./workspace", "test.db");
     let mut db: SqliteDatabase = SqliteDatabase::build(config).await.unwrap();
     let mut db: DB<SqliteDatabase> = DB(db);

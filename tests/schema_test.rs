@@ -1,5 +1,8 @@
 use luna_orm::prelude::*;
 use luna_orm::LunaOrmResult;
+use sqlx::sqlx_macros;
+mod common;
+use common::mutex::get_test_mutex;
 
 #[derive(OrderBy, Debug, Clone)]
 pub enum HelloOrderBy {
@@ -169,8 +172,10 @@ async fn test_execute_template(db: &mut DB<SqliteDatabase>) -> LunaOrmResult<()>
     Ok(())
 }
 
-#[tokio::test]
+#[sqlx_macros::test]
 pub async fn test_database() -> LunaOrmResult<()> {
+    let test_mutex = get_test_mutex();
+    let test_lock = test_mutex.lock();
     let config = SqliteLocalConfig {
         work_dir: "./workspace".to_string(),
         db_file: "test.db".to_string(),

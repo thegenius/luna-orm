@@ -1,14 +1,14 @@
 [package]
 name = "luna-orm"
-version = "0.3.5"
+version = "0.3.6"
 edition = "2021"
 license-file = "LICENSE"
 description = "ORM based on sqlx"
 homepage = "https://github.com/thegenius/luna-orm"
 
 [dependencies]
-luna-orm-trait = { path = "luna-orm-trait", version = "0.3.5" }
-luna-orm-macro = { path = "luna-orm-macro", version = "0.3.5" }
+luna-orm-trait = { path = "luna-orm-trait", version = "0.3.6" }
+luna-orm-macro = { path = "luna-orm-macro", version = "0.3.6" }
 thiserror = {workspace = true}
 sqlx = {workspace = true}
 path-absolutize = {workspace = true}
@@ -36,7 +36,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.3.5"
+version = "0.3.6"
 
 
 [workspace.dependencies]
@@ -58,3 +58,6 @@ serde_yaml = "0.9.27"
 nom = "7.1.3"
 
 runtime-fmt = "0.4.1"
+
+[profile.test]
+test-threads = 1

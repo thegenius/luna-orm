@@ -34,15 +34,15 @@ impl CommandExecutor for MysqlDatabase {
         &self.sql_generator
     }
 
-    async fn create<'a>(&mut self, entity: &'a mut dyn Entity) -> LunaOrmResult<&'a dyn Entity> {
-        debug!(target: "luna_orm", command = "insert",  entity = ?entity);
+    async fn create<'a>(&mut self, entity: &'a mut dyn Entity) -> LunaOrmResult<bool> {
+        debug!(target: "luna_orm", command = "create",  entity = ?entity);
         let sql = self.get_generator().get_insert_sql(entity);
-        debug!(target: "luna_orm", command = "insert", sql = sql);
+        debug!(target: "luna_orm", command = "create", sql = sql);
         let args = entity.any_arguments_of_insert();
         let result = self.execute(&sql, args).await?;
         entity.set_auto_increment_field(result.last_insert_id());
-        debug!(target: "luna_orm", command = "insert", result = ?entity);
-        return Ok(entity);
+        debug!(target: "luna_orm", command = "create", result = ?entity);
+        return Ok(result.rows_affected() > 0);
     }
 }
 

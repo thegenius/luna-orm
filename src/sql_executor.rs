@@ -13,6 +13,24 @@ pub trait SqlExecutor {
         Err(LunaOrmError::NotImplement)
     }
 
+    async fn fetch_one_plain<SE>(&mut self, stmt: &str) -> LunaOrmResult<SE>
+    where
+        SE: SelectedEntity + Send + Unpin,
+    {
+        let query = sqlx::query(stmt).try_map(|row: AnyRow| SE::from_any_row(row));
+        let result_opt: SE = query.fetch_one(self.get_pool()?).await?;
+        Ok(result_opt)
+    }
+
+    async fn fetch_one<SE>(&mut self, stmt: &str, args: AnyArguments<'_>) -> LunaOrmResult<SE>
+    where
+        SE: SelectedEntity + Send + Unpin,
+    {
+        let query = sqlx::query_with(stmt, args).try_map(|row: AnyRow| SE::from_any_row(row));
+        let result_opt: SE = query.fetch_one(self.get_pool()?).await?;
+        Ok(result_opt)
+    }
+
     async fn fetch_optional_plain<SE>(&mut self, stmt: &str) -> LunaOrmResult<Option<SE>>
     where
         SE: SelectedEntity + Send + Unpin,
@@ -21,7 +39,6 @@ pub trait SqlExecutor {
         let result_opt: Option<SE> = query.fetch_optional(self.get_pool()?).await?;
         Ok(result_opt)
     }
-
     async fn fetch_optional<SE>(
         &mut self,
         stmt: &str,

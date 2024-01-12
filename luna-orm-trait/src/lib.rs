@@ -115,6 +115,21 @@ impl SelectedEntity for RecordCount {
 }
 
 #[derive(Clone, Debug)]
+pub struct LastRowId {
+    pub id: i64,
+}
+
+impl SelectedEntity for LastRowId {
+    fn from_any_row(row: AnyRow) -> Result<Self, SqlxError>
+    where
+        Self: Sized,
+    {
+        let last_row_id: i64 = row.try_get("last_row_id")?;
+        Ok(Self { id: last_row_id })
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Pagination {
     pub page_size: usize,
     pub page_num: usize,

@@ -6,10 +6,10 @@ use luna_orm_trait::Location;
 use luna_orm_trait::LocationExpr;
 use luna_orm_trait::Selection;
 */
-
 use luna_orm::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use sqlx::sqlx_macros;
 
 fn false_value() -> bool {
     false
@@ -67,8 +67,8 @@ pub struct JoinedQuery {
     class: ClassJoinedQuery,
 }
 
-#[tokio::test]
-pub async fn test_location() {
+#[test]
+pub fn test_location() {
     let content = "{ \"student_name\": true, \"class_name\": false }";
     let result: Result<ClassSelection, _> = serde_json::from_str(content);
     assert_eq!(result.is_ok(), true);

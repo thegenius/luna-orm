@@ -72,13 +72,14 @@ pub trait Database: CommandExecutor + SqlExecutor + std::fmt::Debug {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum DatabaseType {
     SqliteLocal,
     MySql,
     PostgreSql,
 }
 
+#[derive(Debug, Clone)]
 pub struct DB<T: Database>(pub T);
 
 impl<T> Deref for DB<T>

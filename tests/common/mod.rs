@@ -1,4 +1,5 @@
 mod logger;
+pub mod mutex;
 pub mod schema;
 mod setup_database;
 

@@ -25,5 +25,7 @@ where
     let drop_stmt = format!("DROP TABLE IF EXISTS `{}`", table_name);
     db.execute_plain(&drop_stmt).await?;
     db.execute_plain(create_table_stmt).await?;
+    //let delete_stmt = format!("DELETE FROM `{}`", table_name);
+    //db.execute_plain(&delete_stmt).await?;
     Ok(true)
 }

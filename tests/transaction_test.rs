@@ -1,5 +1,8 @@
 use luna_orm::prelude::*;
 use luna_orm::LunaOrmResult;
+use sqlx::sqlx_macros;
+mod common;
+use common::mutex::get_test_mutex;
 
 #[derive(Selection, Default, Debug, Clone)]
 pub struct HelloSelection {
@@ -59,8 +62,10 @@ async fn clear_db(db: &mut DB<SqliteDatabase>) {
     db.execute_plain("DELETE FROM `article`").await.unwrap();
 }
 
-#[tokio::test]
+#[sqlx_macros::test]
 pub async fn test_transaction() -> LunaOrmResult<()> {
+    let test_mutex = get_test_mutex();
+    let test_lock = test_mutex.lock();
     let mut db = build_db().await;
 
     inner_test_transaction(&db).await?;

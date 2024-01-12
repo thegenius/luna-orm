@@ -57,6 +57,16 @@ where
         let result_vec: Vec<SE> = query.fetch_all(&mut *self.transaction).await?;
         Ok(result_vec)
     }
+
+    async fn fetch_all_plain<SE>(&mut self, stmt: &str) -> LunaOrmResult<Vec<SE>>
+    where
+        SE: SelectedEntity + Send + Unpin,
+    {
+        let query = sqlx::query(stmt).try_map(|row: AnyRow| SE::from_any_row(row));
+        let result_vec: Vec<SE> = query.fetch_all(&mut *self.transaction).await?;
+        Ok(result_vec)
+    }
+
     async fn execute(
         &mut self,
         stmt: &str,
