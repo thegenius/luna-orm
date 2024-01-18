@@ -32,10 +32,11 @@ pub async fn test_create() -> LunaOrmResult<()> {
         name: "test".to_string(),
     };
 
-    // sqlx sqlite has bug #2099, it does not actually commit insert returning stmt
     let result = db.create(&mut entity).await?;
     assert_eq!(entity.id, Some(1));
 
+    // sqlx sqlite has bug #2099, it does not actually commit insert returning stmt
+    /*
     let db_clone = db.clone();
     let mut trx = db_clone.transaction().await?;
     let selection = UserSelection {
@@ -44,7 +45,6 @@ pub async fn test_create() -> LunaOrmResult<()> {
         name: true,
     };
     let entities: Vec<UserSelectedEntity> = trx.search_all(&selection).await?;
-    trx.commit().await?;
 
     let location = UserLocation {
         id: None,
@@ -64,6 +64,9 @@ pub async fn test_create() -> LunaOrmResult<()> {
     assert_eq!(selected_one.id, Some(1));
     assert_eq!(selected_one.age, Some(23));
     assert_eq!(selected_one.name, Some("test".to_string()));
+
+    trx.commit().await?;
+    */
 
     Ok(())
 }
