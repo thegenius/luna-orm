@@ -16,6 +16,18 @@ At that time, the api will be stable, and backward compatible will be promised.
 -  **Truly Asynchronous** : Based on SQLx, luna-orm is fully async.
 -  **Error Soundly** : Every error has its meaning. 
 
+## ROADMAP
+- **0.1 API Skeleton** :white_check_mark:
+- **0.2 Transaction** transaction support :white_check_mark:
+- **0.3 Static Template** static tempalte sql and tracing  :white_check_mark:
+- **0.4 Relationship**: support relationship :hammer:
+- **0.5 Dynamic Template**: support dynamic template :pushpin:
+- **0.6 Error**: :pushpin:
+- **0.7 Performance**: benchmark and optimize :pushpin:
+- **0.7 Correctness**: code coverage and mocking :pushpin:
+- **0.9 Stablize**: stablize the api, macro and error :pushpin:
+- **1.0: Fisrt stable version**: :pushpin:
+
 ## INSTALL
 ```toml
 luna-orm = { version = "0.3.6" }
