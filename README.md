@@ -25,8 +25,9 @@ At that time, the api will be stable, and backward compatible will be promised.
 - **0.6 Error**: :pushpin:
 - **0.7 Performance**: benchmark and optimize :pushpin:
 - **0.7 Correctness**: code coverage and mocking :pushpin:
-- **0.9 Stablize**: stablize the api, macro and error :pushpin:
-- **1.0: Fisrt stable version**: :pushpin:
+- **0.9 Stablization and Doc**: stablize the api, macro and error :pushpin:
+- **1.0 Fisrt stable version**: :pushpin:
+- **2.0 Ecosystem**: :paperclip:
 
 ## INSTALL
 ```toml
