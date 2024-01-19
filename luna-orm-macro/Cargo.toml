@@ -1,6 +1,7 @@
 [package]
 name = "luna-orm-macro"
 version = {workspace = true}
+rust-version = {workspace = true}
 edition = "2021"
 license-file = "LICENSE"
 description = "ORM based on sqlx"

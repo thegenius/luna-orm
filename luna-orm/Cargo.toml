@@ -5,6 +5,7 @@ edition = "2021"
 license-file = "LICENSE"
 description = "ORM based on sqlx"
 homepage = "https://github.com/thegenius/luna-orm"
+rust-version = {workspace = true}
 
 [dependencies]
 luna-orm-trait = { path = "../luna-orm-trait", version = "0.3.6" }
