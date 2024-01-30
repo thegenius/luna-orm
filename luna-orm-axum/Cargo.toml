@@ -6,4 +6,17 @@ version.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = {version = "0.7.4"}
+#sqlx = {workspace = true}
+axum = {workspace = true}
+axum-macros = {workspace = true}
+tokio = {workspace = true}
+serde = {workspace = true}
+serde_yaml = {workspace = true}
+serde_json = {workspace = true}
+case = {workspace = true}
+rust-format = {workspace = true}
+tera = {workspace = true}
+http-body-util = {workspace = true}
+
+sqlx = {version = "0.7.3", features = ["runtime-tokio", "mysql",  "sqlite", "macros", "any"]}
+luna-orm = { path = "../luna-orm", version = "0.3.6" }
