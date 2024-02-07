@@ -1,22 +1,35 @@
 #![allow(dead_code)]
+#![allow(clippy::needless_return)]
 use sqlx::any::AnyArguments;
 use sqlx::any::AnyRow;
+
 use sqlx::Any;
+use sqlx::Column;
 use sqlx::Encode;
 use sqlx::Row;
 use sqlx::Type;
+use sqlx_core::any::AnyColumn;
+use sqlx_core::any::AnyTypeInfo;
+use sqlx_core::any::AnyTypeInfoKind;
 
 use serde::{Deserialize, Serialize};
+use serde_json::Map;
+use serde_json::Value;
 
 mod field;
+mod field_type;
 mod location;
 mod parser;
 mod request;
+mod schema;
 mod timer;
 mod utils;
+pub use field_type::{FieldType, NumericType};
 pub use location::*;
 pub use parser::ParsedTemplateSql;
 pub use request::WriteCommand;
+pub use schema::{ParsedSchema, SchemaDef};
+use std::collections::HashMap;
 use std::fmt::Debug;
 pub use timer::Timer;
 pub use utils::array_str_equal;
@@ -52,13 +65,13 @@ pub trait Location: Sync + Debug {
 }
 
 pub trait Entity: Sync + Debug {
-    fn get_table_name(&self) -> &'static str;
+    fn get_table_name(&self) -> &str;
 
     fn get_insert_fields(&self) -> Vec<String>;
 
     fn get_upsert_set_fields(&self) -> Vec<String>;
 
-    fn get_auto_increment_field(&self) -> Option<&'static str>;
+    fn get_auto_increment_field(&self) -> Option<&str>;
 
     fn set_auto_increment_field(&mut self, value: Option<i64>) -> bool;
 
@@ -81,6 +94,71 @@ pub trait SelectedEntity: Debug {
     fn from_any_row(row: AnyRow) -> Result<Self, SqlxError>
     where
         Self: Sized;
+}
+
+#[derive(Debug, Clone)]
+pub struct JsonResult {
+    pub data: String,
+}
+
+impl SelectedEntity for JsonResult {
+    fn from_any_row(row: AnyRow) -> Result<Self, SqlxError>
+    where
+        Self: Sized,
+    {
+        let record = convert_to_json(row);
+        return Ok(JsonResult {
+            data: record.to_string(),
+        });
+    }
+}
+
+pub fn convert_to_json(row: AnyRow) -> Value {
+    let columns = row.columns();
+    let mut value_map: Map<String, Value> = Map::new();
+    for column in columns {
+        let ordinal = column.ordinal();
+        let name = column.name();
+        let type_info = column.type_info();
+        match type_info.kind() {
+            AnyTypeInfoKind::SmallInt => {
+                let data: i16 = row.get(ordinal);
+                value_map.insert(name.to_string(), Value::Number(data.into()));
+            }
+            AnyTypeInfoKind::Integer => {
+                let data: i32 = row.get(ordinal);
+                value_map.insert(name.to_string(), Value::Number(data.into()));
+            }
+            AnyTypeInfoKind::BigInt => {
+                let data: i64 = row.get(ordinal);
+                value_map.insert(name.to_string(), Value::Number(data.into()));
+            }
+            AnyTypeInfoKind::Real => {
+                let data: f32 = row.get(ordinal);
+                value_map.insert(name.to_string(), data.into());
+            }
+            AnyTypeInfoKind::Double => {
+                let data: f64 = row.get(ordinal);
+                value_map.insert(name.to_string(), data.into());
+            }
+            AnyTypeInfoKind::Bool => {
+                let data: bool = row.get(ordinal);
+                value_map.insert(name.to_string(), data.into());
+            }
+            AnyTypeInfoKind::Blob => {
+                let data: &[u8] = row.get(ordinal);
+                value_map.insert(name.to_string(), data.into());
+            }
+            AnyTypeInfoKind::Text => {
+                let data: String = row.get(ordinal);
+                value_map.insert(name.to_string(), data.into());
+            }
+            AnyTypeInfoKind::Null => {
+                value_map.insert(name.to_string(), Value::Null);
+            }
+        }
+    }
+    return Value::Object(value_map);
 }
 
 pub enum CountSql {

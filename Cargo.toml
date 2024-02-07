@@ -1,11 +1,13 @@
 [workspace]
 members = [
+  "luna-types",
   "luna-orm",
   "luna-orm-trait", 
   "luna-orm-macro",
+  "luna-orm-dynamic",
   "luna-orm-axum", 
   "examples/*"
-]
+, "luna-orm-dynamic", "luna-types"]
 
 default-members = [
   "luna-orm"
@@ -18,16 +20,20 @@ rust-version = "1.56"
 
 [workspace.dependencies]
 sqlx = {version = "0.7.3", features = ["mysql", "sqlite", "any"]}
+sqlx-core = {version = "0.7.3"}
 tokio = {version = "1.34.0", features = ["full"]}
 
 tracing = {version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
 tracing-test = {version = "0.2"}
 tracing-subscriber = {version ="0.3.18"}
+derive_builder = "0.13.0"
 
 serde = {version = "1.0", features = ["derive"]}
 serde_with = { version = "3.4.0" }
+serde_regex = "1.1.0"
 serde_json = "1.0"
 serde_yaml = "0.9.27"
+regex = "1.10.3"
 
 axum = {version = "0.7.4"}
 axum-macros = {version = "0.4.1"}
@@ -36,6 +42,9 @@ http-body-util = {version = "0.1.0"}
 case = {version = "1.0"}
 rust-format = {version = "0.3.4"}
 tera = {version = "1.19"}
+
+
+num-traits = "0.2.17"
 
 
 thiserror = {version = "1.0"}
