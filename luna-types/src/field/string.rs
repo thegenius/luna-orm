@@ -2,12 +2,13 @@ use super::ValidField;
 use crate::constraint::ConstraintError;
 use crate::CachedConstraint;
 use crate::StringConstraint;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fmt::Debug;
 use std::ops::{Deref, DerefMut};
 
-pub struct Text<'a>(Cow<'a, str>);
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Text<'a>(pub Cow<'a, str>);
 
 /*
 impl<'a, T: Into<Cow<'a, str>>> From<T> for Text<'a> {

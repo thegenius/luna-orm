@@ -3,10 +3,12 @@ use crate::constraint::ConstraintError;
 use crate::CachedConstraint;
 use crate::IntegerConstraint;
 use num_traits::PrimInt;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::ops::{Deref, DerefMut};
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct Integer<T: PrimInt>(pub T);
 
 impl<T: PrimInt> From<T> for Integer<T> {

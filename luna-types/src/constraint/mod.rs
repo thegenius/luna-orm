@@ -3,7 +3,9 @@ mod string;
 
 pub use integer::IntegerConstraint;
 pub use integer::IntegerConstraintBuilder;
+use num_traits::NumCast;
 use num_traits::PrimInt;
+use num_traits::ToPrimitive;
 pub use string::StringConstraint;
 pub use string::StringConstraintBuilder;
 
@@ -14,6 +16,8 @@ use std::error::Error;
 use std::fmt::Debug;
 use std::fmt::Display;
 use std::ops::Deref;
+
+use crate::FieldType;
 
 #[derive(Debug, Clone)]
 pub struct ConstraintError<'a> {
@@ -38,57 +42,6 @@ pub trait Constraint: Debug + Serialize {
     type ValueType;
     fn is_valid_json(&self, value: &Value) -> bool;
     fn is_valid(&self, value: &Self::ValueType) -> bool;
-}
-
-pub type CachedIntConstraint<T> = CachedConstraint<IntegerConstraint<T>>;
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "type", content = "constraint")]
-pub enum ConstraintType<'a> {
-    #[serde(rename = "smallint")]
-    SmallInt(CachedIntConstraint<i16>),
-
-    #[serde(alias = "int")]
-    Int(CachedIntConstraint<i32>),
-
-    #[serde(alias = "bigint")]
-    BigInt(CachedIntConstraint<i64>),
-
-    #[serde(alias = "smalluint")]
-    SmallUInt(CachedIntConstraint<u16>),
-
-    #[serde(alias = "uint")]
-    UInt(CachedIntConstraint<u32>),
-
-    #[serde(alias = "biguint")]
-    BigUInt(CachedIntConstraint<u64>),
-
-    #[serde(alias = "text")]
-    Text(StringConstraint<'a>),
-}
-
-impl<'a> ConstraintType<'a> {
-    pub fn cache_str(&mut self) {
-        match self {
-            Self::SmallInt(val) => val.cache_str(),
-            Self::Int(val) => val.cache_str(),
-            Self::BigInt(val) => val.cache_str(),
-            Self::SmallUInt(val) => val.cache_str(),
-            Self::UInt(val) => val.cache_str(),
-            Self::BigUInt(val) => val.cache_str(),
-            Self::Text(_) => {}
-        }
-    }
-}
-
-pub trait JsonConstraint {
-    fn is_valid_json(&self, value: &Value) -> bool;
-}
-
-impl<T: Constraint> JsonConstraint for T {
-    fn is_valid_json(&self, value: &Value) -> bool {
-        self.is_valid_json(value)
-    }
 }
 
 #[derive(Debug, Eq, Serialize, Deserialize, Clone)]
@@ -134,3 +87,79 @@ impl<T: Constraint + Serialize> Deref for CachedConstraint<T> {
         &self.constraint
     }
 }
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
+pub struct NamedConstraint<T: Constraint + Serialize> {
+    pub name: String,
+    pub constraint: CachedConstraint<T>,
+}
+
+impl<T: Constraint + Serialize> Deref for NamedConstraint<T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        &self.constraint.constraint
+    }
+}
+
+pub type NamedIntConstraint<T> = NamedConstraint<IntegerConstraint<T>>;
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum ConstraintType<'a> {
+    #[serde(rename = "smallint")]
+    SmallInt(NamedIntConstraint<i16>),
+
+    #[serde(alias = "int")]
+    Int(NamedIntConstraint<i32>),
+
+    #[serde(alias = "bigint")]
+    BigInt(NamedIntConstraint<i64>),
+
+    #[serde(alias = "smalluint")]
+    SmallUInt(NamedIntConstraint<u16>),
+
+    #[serde(alias = "uint")]
+    UInt(NamedIntConstraint<u32>),
+
+    #[serde(alias = "biguint")]
+    BigUInt(NamedIntConstraint<u64>),
+
+    #[serde(alias = "text")]
+    Text(NamedConstraint<StringConstraint<'a>>),
+}
+
+impl<'a> ConstraintType<'a> {
+    pub fn cache_str(&mut self) {
+        match self {
+            Self::SmallInt(val) => val.constraint.cache_str(),
+            Self::Int(val) => val.constraint.cache_str(),
+            Self::BigInt(val) => val.constraint.cache_str(),
+            Self::SmallUInt(val) => val.constraint.cache_str(),
+            Self::UInt(val) => val.constraint.cache_str(),
+            Self::BigUInt(val) => val.constraint.cache_str(),
+            Self::Text(val) => val.constraint.cache_str(),
+        }
+    }
+    pub fn name(&self) -> &str {
+        match self {
+            Self::SmallInt(val) => &val.name,
+            Self::Int(val) => &val.name,
+            Self::BigInt(val) => &val.name,
+            Self::SmallUInt(val) => &val.name,
+            Self::UInt(val) => &val.name,
+            Self::BigUInt(val) => &val.name,
+            Self::Text(val) => &val.name,
+        }
+    }
+}
+
+/*
+pub trait JsonConstraint {
+    fn is_valid_json(&self, value: &Value) -> bool;
+}
+
+impl<T: Constraint> JsonConstraint for T {
+    fn is_valid_json(&self, value: &Value) -> bool {
+        self.is_valid_json(value)
+    }
+}
+*/

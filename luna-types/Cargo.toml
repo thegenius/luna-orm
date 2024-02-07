@@ -12,6 +12,8 @@ serde_json = {workspace = true}
 serde_regex = {workspace = true}
 regex = {workspace = true}
 derive_builder = {workspace = true}
+
+num = {workspace = true}
 num-traits = {workspace = true}
 
 
