@@ -40,6 +40,7 @@ impl<'a> Error for ConstraintError<'a> {}
 
 pub trait Constraint: Debug + Serialize {
     type ValueType;
+    fn is_option(&self) -> bool;
     fn is_valid_json(&self, value: &Value) -> bool;
     fn is_valid(&self, value: &Self::ValueType) -> bool;
 }

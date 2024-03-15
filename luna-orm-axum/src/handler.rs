@@ -92,29 +92,29 @@ where
 pub struct PostHandler<D, T>
 where
     D: Database + Clone + Send + 'static,
-    T: DeserializeOwned + Entity + Send + Clone + 'static,
+    T: DeserializeOwned + Serialize + Entity + Send + Clone + 'static,
 {
-    db: PhantomData<D>,
+    db: DB<D>,
     data: PhantomData<T>,
 }
 
-impl<D, T> Default for PostHandler<D, T>
+impl<D, T> PostHandler<D, T>
 where
     D: Database + Clone + Send + 'static,
-    T: DeserializeOwned + Entity + Send + Clone + 'static,
+    T: DeserializeOwned + Serialize + Entity + Send + Clone + 'static,
 {
-    fn default() -> Self {
+    pub fn new(db: &DB<D>) -> Self {
         Self {
-            db: PhantomData,
+            db: db.clone(),
             data: PhantomData,
         }
     }
 }
-
+/*
 impl<S, T> Handler<((),), S> for PostHandler<S, T>
 where
     S: Database + Clone + Send + 'static,
-    T: DeserializeOwned + Entity + Send + Clone + 'static,
+    T: DeserializeOwned + Serialize + Entity + Send + Clone + 'static,
 {
     type Future = Pin<Box<dyn Future<Output = Response> + Send>>;
 
@@ -123,37 +123,37 @@ where
             let (mut parts, body) = req.into_parts();
             let data = body.collect().await.unwrap().to_bytes();
             let payload: PostRequest<T> = serde_json::from_slice(&data).unwrap();
-            post_test(payload).await;
+            handle_post(&mut self.db, payload).await;
 
             let response: Response = StatusCode::NOT_FOUND.into_response();
             response
         })
     }
 }
+*/
 
-pub async fn post_test<T>(payload: PostRequest<T>) -> bool
+pub async fn handle_post<D, T>(db: &mut DB<D>, payload: PostRequest<T>) -> Result<PostResponse<T>>
 where
-    T: Entity + Send + Sync,
+    T: Entity + Send + Sync + Serialize,
+    D: Database,
 {
-    true
-    /*
-        match payload {
+    match payload {
         PostRequest::Create { mut entity } => {
             db.create(&mut entity).await.unwrap();
             let response = PostResponse::Create { entity };
-            Ok(Json(response))
+            Ok(response)
         }
         PostRequest::Insert { entity } => {
             db.insert(&entity).await.unwrap();
-            Ok(Json(PostResponse::Insert))
+            Ok(PostResponse::Insert)
         }
         PostRequest::Upsert { entity } => {
             db.upsert(&entity).await.unwrap();
-            Ok(Json(PostResponse::Insert))
+            Ok(PostResponse::Insert)
         }
     }
-    */
 }
+
 pub async fn put<D, M, P, L>(
     State(mut db): State<DB<D>>,
     Json(payload): Json<PutRequest<M, P, L>>,

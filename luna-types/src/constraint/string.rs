@@ -10,20 +10,29 @@ use std::{fmt::Debug, marker::PhantomData};
 #[builder(setter(into))]
 pub struct StringConstraint<'a> {
     #[builder(default = "None")]
+    #[serde(default)]
+    is_option: Option<bool>,
+
+    #[builder(default = "None")]
+    #[serde(default)]
     min_len: Option<usize>,
 
     #[builder(default = "None")]
+    #[serde(default)]
     max_len: Option<usize>,
 
     #[builder(default = "false")]
+    #[serde(default = "bool::default")]
     deny_blank: bool,
 
     #[builder(setter(custom))]
     #[serde(with = "serde_regex")]
     #[builder(default = "None")]
+    #[serde(default)]
     regex: Option<Regex>,
 
     #[builder(setter(skip))]
+    #[serde(default)]
     phantom: PhantomData<&'a ()>,
 }
 
@@ -66,6 +75,10 @@ impl<'a> PartialEq for StringConstraint<'a> {
 impl<'a> Constraint for StringConstraint<'a> {
     type ValueType = Cow<'a, str>;
 
+    fn is_option(&self) -> bool {
+        return self.is_option.unwrap_or(false);
+    }
+
     fn is_valid_json(&self, value: &Value) -> bool {
         let value = value.as_str();
         if value.is_none() {
@@ -101,5 +114,43 @@ impl<'a> Constraint for StringConstraint<'a> {
             }
         }
         return true;
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use serde_json;
+
+    #[test]
+    fn test_default() {
+        let constraint_str = r#" {}   "#;
+        let string_constrait: StringConstraint = serde_json::from_str(constraint_str).unwrap();
+        let json_value_str = r#" "" "#;
+        let json_value: serde_json::Value = serde_json::from_str(json_value_str).unwrap();
+        let is_option = string_constrait.is_option();
+        assert_eq!(is_option, false);
+        let is_valid = string_constrait.is_valid_json(&json_value);
+        assert_eq!(is_valid, true);
+    }
+
+    #[test]
+    fn test_is_option() {
+        let constraint_str = r#" { "is_option": true }   "#;
+        let string_constrait: StringConstraint = serde_json::from_str(constraint_str).unwrap();
+        let is_option = string_constrait.is_option();
+        assert_eq!(is_option, true);
+    }
+
+    #[test]
+    fn test_min_length() {
+        let constraint_str = r#" { "min_len": 10 }   "#;
+        let string_constrait: StringConstraint = serde_json::from_str(constraint_str).unwrap();
+        let json_value_str = r#" "test" "#;
+        let json_value: serde_json::Value = serde_json::from_str(json_value_str).unwrap();
+        let is_option = string_constrait.is_option();
+        assert_eq!(is_option, false);
+        let is_valid = string_constrait.is_valid_json(&json_value);
+        assert_eq!(is_valid, false);
     }
 }

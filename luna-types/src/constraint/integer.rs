@@ -12,8 +12,15 @@ use std::fmt::Debug;
 #[builder(setter(into))]
 pub struct IntegerConstraint<T: PrimInt + Serialize + Debug> {
     #[builder(default = "None")]
-    min: Option<T>,
+    #[serde(default)]
+    is_option: Option<bool>,
+
     #[builder(default = "None")]
+    #[serde(default)]
+    min: Option<T>,
+
+    #[builder(default = "None")]
+    #[serde(default)]
     max: Option<T>,
 }
 
@@ -63,6 +70,10 @@ impl<T: PrimInt + Serialize + Debug> IntegerConstraint<T> {
 }
 impl<T: PrimInt + Serialize + Debug> Constraint for IntegerConstraint<T> {
     type ValueType = T;
+
+    fn is_option(&self) -> bool {
+        return self.is_option.unwrap_or(false);
+    }
 
     fn is_valid_json(&self, value: &Value) -> bool {
         let data_opt: Option<T> = value_to_primitive_int(value);

@@ -45,6 +45,19 @@ where
     Purify { location: L },
 }
 
+pub enum DynamicRequest<T, M, P, L, S>
+where
+    T: Entity + Send + Sync,
+    M: Serialize + Mutation,
+    P: Serialize + Primary,
+    L: Serialize + Location,
+    S: Serialize + Selection,
+{
+    Post(PostRequest<T>),
+    Put(PutRequest<M, P, L>),
+    Delete(DeleteRequest<P, L, S>),
+}
+
 #[cfg(test)]
 mod test {
     use super::PostRequest;

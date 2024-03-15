@@ -16,4 +16,7 @@ pub enum LunaOrmError {
 
     #[error("paged template sql can't execute with no count sql")]
     PagedTemplateHasNoCountSql,
+
+    #[error("dynamic request parse error: {0}")]
+    DynamicRequestParseError(String),
 }
