@@ -11,6 +11,8 @@ use sqlx::Type;
 use sqlx_core::any::AnyColumn;
 use sqlx_core::any::AnyTypeInfo;
 use sqlx_core::any::AnyTypeInfoKind;
+use sqlx::mysql::MySqlArguments;
+use sqlx::sqlite::SqliteArguments;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Map;
@@ -37,6 +39,20 @@ pub use utils::array_str_equal;
 pub type SqlxError = sqlx::Error;
 
 pub trait Schema {}
+
+pub enum DatabaseType {
+    MySql,
+    Sqlite
+}
+pub enum DatabaseArguments<'a> {
+    MySql(MySqlArguments),
+    Sqlite(SqliteArguments<'a>)
+}
+pub trait IntoArguments {
+    // 1. get all primary fields in order, and add it to args
+    // 2. get other fields in order, add it to args, or add it to args after option check
+    fn into_arguments(&self, database_type: DatabaseType) -> DatabaseArguments<'_>;
+}
 
 pub trait Primary: Sync + Debug {
     fn get_table_name(&self) -> &'static str;
