@@ -1,4 +1,4 @@
-use luna_types::FieldType;
+use luna_types::field::supported::Field;
 use serde_json::Value;
 
 #[test]

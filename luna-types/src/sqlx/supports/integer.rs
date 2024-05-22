@@ -1,4 +1,4 @@
-use crate::Integer;
+use crate::field::supports::integer::Integer;
 use num_traits::PrimInt;
 use sqlx::any::AnyValue;
 use sqlx::database::HasArguments;

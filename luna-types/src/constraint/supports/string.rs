@@ -1,4 +1,4 @@
-use super::Constraint;
+use crate::constraint::common::ConstraintTrait;
 use derive_builder::Builder;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -72,7 +72,7 @@ impl<'a> PartialEq for StringConstraint<'a> {
     }
 }
 
-impl<'a> Constraint for StringConstraint<'a> {
+impl<'a> ConstraintTrait for StringConstraint<'a> {
     type ValueType = Cow<'a, str>;
 
     fn is_option(&self) -> bool {

@@ -1,30 +1,22 @@
-use luna_types::CachedConstraint;
-use luna_types::ConstraintType;
-use luna_types::Integer;
-use luna_types::IntegerConstraint;
-use luna_types::IntegerConstraintBuilder;
-use luna_types::NamedIntConstraint;
-use luna_types::ValidField;
-use sqlx::ConnectOptions;
+use luna_types::constraint::named:: NamedConstraint;
+use luna_types::constraint::supported::Constraint;
+use luna_types::constraint::supports::integer::IntegerConstraint;
+use luna_types::constraint::supports::integer::IntegerConstraintBuilder;
 
 #[test]
-fn test_field_of_int() {
-    let expect_int_constraint: IntegerConstraint<i16> = IntegerConstraintBuilder::default()
+fn test_constraint_serialize_deserialize() {
+    let int_constraint: IntegerConstraint<i16> = IntegerConstraintBuilder::default()
         .min(23i16)
         .build()
         .unwrap();
-    let expect: CachedConstraint<IntegerConstraint<i16>> = expect_int_constraint.into();
-    let expect: NamedIntConstraint<i16> = NamedIntConstraint {
-        name: "hello".to_string(),
-        constraint: expect,
-    };
-    let expect_type = ConstraintType::SmallInt(expect);
-    let expect_str = serde_json::to_string(&expect_type).unwrap();
-    dbg!(&expect_str);
 
-    let data = r#"{ "type": "smallint", "name": "hello", "constraint": { "min": 23 } }"#;
-    let mut constraint: ConstraintType = serde_json::from_str(data).unwrap();
-    constraint.cache_str();
+    let constraint_type = Constraint::SmallInt(int_constraint);
+    let constraint_type_serde_str = serde_json::to_string(&constraint_type).unwrap();
+    let expect_str = "{\"type\":\"smallint\",\"is_option\":null,\"min\":23,\"max\":null}";
+    assert_eq!(constraint_type_serde_str, expect_str);
 
-    assert_eq!(constraint, expect_type);
+    let named_cons: NamedConstraint = NamedConstraint::from_named("hello".to_string(), constraint_type.clone());
+    let named_cons_str = serde_json::to_string(&named_cons).unwrap();
+    let named_cons_expect_str = "{\"name\":\"hello\",\"constraint\":{\"type\":\"smallint\",\"is_option\":null,\"min\":23,\"max\":null}}";
+    assert_eq!(named_cons_str, named_cons_expect_str);
 }

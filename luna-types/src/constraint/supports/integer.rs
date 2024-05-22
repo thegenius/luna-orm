@@ -1,5 +1,5 @@
-use super::Constraint;
-use super::ConstraintError;
+use crate::constraint::common::ConstraintTrait;
+use crate::constraint::error::ConstraintError;
 use derive_builder::Builder;
 use num::NumCast;
 use num::ToPrimitive;
@@ -68,7 +68,7 @@ impl<T: PrimInt + Serialize + Debug> IntegerConstraint<T> {
         return data.map_or(false, |e| self.is_valid(&e));
     }
 }
-impl<T: PrimInt + Serialize + Debug> Constraint for IntegerConstraint<T> {
+impl<T: PrimInt + Serialize + Debug> ConstraintTrait for IntegerConstraint<T> {
     type ValueType = T;
 
     fn is_option(&self) -> bool {

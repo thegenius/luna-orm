@@ -1,6 +1,7 @@
-use luna_types::Constraint;
-use luna_types::StringConstraint;
-use luna_types::StringConstraintBuilder;
+use luna_types::constraint::supported::Constraint;
+use luna_types::constraint::common::ConstraintTrait;
+use luna_types::constraint::supports::string::StringConstraint;
+use luna_types::constraint::supports::string::StringConstraintBuilder;
 use serde_json::{Number, Value};
 
 #[test]

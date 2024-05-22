@@ -1,7 +1,5 @@
-use super::ValidField;
-use crate::constraint::ConstraintError;
-use crate::CachedConstraint;
-use crate::IntegerConstraint;
+use crate::constraint::error::ConstraintError;
+use crate::constraint::supports::integer::IntegerConstraint;
 use num_traits::PrimInt;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -17,15 +15,6 @@ impl<T: PrimInt> From<T> for Integer<T> {
     }
 }
 
-impl<T: PrimInt + Serialize + Debug> Integer<T> {
-    pub fn from_valid(
-        value: T,
-        constraint: &CachedConstraint<<Self as ValidField>::ConstraintType>,
-    ) -> Result<Self, ConstraintError<'_>> {
-        <Self as ValidField>::try_from_valid(&value, constraint)?;
-        return Ok(Integer(value));
-    }
-}
 impl<T: PrimInt> Deref for Integer<T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
@@ -38,7 +27,3 @@ impl<T: PrimInt> DerefMut for Integer<T> {
     }
 }
 
-impl<T: PrimInt + Serialize + Debug> ValidField for Integer<T> {
-    type ValueType = T;
-    type ConstraintType = IntegerConstraint<T>;
-}
