@@ -1,11 +1,11 @@
 use luna_orm::prelude::*;
 use luna_orm::LunaOrmResult;
-use luna_types::CachedConstraint;
-use luna_types::Integer;
-use luna_types::IntegerConstraint;
-use luna_types::IntegerConstraintBuilder;
-use luna_types::ValidField;
-use luna_types::{ConstraintType, Record, RecordConstraint};
+use luna_types::constraint::named::NamedConstraint;
+use luna_types::field::supports::integer::Integer;
+use luna_types::constraint::supports::integer::IntegerConstraint;
+use luna_types::constraint::supports::integer::IntegerConstraintBuilder;
+use luna_types::field::valid::ValidField;
+use luna_types::{constraint::supported::Constraint, record::Record, record::RecordConstraint};
 use serde_json::Value;
 use sqlx::sqlx_macros;
 
@@ -27,8 +27,8 @@ async fn test_insert_record() {
     let json_value: Value = serde_json::from_str(json_str).unwrap();
 
     let constraint_str = r#"[ 
-    { "type": "smallint", "name": "id", "constraint": { "min": 10, "max": 20 } },
-    { "type": "smallint", "name": "age", "constraint": { "min": 10, "max": 30 } } ]"#;
+    {  "name": "id", "constraint": {"type": "smallint", "min": 10, "max": 20 } },
+    {  "name": "age", "constraint": { "type": "smallint", "min": 10, "max": 30 } } ]"#;
     let constraint: RecordConstraint = serde_json::from_str(constraint_str).unwrap();
     dbg!(&constraint);
 

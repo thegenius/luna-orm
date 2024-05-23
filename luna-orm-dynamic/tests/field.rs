@@ -1,10 +1,12 @@
 use luna_orm::prelude::*;
 use luna_orm::LunaOrmResult;
-use luna_types::CachedConstraint;
-use luna_types::Integer;
-use luna_types::IntegerConstraint;
-use luna_types::IntegerConstraintBuilder;
-use luna_types::ValidField;
+use luna_types::constraint::supported::Constraint;
+use luna_types::constraint::named::NamedConstraint;
+use luna_types::field::supports::integer::Integer;
+use luna_types::constraint::supports::integer::IntegerConstraint;
+use luna_types::constraint::supports::integer::IntegerConstraintBuilder;
+use luna_types::field::valid::ValidField;
+use luna_types::field::supported::Field;
 use sqlx::sqlx_macros;
 
 #[sqlx_macros::test]
@@ -21,15 +23,20 @@ async fn test_insert_field() {
     .await
     .unwrap();
 
-    let int_constraint: CachedConstraint<IntegerConstraint<i32>> =
+    let int_constraint: IntegerConstraint<i32> =
         IntegerConstraintBuilder::default()
             .min(10)
             .max(30)
             .build()
             .unwrap()
             .into();
-    let val_id: Integer<i32> = Integer::<i32>::from_valid(20i32, &int_constraint).unwrap();
-    let val_age: Integer<i32> = Integer::<i32>::from_valid(21i32, &int_constraint).unwrap();
+    let int_cons = Constraint::Int(int_constraint);
+
+    let val_id: Field = Field::Int( Integer::<i32>::from(20i32));
+    let val_age: Field = Field::Int(Integer::<i32>::from(21i32));
+    // let valid_id: ValidField<'_> = ValidField::from_valid(val_id, int_cons.clone()).unwrap();
+    // let valid_age: ValidField<'_> = ValidField::from_valid(val_age, int_cons).unwrap();
+
     let mut args: AnyArguments = AnyArguments::default();
     luna_add_arg(&mut args, &val_id);
     luna_add_arg(&mut args, &val_age);

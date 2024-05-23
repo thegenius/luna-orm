@@ -10,7 +10,7 @@ pub struct UserEntity {
     age: Option<i32>,
 }
 
-#[derive(TemplateRecord)]
+#[derive(TemplateRecord, Debug)]
 #[TemplateSql = "select id, name, age FROM `user` where id > #{id}"]
 #[TemplateCountSql = "select count(*) as count FROM `user` where id > #{id}"]
 pub struct HelloSelectTemplate {
