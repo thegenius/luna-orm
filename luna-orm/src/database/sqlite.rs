@@ -7,7 +7,7 @@ use luna_orm_trait::LastRowId;
 use sqlx::any::AnyConnectOptions;
 use sqlx::any::AnyPoolOptions;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePool, SqliteSynchronous};
-use sqlx::AnyPool;
+use sqlx::{AnyConnection, AnyPool, Pool, Sqlite};
 
 use std::fs;
 use std::path::Path;
@@ -50,9 +50,11 @@ pub struct SqliteDatabase {
 }
 
 impl SqlExecutor for SqliteDatabase {
+
     fn get_pool(&self) -> LunaOrmResult<&AnyPool> {
         Ok(&self.pool)
     }
+
 }
 
 impl CommandExecutor for SqliteDatabase {
@@ -124,7 +126,7 @@ impl SqliteDatabase {
         let any_pool = AnyPool::connect_with(any_options)
             .await
             .map_err(|_e| LunaOrmError::DatabaseInitFail("init pool fail".to_string()))?;
-        return Ok(any_pool);
+        Ok(any_pool)
     }
 
     pub async fn build(config: SqliteLocalConfig) -> LunaOrmResult<Self> {

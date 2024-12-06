@@ -7,20 +7,25 @@ members = [
   "luna-orm-dynamic",
   "luna-orm-axum", 
   "examples/*"
-, "luna-orm-dynamic", "luna-types"]
+]
 
 default-members = [
   "luna-orm"
 ]
-
+workspace.resolver = 2
 [workspace.package]
-version = "0.3.6"
+version = "0.3.7"
 rust-version = "1.56"
 
 
 [workspace.dependencies]
-sqlx = {version = "0.7.4", features = ["mysql", "sqlite", "any"]}
-sqlx-core = {version = "0.7.4"}
+sqlx = {version = "0.8.2", features = ["mysql", "sqlite", "any", "bigdecimal", "time", "uuid"]}
+sqlx-core = {version = "0.8.2"}
+
+time = {version = "0.3.37"}
+bigdecimal = { version = "0.4.6" }
+uuid = { version = "1.11.0" }
+
 tokio = {version = "1.34.0", features = ["full"]}
 
 tracing = {version = "0.1", features = ["max_level_trace", "release_max_level_info"] }

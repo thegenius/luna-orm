@@ -1,11 +1,11 @@
 use sqlx::database::Database;
-use sqlx::database::HasValueRef;
 use sqlx::error::BoxDynError;
 use sqlx::Any;
 use sqlx::ColumnIndex;
 use sqlx::Decode;
 use sqlx::Error;
 use sqlx::Type;
+use sqlx::ValueRef;
 
 pub trait Decodable<'r, DB: Database>: Decode<'r, DB> + Type<DB> {}
 impl<'r, T, DB: Database> Decodable<'r, DB> for T where T: Decode<'r, DB> + Type<DB> {}
@@ -20,10 +20,10 @@ where
 
 impl<T> Decode<'_, Any> for Field<T>
 where
-    for<'r> T: Decodable<'r, Any>,
+    for <'r> T: Decodable<'r, Any>,
 {
     #[inline]
-    fn decode(value: <Any as HasValueRef<'_>>::ValueRef) -> Result<Self, BoxDynError> {
+    fn decode(value: <Any as Database>::ValueRef<'_>) -> Result<Self, BoxDynError> {
         let val = T::decode(value)?;
         Ok(Self::Value(Some(val)))
     }

@@ -17,6 +17,9 @@ mod type_check;
 mod type_extract;
 mod utils;
 mod into_arguments;
+mod gen_arguments;
+mod field_mapper;
+mod entity_trait;
 
 use auto_entity::impl_auto_entity_macro;
 use entity::impl_entity_macro;

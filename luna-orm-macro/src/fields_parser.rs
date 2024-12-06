@@ -4,12 +4,15 @@ use crate::field_utils::FieldMapType;
 use crate::type_check::type_is_option;
 use crate::type_extract::get_option_inner_type;
 use crate::utils::check_has_attr;
+// use proc_macro::TokenStream;
 
+use luna_orm_trait::DatabaseType;
 use proc_macro2::TokenStream;
 use quote::{quote, quote_spanned};
 use syn::Field;
 use syn::FieldsNamed;
 use syn::LitStr;
+use crate::field_mapper::FieldMapper;
 
 pub struct FieldsParser {
     fields: Vec<Field>,
@@ -26,6 +29,11 @@ impl FieldsParser {
         Self { fields }
     }
 }
+
+
+
+
+
 
 impl FieldsParser {
     pub fn map_with<F>(self, map_fn: &F) -> Vec<TokenStream>
@@ -214,6 +222,7 @@ impl FieldsParser {
                 }
             }
         });
+
         quote! {
             let mut arguments = AnyArguments::default();
             #(#args_add_clause)*
@@ -237,22 +246,7 @@ impl FieldsParser {
     }
 
     pub fn get_maybe_option_args(&self) -> TokenStream {
-        let args_add_clause = map_field_vec(&self.fields, &|field: Field| {
-            let field_name = field.ident.unwrap();
-            let span = field_name.span();
-            let field_type = field.ty;
-            if type_is_option(&field_type) {
-                quote_spanned! { span =>
-                    if let Some(#field_name) = &self.#field_name {
-                        luna_add_arg(&mut arguments, &#field_name);
-                    }
-                }
-            } else {
-                quote_spanned! { span =>
-                    luna_add_arg(&mut arguments, &self.#field_name);
-                }
-            }
-        });
+        let args_add_clause = map_field_vec(&self.fields, &FieldMapper::map_to_any_args_add);
         quote! {
             let mut arguments = AnyArguments::default();
             #(#args_add_clause)*
@@ -342,20 +336,7 @@ impl FieldsParser {
     }
 
     pub fn get_where_clause(&self) -> TokenStream {
-        let where_clause_members = map_field_vec(&self.fields, &|field| {
-            let field_name = field.ident.unwrap();
-            let span = field_name.span();
-            let field_name_stringified = LitStr::new(&field_name.to_string(), span);
-            quote_spanned! { span=>
-                if let Some(#field_name) = &self.#field_name {
-                    sql.push(wrap_char);
-                    sql.push_str(#field_name_stringified);
-                    sql.push(wrap_char);
-                    sql.push_str(#field_name.cmp.get_sql());
-                    sql.push(place_holder);
-                }
-            }
-        });
+        let where_clause_members = map_field_vec(&self.fields, &FieldMapper::map_to_where_field);
         quote! {
             let mut sql = String::default();
             #(#where_clause_members )*
@@ -384,21 +365,22 @@ impl FieldsParser {
     }
 
     pub fn get_row_construct(&self) -> TokenStream {
-        let row_get_stmts = map_field_vec(&self.fields, &|field: Field| {
-            let field_name = field.ident.unwrap();
-            let span = field_name.span();
-            let field_name_stringified = LitStr::new(&field_name.to_string(), span);
-            let field_type = field.ty;
-            if type_is_option(&field_type) {
-                quote_spanned! { span =>
-                    let #field_name: #field_type = row.try_get(#field_name_stringified).ok();
-                }
-            } else {
-                quote_spanned! { span =>
-                    let #field_name: Option<#field_type> = row.try_get(#field_name_stringified).ok();
-                }
-            }
-        });
+        // let row_get_stmts = map_field_vec(&self.fields, &|field: Field| {
+        //     let field_name = field.ident.unwrap();
+        //     let span = field_name.span();
+        //     let field_name_lit = LitStr::new(&field_name.to_string(), span);
+        //     let field_type = field.ty;
+        //     if type_is_option(&field_type) {
+        //         quote_spanned! { span =>
+        //             let #field_name: #field_type = row.try_get(#field_name_lit).ok();
+        //         }
+        //     } else {
+        //         quote_spanned! { span =>
+        //             let #field_name: Option<#field_type> = row.try_get(#field_name_lit).ok();
+        //         }
+        //     }
+        // });
+        let row_get_stmts = map_field_vec(&self.fields, &FieldMapper::map_to_selected_field);
         let construct_fields = self.get_construct_fields();
 
         quote! {

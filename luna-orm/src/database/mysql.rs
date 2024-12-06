@@ -1,3 +1,5 @@
+mod MySqlInputGenerator;
+
 use crate::database::lib::Database;
 use crate::database::lib::DatabaseType;
 use crate::database::DB;

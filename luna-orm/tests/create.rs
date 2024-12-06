@@ -1,3 +1,4 @@
+use std::fmt::{Debug, Formatter};
 use luna_orm::prelude::*;
 use luna_orm::LunaOrmResult;
 mod common;
@@ -6,7 +7,6 @@ use common::mutex::get_test_mutex;
 use common::setup_database;
 use common::setup_logger;
 use sqlx::sqlx_macros;
-use tracing::debug;
 
 #[derive(Schema, Clone, Debug)]
 #[TableName = "user"]
@@ -24,8 +24,8 @@ pub async fn test_create() -> LunaOrmResult<()> {
     let test_lock = test_mutex.lock();
     setup_logger();
     let mut db = setup_database().await?;
-    create_table(&mut db, "user" , 
-        "create table if not exists `user`(`id` integer primary key autoincrement, `age` INT, `name` VARCHAR(60), create_time DATETIME default current_timestamp)" ).await?;
+    create_table(&mut db, "user" ,
+                 "create table if not exists `user`(`id` integer primary key autoincrement, `age` INT, `name` VARCHAR(60), create_time DATETIME default current_timestamp)" ).await?;
     let mut entity = UserEntity {
         id: None,
         age: Some(23),

@@ -1,10 +1,10 @@
-
+use sqlx::any::AnyArguments;
 use sqlx::mysql::MySqlArguments;
 use sqlx::sqlite::SqliteArguments;
-use sqlx::any::AnyArguments;
+use sqlx::Arguments;
 use sqlx::{Any, MySql, Sqlite};
 use sqlx::{Encode, Type};
-use sqlx::Arguments;
+use sqlx_core::error::BoxDynError;
 
 pub fn add_val_to_any_arguments<'q, T>(args: &mut AnyArguments<'q>, value: &T)
 where
@@ -13,7 +13,10 @@ where
     let _ = value.encode_by_ref(&mut args.values);
 }
 
-pub fn add_val_to_mysql_arguments<'q, T>(args: &mut MySqlArguments, value: &'q T)
+pub fn add_val_to_mysql_arguments<'q, T>(
+    args: &mut MySqlArguments,
+    value: &'q T,
+) -> Result<(), BoxDynError>
 where
     T: 'q + Sync + Encode<'q, MySql> + Type<MySql>,
 {
@@ -21,17 +24,12 @@ where
 }
 
 pub fn add_val_to_sqlite_arguments<'q, T>(args: &'q mut SqliteArguments<'q>, value: &'q T)
+-> Result<(), BoxDynError>
 where
     T: 'q + Sync + Encode<'q, Sqlite> + Type<Sqlite>,
 {
     args.add(value)
 }
-
-
-
-
-
-
 
 pub trait ArrayStrEqual {
     fn equal<S>(&self, arr: &[S]) -> bool

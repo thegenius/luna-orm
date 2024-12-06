@@ -8,8 +8,8 @@ homepage = "https://github.com/thegenius/luna-orm"
 rust-version = {workspace = true}
 
 [dependencies]
-luna-orm-trait = { path = "../luna-orm-trait", version = "0.3.6" }
-luna-orm-macro = { path = "../luna-orm-macro", version = "0.3.6" }
+luna-orm-trait = { path = "../luna-orm-trait" }
+luna-orm-macro = { path = "../luna-orm-macro" }
 thiserror = {workspace = true}
 sqlx = {workspace = true}
 path-absolutize = {workspace = true}
@@ -22,7 +22,7 @@ tokio = {workspace = true}
 serde = {workspace = true}
 serde_json = {workspace = true}
 serde_yaml = {workspace = true}
-sqlx = {version = "0.7.3", features = ["runtime-tokio", "mysql",  "sqlite", "macros", "any"]}
+sqlx = {version = "0.8.2", features = ["runtime-tokio", "mysql",  "sqlite", "macros", "any"]}
 
 
 [profile.test]

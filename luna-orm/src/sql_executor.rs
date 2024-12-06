@@ -6,12 +6,14 @@ use luna_orm_trait::*;
 use sqlx::any::AnyArguments;
 use sqlx::any::AnyQueryResult;
 use sqlx::any::AnyRow;
-use sqlx::AnyPool;
+use sqlx::{AnyPool, Database, IntoArguments, Pool};
 
 pub trait SqlExecutor {
+
     fn get_pool(&self) -> LunaOrmResult<&AnyPool> {
         Err(LunaOrmError::NotImplement)
     }
+
 
     async fn fetch_one_plain<SE>(&mut self, stmt: &str) -> LunaOrmResult<SE>
     where

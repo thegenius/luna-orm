@@ -26,4 +26,4 @@ luna-types = {path = "../luna-types", version = "0.3.6"}
 
 
 [dev-dependencies]
-sqlx = {version = "0.7.3", features = ["runtime-tokio", "mysql",  "sqlite", "macros", "any"]}
+sqlx = {version = "0.8.2", features = ["runtime-tokio", "mysql",  "sqlite", "macros", "any"]}

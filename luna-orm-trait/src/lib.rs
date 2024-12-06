@@ -8,8 +8,6 @@ use sqlx::Column;
 use sqlx::Encode;
 use sqlx::Row;
 use sqlx::Type;
-use sqlx_core::any::AnyColumn;
-use sqlx_core::any::AnyTypeInfo;
 use sqlx_core::any::AnyTypeInfoKind;
 use sqlx::mysql::MySqlArguments;
 use sqlx::sqlite::SqliteArguments;
@@ -26,13 +24,16 @@ mod request;
 mod schema;
 mod timer;
 mod utils;
+pub mod input_generator;
+mod schema_trait;
+
 pub use field_type::{FieldType, NumericType};
 pub use location::*;
 pub use parser::ParsedTemplateSql;
 pub use request::WriteCommand;
 pub use schema::{ParsedSchema, SchemaDef};
-use std::collections::HashMap;
 use std::fmt::Debug;
+use sqlx_core::arguments::Arguments;
 pub use timer::Timer;
 pub use utils::array_str_equal;
 
@@ -41,6 +42,7 @@ pub type SqlxError = sqlx::Error;
 pub trait Schema {}
 
 pub enum DatabaseType {
+    Any,
     MySql,
     Sqlite
 }
@@ -48,10 +50,27 @@ pub enum DatabaseArguments<'a> {
     MySql(MySqlArguments),
     Sqlite(SqliteArguments<'a>)
 }
-pub trait IntoArguments {
+pub trait GenArguments {
+    // entity中
+    // [1] 主键，not auto-increment -> not-option
+    // [2] 主键，auto-increment     -> option
+    // （2）唯一键是not option，且不能是auto-increment
+    //  (2) 非主键，NULL字段，是option的；但这不是好的实践，不建议
+    //  (3) 非主键，NOT NULL字段，如果含有DEFAULT，那么是option
+    //  (4) 所非主键，NOT NULL字段，如果含有DEFAULT，那么是option
+
+    // 1. insert：所有非空字段都应该转化到arguments里面
+    // 2. upsert：所有非空字段都转化，非primary主键的部分需要转2遍用来 on duplicate update set
+    // 3. update(mutation, primary): 所有mutation的
+
     // 1. get all primary fields in order, and add it to args
     // 2. get other fields in order, add it to args, or add it to args after option check
-    fn into_arguments(&self, database_type: DatabaseType) -> DatabaseArguments<'_>;
+    fn gen_mysql_arguments(&self) -> MySqlArguments {
+        MySqlArguments::default()
+    }
+    fn gen_sqlite_arguments(&self) -> SqliteArguments<'_> {
+        SqliteArguments::default()
+    }
 }
 
 pub trait Primary: Sync + Debug {
@@ -285,3 +304,17 @@ where
 {
     let _ = value.encode_by_ref(&mut args.values);
 }
+
+// pub fn luna_add_mysql_arg<'q, T>(args: &mut MySqlArguments, value: &'q T) -> Result<(), BoxDynError>
+// where
+//     T: 'q + Send + Encode<'q, MySql> + Type<MySql>,
+// {
+//     args.add(value)
+// }
+//
+// pub fn luna_add_sqlite_arg<'q, T>(args: &mut SqliteArguments, value: &'q T) -> Result<(), BoxDynError>
+// where
+//     T: 'q + Send + Encode<'q, Sqlite> + Type<Sqlite>,
+// {
+//     args.add(value)
+// }

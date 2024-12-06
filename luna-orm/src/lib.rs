@@ -25,11 +25,15 @@ mod error;
 mod mapper;
 mod sql_executor;
 mod sql_generator;
+
 mod transaction;
+mod sql_executor2;
 
 pub type LunaOrmResult<T> = std::result::Result<T, error::LunaOrmError>;
 
 pub mod prelude {
+    pub use luna_orm_trait::input_generator::InputGenerator;
+
     pub use crate::command_executor::CommandExecutor;
     pub use crate::database::*;
     pub use crate::error::*;
