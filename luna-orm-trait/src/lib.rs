@@ -25,7 +25,7 @@ mod schema;
 mod timer;
 mod utils;
 pub mod input_generator;
-mod schema_trait;
+pub mod schema_trait;
 
 pub use field_type::{FieldType, NumericType};
 pub use location::*;

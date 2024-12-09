@@ -8,6 +8,9 @@ pub enum LunaOrmError {
     #[error(transparent)]
     SqlxError(#[from] sqlx::Error),
 
+    #[error("deserialize entity from row  error")]
+    FromRowToEntityError,
+
     #[error("invalid order by fields")]
     OrderByFieldsError,
 

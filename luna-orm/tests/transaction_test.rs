@@ -46,6 +46,7 @@ async fn build_db() -> DB<SqliteDatabase> {
     let config = SqliteLocalConfig {
         work_dir: "./workspace".to_string(),
         db_file: "test.db".to_string(),
+        use_specified: false,
     };
     let db = SqliteDatabase::build(config).await.unwrap();
     let mut trx = db.transaction().await.unwrap();

@@ -23,11 +23,13 @@ use sqlx::any::AnyArguments;
 use sqlx::any::AnyRow;
 use tracing::debug;
 
+use crate::sql_executor2::{GetAffectedRows, SqlExecutorNew};
 use path_absolutize::*;
 
 pub struct SqliteLocalConfig {
     pub work_dir: String,
     pub db_file: String,
+    pub use_specified: bool,
 }
 
 impl SqliteLocalConfig {
@@ -38,6 +40,18 @@ impl SqliteLocalConfig {
         Self {
             work_dir: work_dir.into(),
             db_file: db_file.into(),
+            use_specified: false,
+        }
+    }
+
+    pub fn new_specified<S>(work_dir: S, db_file: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            work_dir: work_dir.into(),
+            db_file: db_file.into(),
+            use_specified: true,
         }
     }
 }
@@ -47,14 +61,28 @@ pub struct SqliteDatabase {
     database_type: DatabaseType,
     pool: AnyPool,
     sql_generator: DefaultSqlGenerator,
+    sqlite_pool: Option<SqlitePool>,
 }
 
 impl SqlExecutor for SqliteDatabase {
-
     fn get_pool(&self) -> LunaOrmResult<&AnyPool> {
         Ok(&self.pool)
     }
+}
 
+impl SqlExecutorNew for SqliteDatabase {
+    type DB = Sqlite;
+    fn new_get_pool(&self) -> LunaOrmResult<&Pool<Self::DB>> {
+        if let Some(sqlite_pool) = &self.sqlite_pool {
+            Ok(sqlite_pool)
+        } else {
+            Err(LunaOrmError::DatabaseInitFail("sqlite connection not found when get pool".to_string()))
+        }
+    }
+
+    fn get_affected_rows(&self, query_result: &<Self::DB as sqlx::Database>::QueryResult) -> LunaOrmResult<u64> {
+        Ok(query_result.get_affected_rows())
+    }
 }
 
 impl CommandExecutor for SqliteDatabase {
@@ -100,7 +128,10 @@ impl From<SqliteDatabase> for DB<SqliteDatabase> {
 }
 
 impl SqliteDatabase {
-    pub async fn init_local_sqlite(workspace_dir: &str, db_file: &str) -> LunaOrmResult<AnyPool> {
+    pub async fn init_local_sqlite(
+        workspace_dir: &str,
+        db_file: &str,
+    ) -> LunaOrmResult<(AnyPool, SqlitePool,)> {
         let workspace = Path::new(workspace_dir);
         let workspace_absolute = workspace
             .absolutize()
@@ -109,16 +140,15 @@ impl SqliteDatabase {
         fs::create_dir_all(&workspace_absolute)
             .map_err(|_e| LunaOrmError::DatabaseInitFail("create dir fail".to_string()))?;
         let db_file_path = workspace_absolute.join(db_file);
-        {
-            let options = SqliteConnectOptions::new()
-                .filename(db_file_path.clone())
-                .synchronous(SqliteSynchronous::Full)
-                .journal_mode(SqliteJournalMode::Wal)
-                .create_if_missing(true);
-            let _ = SqlitePool::connect_with(options).await.map_err(|_e| {
-                LunaOrmError::DatabaseInitFail("create is missing fail".to_string())
-            })?;
-        }
+
+        let options = SqliteConnectOptions::new()
+            .filename(db_file_path.clone())
+            .synchronous(SqliteSynchronous::Full)
+            .journal_mode(SqliteJournalMode::Wal)
+            .create_if_missing(true);
+        let sqlite_pool = SqlitePool::connect_with(options)
+            .await
+            .map_err(|_e| LunaOrmError::DatabaseInitFail("create is missing fail".to_string()))?;
 
         sqlx::any::install_default_drivers();
         let url = format!("sqlite:{}", db_file_path.to_str().unwrap());
@@ -126,18 +156,29 @@ impl SqliteDatabase {
         let any_pool = AnyPool::connect_with(any_options)
             .await
             .map_err(|_e| LunaOrmError::DatabaseInitFail("init pool fail".to_string()))?;
-        Ok(any_pool)
+        Ok((any_pool, sqlite_pool))
     }
 
     pub async fn build(config: SqliteLocalConfig) -> LunaOrmResult<Self> {
         let pool = SqliteDatabase::init_local_sqlite(&config.work_dir, &config.db_file).await?;
         let generator = DefaultSqlGenerator::new();
-        let database = SqliteDatabase {
-            database_type: DatabaseType::SqliteLocal,
-            pool,
-            sql_generator: generator,
-        };
-        return Ok(database);
+        if config.use_specified {
+            let database = SqliteDatabase {
+                database_type: DatabaseType::SqliteLocal,
+                pool: pool.0,
+                sql_generator: generator,
+                sqlite_pool: Some(pool.1),
+            };
+            Ok(database)
+        } else {
+            let database = SqliteDatabase {
+                database_type: DatabaseType::SqliteLocal,
+                pool: pool.0,
+                sql_generator: generator,
+                sqlite_pool: None
+            };
+            Ok(database)
+        }
     }
 
     /*

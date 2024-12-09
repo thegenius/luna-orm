@@ -179,6 +179,7 @@ pub async fn test_database() -> LunaOrmResult<()> {
     let config = SqliteLocalConfig {
         work_dir: "./workspace".to_string(),
         db_file: "test.db".to_string(),
+        use_specified: false,
     };
     let mut db: SqliteDatabase = SqliteDatabase::build(config).await.unwrap();
     let mut db: DB<SqliteDatabase> = DB(db);

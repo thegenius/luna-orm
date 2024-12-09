@@ -7,10 +7,21 @@ impl<T> SelectionWithSend for T where T: Selection + Send {}
 pub trait LocationWithSend: Location + Send {}
 impl<T> LocationWithSend for T where T: Location + Send {}
 
+
+pub trait LocationTrait {
+    fn get_cmp_sql(&self) -> &str;
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct LocationExpr<T> {
     pub val: T,
     pub cmp: CmpOperator,
+}
+
+impl <T> LocationTrait for LocationExpr<T> {
+    fn get_cmp_sql(&self) -> &str {
+        self.cmp.get_sql()
+    }
 }
 
 impl<T> LocationExpr<T> {
