@@ -524,15 +524,6 @@ pub async fn test_schema_trait() -> LunaOrmResult<()> {
 
     let mut db: DB<SqliteDatabase> = SqliteDatabase::build(config).await.unwrap().into();
 
-    /*
-    pub struct User {
-    id: i64,
-    request_id: Uuid,
-    name: String,
-    age: Option<i32>,
-    birthday: Option<PrimitiveDateTime>,
-    }
-     */
     let result = db.execute_plain("DROP TABLE IF EXISTS `user`").await?;
     let result = db.execute_plain(
         "CREATE TABLE IF NOT EXISTS `user`(`id` BIGINT PRIMARY KEY, `request_id` blob,  `name` VARCHAR(64), `age` INT, `birthday` DATETIME)",
@@ -553,5 +544,24 @@ pub async fn test_schema_trait() -> LunaOrmResult<()> {
     let result = db.new_execute(pool, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES(?, ?, ?, ?, ?)",
                                 args).await?;
     assert_eq!(result, 1);
+
+    let mut selection = UserSelection::default();
+    selection.request_id = true;
+    selection.name = true;
+    selection.age = true;
+    selection.birthday = true;
+
+    let primary = UserPrimary {id : 1};
+    let primary_args = <User as SchemaNew<Sqlite>>::gen_primary_arguments(&primary).unwrap();
+
+    let entity_opt : Option<UserSelected> = db.new_fetch_optional(pool, "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?", &selection, primary_args).await?;
+    assert!(entity_opt.is_some());
+
+
+
+
+
+
+
     Ok(())
 }
