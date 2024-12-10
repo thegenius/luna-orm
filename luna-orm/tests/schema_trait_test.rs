@@ -39,9 +39,7 @@
 
 use luna_orm::prelude::{SqlExecutor, SqlExecutorNew, SqliteDatabase, SqliteLocalConfig, DB};
 use luna_orm::LunaOrmResult;
-use luna_orm_trait::schema_trait::{
-    EntityNew, LocationNew, MutationNew, PrimaryNew, SelectedEntityNew,
-};
+use luna_orm_trait::schema_trait::{EntityNew, LocationNew, MutationNew, PrimaryNew, SelectedEntityNew, UpdateCommand};
 use luna_orm_trait::{CmpOperator, LocationExpr, LocationTrait, Selection, SqlxError};
 use std::marker::PhantomData;
 
@@ -303,7 +301,6 @@ pub struct UserPrimary {
 }
 
 impl PrimaryNew for UserPrimary {
-    type Mutation = UserMutation;
     fn get_table_name(&self) -> &'static str {
         "user"
     }
@@ -315,30 +312,6 @@ impl PrimaryNew for UserPrimary {
     fn gen_primary_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
         let mut args = SqliteArguments::default();
         args.add(&self.id)?;
-        Ok(args)
-    }
-
-    fn gen_update_arguments_sqlite<'a>(
-        &'a self,
-        mutation: &'a Self::Mutation,
-    ) -> Result<SqliteArguments<'a>, BoxDynError> {
-        let mut args = SqliteArguments::default();
-
-        if let Some(request_id) = &mutation.request_id {
-            args.add(request_id)?;
-        }
-        if let Some(name) = &mutation.name {
-            args.add(name)?;
-        }
-        if let Some(age) = &mutation.age {
-            args.add(age)?;
-        }
-        if let Some(birthday) = &mutation.birthday {
-            args.add(birthday)?;
-        }
-
-        args.add(&self.id)?;
-
         Ok(args)
     }
 }
@@ -463,6 +436,34 @@ impl MutationNew for UserMutation {
 }
 
 #[derive(Debug)]
+pub struct UserPrimaryMutationPair<'a>(&'a UserMutation, &'a UserPrimary);
+
+impl <'a> UpdateCommand for UserPrimaryMutationPair<'a> {
+    fn gen_update_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
+        let mut args = SqliteArguments::default();
+
+        if let Some(request_id) = &self.0.request_id {
+            args.add(request_id)?;
+        }
+        if let Some(name) = &self.0.name {
+            args.add(name)?;
+        }
+        if let Some(age) = &self.0.age {
+            args.add(age)?;
+        }
+        if let Some(birthday) = &self.0.birthday {
+            args.add(birthday)?;
+        }
+
+        args.add(&self.1.id)?;
+
+        Ok(args)
+    }
+}
+
+
+
+#[derive(Debug)]
 pub struct UserLocation {
     request_id: Option<LocationExpr<Uuid>>,
     name: Option<LocationExpr<String>>,
@@ -492,7 +493,6 @@ impl UserLocation {
 }
 
 impl LocationNew for UserLocation {
-    type Mutation = UserMutation;
     fn get_table_name(&self) -> &'static str {
         "user"
     }
@@ -578,36 +578,74 @@ impl LocationNew for UserLocation {
 
         Ok(args)
     }
+    //
+    // fn gen_change_arguments_sqlite<'a>(
+    //     &'a self,
+    //     mutation: &'a Self::Mutation,
+    // ) -> Result<SqliteArguments<'a>, BoxDynError> {
+    //     let mut args = SqliteArguments::default();
+    //
+    //     if let Some(request_id) = &mutation.request_id {
+    //         args.add(request_id)?;
+    //     }
+    //     if let Some(name) = &mutation.name {
+    //         args.add(name)?;
+    //     }
+    //     if let Some(age) = &mutation.age {
+    //         args.add(age)?;
+    //     }
+    //     if let Some(birthday) = &mutation.birthday {
+    //         args.add(birthday)?;
+    //     }
+    //
+    //     if let Some(request_id) = &self.request_id {
+    //         args.add(request_id.val)?;
+    //     }
+    //     if let Some(name) = &self.name {
+    //         args.add(name.clone().val)?;
+    //     }
+    //     if let Some(age) = &self.age {
+    //         args.add(age.val)?;
+    //     }
+    //     if let Some(birthday) = &self.birthday {
+    //         args.add(birthday.val)?;
+    //     }
+    //
+    //     Ok(args)
+    // }
+}
 
-    fn gen_change_arguments_sqlite<'a>(
-        &'a self,
-        mutation: &'a Self::Mutation,
-    ) -> Result<SqliteArguments<'a>, BoxDynError> {
+
+#[derive(Debug)]
+pub struct UserLocationMutationPair(UserMutation, UserLocation);
+
+impl UpdateCommand for UserLocationMutationPair {
+    fn gen_update_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
         let mut args = SqliteArguments::default();
 
-        if let Some(request_id) = &mutation.request_id {
+        if let Some(request_id) = &self.0.request_id {
             args.add(request_id)?;
         }
-        if let Some(name) = &mutation.name {
+        if let Some(name) = &self.0.name {
             args.add(name)?;
         }
-        if let Some(age) = &mutation.age {
+        if let Some(age) = &self.0.age {
             args.add(age)?;
         }
-        if let Some(birthday) = &mutation.birthday {
+        if let Some(birthday) = &self.0.birthday {
             args.add(birthday)?;
         }
 
-        if let Some(request_id) = &self.request_id {
+        if let Some(request_id) = &self.1.request_id {
             args.add(request_id.val)?;
         }
-        if let Some(name) = &self.name {
+        if let Some(name) = &self.1.name {
             args.add(name.clone().val)?;
         }
-        if let Some(age) = &self.age {
+        if let Some(age) = &self.1.age {
             args.add(age.val)?;
         }
-        if let Some(birthday) = &self.birthday {
+        if let Some(birthday) = &self.1.birthday {
             args.add(birthday.val)?;
         }
 
@@ -660,9 +698,11 @@ async fn test_update_user(
 ) -> LunaOrmResult<()> {
     let pool = db.new_get_pool()?;
     let mut conn = pool.acquire().await?;
-    let args: SqliteArguments = user_primary
-        .gen_update_arguments_sqlite(user_mutation)
-        .unwrap();
+    let update_command = UserPrimaryMutationPair(user_mutation, user_primary);
+    let args = update_command.gen_update_arguments_sqlite().unwrap();
+    // let args: SqliteArguments = user_primary
+    //     .gen_update_arguments_sqlite(user_mutation)
+    //     .unwrap();
     let result = db.new_execute(&mut *conn, "UPDATE `user` SET `request_id` = ?, `name` = ?, `age` = ?, `birthday` = ? WHERE `id` = ?",
                                 args).await?;
     assert_eq!(result, 1);

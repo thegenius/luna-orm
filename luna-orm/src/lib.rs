@@ -20,13 +20,15 @@
 //#![allow(incomplete_features)]
 
 mod command_executor;
-// mod command_executor2;
+mod command_executor2;
 
 mod database;
 mod error;
 mod mapper;
 mod sql_executor;
 mod sql_generator;
+
+mod sql_generator2;
 
 mod transaction;
 mod sql_executor2;

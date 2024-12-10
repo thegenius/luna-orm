@@ -1,5 +1,4 @@
-use crate::{Entity, Location, Mutation, Primary, SelectedEntity, Selection, SqlxError};
-use sqlx_core::any::{AnyArguments, AnyRow};
+use crate::{Selection, SqlxError};
 use sqlx_core::database::Database;
 use sqlx_core::error::BoxDynError;
 use sqlx_core::row::Row;
@@ -53,7 +52,7 @@ pub trait EntityNew: Sync + Debug {
 
 
 pub trait PrimaryNew: Sync + Debug {
-    type Mutation: MutationNew;
+
     fn get_table_name(&self) -> &'static str;
 
     fn get_primary_field_names(&self) -> &'static [&'static str];
@@ -67,17 +66,22 @@ pub trait PrimaryNew: Sync + Debug {
     fn gen_primary_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
         Err(NotImplementError("gen_primary_arguments_postgres".to_string()).into())
     }
+}
 
-    fn gen_update_arguments_sqlite<'a>(&'a self, mutation: &'a Self::Mutation) -> Result<SqliteArguments<'a>, BoxDynError> {
-        Err(NotImplementError("gen_update_arguments_sqlite".to_string()).into())
+// primary  + mutation = update_command
+// location + mutation = update_command
+pub trait UpdateCommand: Sync + Debug {
+    fn gen_update_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
+        Err(NotImplementError("PrimaryMutationPair::gen_update_arguments_sqlite".to_string()).into())
     }
-    fn gen_update_arguments_mysql(&self, mutation: &Self::Mutation) -> Result<MySqlArguments, BoxDynError> {
-        Err(NotImplementError("gen_update_arguments_mysql".to_string()).into())
+    fn gen_update_arguments_mysql(&self) -> Result<MySqlArguments, BoxDynError> {
+        Err(NotImplementError("PrimaryMutationPair::gen_update_arguments_mysql".to_string()).into())
     }
-    fn gen_update_arguments_postgres(&self, mutation: &Self::Mutation) -> Result<PgArguments, BoxDynError> {
-        Err(NotImplementError("gen_update_arguments_postgres".to_string()).into())
+    fn gen_update_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
+        Err(NotImplementError("PrimaryMutationPair::gen_update_arguments_postgres".to_string()).into())
     }
 }
+
 
 pub trait MutationNew: Sync + Debug {
 
@@ -85,7 +89,7 @@ pub trait MutationNew: Sync + Debug {
 }
 
 pub trait LocationNew: Sync + Debug {
-    type Mutation: MutationNew;
+
     fn get_table_name(&self) -> &'static str;
 
     fn get_fields_name(&self) -> Vec<String>;
@@ -102,16 +106,6 @@ pub trait LocationNew: Sync + Debug {
     }
     fn gen_location_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
         Err(NotImplementError("gen_primary_arguments_postgres".to_string()).into())
-    }
-
-    fn gen_change_arguments_sqlite<'a>(&'a self, mutation: &'a Self::Mutation) -> Result<SqliteArguments<'a>, BoxDynError> {
-        Err(NotImplementError("gen_update_arguments_sqlite".to_string()).into())
-    }
-    fn gen_change_arguments_mysql(&self, mutation: &Self::Mutation) -> Result<MySqlArguments, BoxDynError> {
-        Err(NotImplementError("gen_update_arguments_mysql".to_string()).into())
-    }
-    fn gen_change_arguments_postgres(&self, mutation: &Self::Mutation) -> Result<PgArguments, BoxDynError> {
-        Err(NotImplementError("gen_update_arguments_postgres".to_string()).into())
     }
 }
 

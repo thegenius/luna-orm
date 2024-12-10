@@ -26,12 +26,12 @@ impl GetAffectedRows for MySqlQueryResult {
 pub trait SqlExecutorNew {
     type DB: Database;
 
-    fn new_get_pool(&mut self) -> LunaOrmResult<&Pool<Self::DB>> {
+    fn new_get_pool(&self) -> LunaOrmResult<&Pool<Self::DB>> {
         Err(LunaOrmError::NotImplement)
     }
 
     fn get_affected_rows(
-        &mut self,
+        &self,
         query_result: &<Self::DB as Database>::QueryResult,
     ) -> LunaOrmResult<u64>
     {
@@ -59,7 +59,7 @@ pub trait SqlExecutorNew {
         }
     }
     async fn new_fetch_optional<'a, EX, SE, A>(
-        &mut self,
+        &self,
         ex: EX,
         stmt: &'a str,
         selection: &SE::Selection,
@@ -81,7 +81,7 @@ pub trait SqlExecutorNew {
 
 
     async fn new_fetch_all_plain<'a, EX, SE, A>(
-        &mut self,
+        &self,
         ex: EX,
         stmt: &'a str,
         selection: &SE::Selection,
@@ -107,7 +107,7 @@ pub trait SqlExecutorNew {
     }
 
     async fn new_fetch_all<'a, EX, SE, A>(
-        &mut self,
+        &self,
         ex: EX,
         stmt: &'a str,
         selection: &SE::Selection,
@@ -133,7 +133,7 @@ pub trait SqlExecutorNew {
     }
 
     async fn new_execute_plain<'a, EX, A>(
-        &mut self,
+        &self,
         ex: EX,
         query: &'a str,
         _args: PhantomData<A>
@@ -148,7 +148,7 @@ pub trait SqlExecutorNew {
     }
 
     async fn new_execute<'a, EX, A>(
-        &mut self,
+        &self,
         ex: EX,
         query: &'a str,
         args: A,
