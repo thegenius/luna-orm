@@ -72,7 +72,7 @@ impl SqlExecutor for SqliteDatabase {
 
 impl SqlExecutorNew for SqliteDatabase {
     type DB = Sqlite;
-    fn new_get_pool(&self) -> LunaOrmResult<&Pool<Self::DB>> {
+    fn new_get_pool(&mut self) -> LunaOrmResult<&Pool<Self::DB>> {
         if let Some(sqlite_pool) = &self.sqlite_pool {
             Ok(sqlite_pool)
         } else {
@@ -80,7 +80,7 @@ impl SqlExecutorNew for SqliteDatabase {
         }
     }
 
-    fn get_affected_rows(&self, query_result: &<Self::DB as sqlx::Database>::QueryResult) -> LunaOrmResult<u64> {
+    fn get_affected_rows(&mut self, query_result: &<Self::DB as sqlx::Database>::QueryResult) -> LunaOrmResult<u64> {
         Ok(query_result.get_affected_rows())
     }
 }

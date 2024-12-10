@@ -38,24 +38,24 @@
 //! | `uuid::fmt::Simple`                   | CHAR(32), VARCHAR, TEXT                              |
 
 use luna_orm::prelude::{
-    CommandExecutor, SqlExecutor, SqlExecutorNew, SqliteDatabase, SqliteLocalConfig, DB,
+    SqlExecutor, SqlExecutorNew, SqliteDatabase, SqliteLocalConfig, DB,
 };
 use luna_orm::LunaOrmResult;
 use luna_orm_trait::schema_trait::{SchemaNew, SelectedEntityNew};
-use luna_orm_trait::{
-    Entity, Location, LocationExpr, LocationTrait, Mutation, Primary, Selection, SqlxError,
-};
+use luna_orm_trait::{CmpOperator, Entity, Location, LocationExpr, LocationTrait, Mutation, Primary, Selection, SqlxError};
+use std::marker::PhantomData;
 
-use sqlx::any::{AnyArguments, AnyRow};
+use serde::{Deserialize, Serialize};
+use sqlx::any::{AnyArguments};
 use sqlx::error::BoxDynError;
+
 use sqlx::sqlite::SqliteArguments;
-use sqlx::types::time::{Date, PrimitiveDateTime};
-use sqlx::types::BigDecimal;
+use sqlx::types::time::{PrimitiveDateTime};
+
 use sqlx::types::Uuid;
-use sqlx::Arguments;
-use sqlx::Row;
 use sqlx::{sqlx_macros, Database, Sqlite};
-use std::net::{Ipv4Addr, Ipv6Addr};
+use sqlx::{Arguments};
+use sqlx::{Row};
 use time::macros::datetime;
 
 #[derive(Debug)]
@@ -91,9 +91,8 @@ impl SchemaNew<Sqlite> for User {
         Ok(args)
     }
 
-    fn gen_upsert_arguments<'a>(
-        &'a self,
-        entity: &'a Self::Entity,
+    fn gen_upsert_arguments(
+        entity: &Self::Entity,
     ) -> Result<<Sqlite as Database>::Arguments<'_>, BoxDynError> {
         let mut args = SqliteArguments::default();
         args.add(&entity.id)?;
@@ -120,10 +119,9 @@ impl SchemaNew<Sqlite> for User {
     }
 
     fn gen_update_arguments<'a>(
-        &'a self,
         mutation: &'a Self::Mutation,
         primary: &'a Self::Primary,
-    ) -> Result<<Sqlite as Database>::Arguments<'_>, BoxDynError> {
+    ) -> Result<<Sqlite as Database>::Arguments<'a>, BoxDynError> {
         let mut args = SqliteArguments::default();
 
         if let Some(request_id) = &mutation.request_id {
@@ -145,10 +143,9 @@ impl SchemaNew<Sqlite> for User {
     }
 
     fn gen_change_arguments<'a>(
-        &'a self,
         mutation: &'a Self::Mutation,
         location: &'a Self::Location,
-    ) -> Result<<Sqlite as Database>::Arguments<'_>, BoxDynError> {
+    ) -> Result<<Sqlite as Database>::Arguments<'a>, BoxDynError> {
         let mut args = SqliteArguments::default();
 
         if let Some(request_id) = &mutation.request_id {
@@ -180,18 +177,16 @@ impl SchemaNew<Sqlite> for User {
         Ok(args)
     }
 
-    fn gen_primary_arguments<'a>(
-        &'a self,
-        primary: &'a Self::Primary,
+    fn gen_primary_arguments(
+        primary: &Self::Primary,
     ) -> Result<<Sqlite as Database>::Arguments<'_>, BoxDynError> {
         let mut args = SqliteArguments::default();
         args.add(&primary.id)?;
         Ok(args)
     }
 
-    fn gen_location_arguments<'a>(
-        &'a self,
-        location: &'a Self::Location,
+    fn gen_location_arguments(
+        location: &Self::Location,
     ) -> Result<<Sqlite as Database>::Arguments<'_>, BoxDynError> {
         let mut args = SqliteArguments::default();
 
@@ -211,9 +206,8 @@ impl SchemaNew<Sqlite> for User {
         Ok(args)
     }
 
-    fn gen_selected_entity<'a>(
-        &'a self,
-        selection: &'a Self::Selection,
+    fn gen_selected_entity(
+        selection: &Self::Selection,
         row: <Sqlite as Database>::Row,
     ) -> Result<Self::Selected, BoxDynError> {
         let mut selected: Self::Selected = UserSelected::default();
@@ -292,10 +286,10 @@ impl Primary for UserPrimary {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct UserSelected {
-    request_id: Option<Uuid>,
     id: Option<u64>,
+    request_id: Option<Uuid>,
     name: Option<String>,
     age: Option<i32>,
     birthday: Option<PrimitiveDateTime>,
@@ -317,6 +311,9 @@ impl SelectedEntityNew<Sqlite> for UserSelected {
         let mut selected = Self::default();
         if selection.id {
             selected.id = row.try_get("id").ok();
+        }
+        if selection.request_id {
+            selected.request_id = row.try_get("request_id").ok();
         }
         if selection.name {
             selected.name = row.try_get("name").ok();
@@ -514,34 +511,52 @@ impl Location for UserLocation {
     }
 }
 
-#[sqlx_macros::test]
-pub async fn test_schema_trait() -> LunaOrmResult<()> {
-    let config = SqliteLocalConfig {
-        work_dir: "./workspace".to_string(),
-        db_file: "test.db".to_string(),
-        use_specified: true,
-    };
-
-    let mut db: DB<SqliteDatabase> = SqliteDatabase::build(config).await.unwrap().into();
-
-    let result = db.execute_plain("DROP TABLE IF EXISTS `user`").await?;
-    let result = db.execute_plain(
-        "CREATE TABLE IF NOT EXISTS `user`(`id` BIGINT PRIMARY KEY, `request_id` blob,  `name` VARCHAR(64), `age` INT, `birthday` DATETIME)",
-    ).await?;
-
-    let birthday = datetime!(2019-01-01 0:00);
-    // 1. insert entity
-    let entity = User {
-        id: 1,
-        request_id: Uuid::default(),
-        name: "Allen".to_string(),
-        age: Some(23),
-        birthday: Some(birthday),
-    };
-    let args: SqliteArguments = <User as SchemaNew<Sqlite>>::gen_insert_arguments(&entity).unwrap();
-
+async fn test_insert_user(db: &mut DB<SqliteDatabase>, user: &User) -> LunaOrmResult<()> {
     let pool = db.new_get_pool()?;
-    let result = db.new_execute(pool, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES(?, ?, ?, ?, ?)",
+    let mut conn = pool.acquire().await?;
+    let args: SqliteArguments = <User as SchemaNew<Sqlite>>::gen_insert_arguments(user).unwrap();
+    let result = db.new_execute(&mut *conn, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES(?, ?, ?, ?, ?)",
+                                args).await?;
+    assert_eq!(result, 1);
+
+    let mut selection = UserSelection::default();
+    selection.request_id = true;
+    selection.name = true;
+    selection.age = true;
+    selection.birthday = true;
+    let primary = UserPrimary { id: user.id };
+    let primary_args = <User as SchemaNew<Sqlite>>::gen_primary_arguments(&primary).unwrap();
+    let entity_opt: Option<UserSelected> = db
+        .new_fetch_optional(
+            &mut *conn,
+            "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
+            &selection,
+            primary_args,
+        )
+        .await?;
+
+    assert!(entity_opt.is_some());
+    let selected_entity = entity_opt.unwrap();
+    assert_eq!(selected_entity.request_id.unwrap(), user.request_id);
+    assert_eq!(selected_entity.name.unwrap(), user.name);
+    assert_eq!(selected_entity.age, user.age);
+    assert_eq!(selected_entity.birthday, user.birthday);
+    Ok(())
+}
+
+/**
+因为UPDATE语句固定了，所以目前要求mutation必须包含所有字段
+*/
+async fn test_update_user(
+    db: &mut DB<SqliteDatabase>,
+    user_mutation: &UserMutation,
+    user_primary: &UserPrimary,
+) -> LunaOrmResult<()> {
+    let pool = db.new_get_pool()?;
+    let mut conn = pool.acquire().await?;
+    let args: SqliteArguments =
+        <User as SchemaNew<Sqlite>>::gen_update_arguments(user_mutation, user_primary).unwrap();
+    let result = db.new_execute(&mut *conn, "UPDATE `user` SET `request_id` = ?, `name` = ?, `age` = ?, `birthday` = ? WHERE `id` = ?",
                                 args).await?;
     assert_eq!(result, 1);
 
@@ -551,17 +566,231 @@ pub async fn test_schema_trait() -> LunaOrmResult<()> {
     selection.age = true;
     selection.birthday = true;
 
-    let primary = UserPrimary {id : 1};
-    let primary_args = <User as SchemaNew<Sqlite>>::gen_primary_arguments(&primary).unwrap();
+    let primary_args = <User as SchemaNew<Sqlite>>::gen_primary_arguments(&user_primary).unwrap();
+    let entity_opt: Option<UserSelected> = db
+        .new_fetch_optional(
+            &mut *conn,
+            "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
+            &selection,
+            primary_args,
+        )
+        .await?;
 
-    let entity_opt : Option<UserSelected> = db.new_fetch_optional(pool, "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?", &selection, primary_args).await?;
     assert!(entity_opt.is_some());
+    let selected_entity = entity_opt.unwrap();
+    assert_eq!(selected_entity.request_id, user_mutation.request_id);
+    assert_eq!(selected_entity.name, user_mutation.name);
+    assert_eq!(selected_entity.age, user_mutation.age);
+    assert_eq!(selected_entity.birthday, user_mutation.birthday);
+    Ok(())
+}
+
+async fn test_upsert_user(
+    db: &mut DB<SqliteDatabase>,
+    user: &User,
+) -> LunaOrmResult<()> {
+    let pool = db.new_get_pool()?;
+    let mut conn = pool.acquire().await?;
+    let args: SqliteArguments =
+        <User as SchemaNew<Sqlite>>::gen_upsert_arguments(user).unwrap();
+    let result = db.new_execute(&mut *conn, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES (?, ?, ?, ?, ?)
+ON CONFLICT (`id`) DO UPDATE SET
+`request_id` = ?, `name` = ?, `age` = ?, `birthday` = ?", args).await?;
+    assert_eq!(result, 1);
+
+    let mut selection = UserSelection::default();
+    selection.request_id = true;
+    selection.name = true;
+    selection.age = true;
+    selection.birthday = true;
+
+    let user_primary: UserPrimary = UserPrimary { id: user.id };
+    let primary_args = <User as SchemaNew<Sqlite>>::gen_primary_arguments(&user_primary).unwrap();
+    let entity_opt: Option<UserSelected> = db
+        .new_fetch_optional(
+            &mut *conn,
+            "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
+            &selection,
+            primary_args,
+        )
+        .await?;
+
+    assert!(entity_opt.is_some());
+    let selected_entity = entity_opt.unwrap();
+    assert_eq!(selected_entity.request_id.unwrap(), user.request_id);
+    assert_eq!(selected_entity.name.unwrap(), user.name);
+    assert_eq!(selected_entity.age, user.age);
+    assert_eq!(selected_entity.birthday, user.birthday);
+    Ok(())
+}
+
+async fn test_delete_user(
+    db: &mut DB<SqliteDatabase>,
+    user_primary: &UserPrimary,
+) -> LunaOrmResult<()> {
+    let pool = db.new_get_pool()?;
+    let mut conn = pool.acquire().await?;
+    let args: SqliteArguments =
+        <User as SchemaNew<Sqlite>>::gen_primary_arguments(user_primary).unwrap();
+    let result = db.new_execute(&mut *conn, "DELETE FROM `user` WHERE `id` = ?", args).await?;
+    assert_eq!(result, 1);
+
+    let mut selection = UserSelection::default();
+    selection.request_id = true;
+    selection.name = true;
+    selection.age = true;
+    selection.birthday = true;
+
+    let user_primary: UserPrimary = UserPrimary { id: user_primary.id };
+    let primary_args = <User as SchemaNew<Sqlite>>::gen_primary_arguments(&user_primary).unwrap();
+    let entity_opt: Option<UserSelected> = db
+        .new_fetch_optional(
+            &mut *conn,
+            "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
+            &selection,
+            primary_args,
+        )
+        .await?;
+
+    assert!(entity_opt.is_none());
+    Ok(())
+}
+
+async fn test_select_all(
+    db: &mut DB<SqliteDatabase>,
+    expect_cnt: usize,
+) -> LunaOrmResult<()> {
+    let pool = db.new_get_pool()?;
+    let mut conn = pool.acquire().await?;
+
+    let mut selection = UserSelection::default();
+    selection.request_id = true;
+    selection.name = true;
+    selection.age = true;
+    selection.birthday = true;
+
+    let phantom = PhantomData::<SqliteArguments>::default();
+    let entity_vec: Vec<UserSelected> = db
+        .new_fetch_all_plain(
+            &mut *conn,
+            "SELECT `request_id`, `name`, `age`, `birthday` FROM `user`",
+            &selection,
+            phantom,
+        )
+        .await?;
+
+    assert_eq!(entity_vec.len(), expect_cnt);
+    Ok(())
+}
+
+async fn test_select_location(
+    db: &mut DB<SqliteDatabase>,
+    user_location: &UserLocation,
+    expect_cnt: usize,
+) -> LunaOrmResult<()> {
+    let pool = db.new_get_pool()?;
+    let mut conn = pool.acquire().await?;
+    let loc_args: SqliteArguments =
+        <User as SchemaNew<Sqlite>>::gen_location_arguments(user_location).unwrap();
 
 
+    let mut selection = UserSelection::default();
+    selection.request_id = true;
+    selection.name = true;
+    selection.age = true;
+    selection.birthday = true;
+
+    let entities: Vec<UserSelected> = db
+        .new_fetch_all(
+            &mut *conn,
+            "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `birthday` = ?",
+            &selection,
+            loc_args,
+        )
+        .await?;
+
+    assert_eq!(entities.len(), expect_cnt);
+    Ok(())
+}
 
 
+/**
+测试用例设计如下：
+insert  id = 1
+update  id = 1
+upsert  id = 2
 
+select all
+select id = 2
+delete id = 2
+select all where id = 1
+select all where id = 2
+*/
+#[sqlx_macros::test]
+pub async fn test_schema_trait() -> LunaOrmResult<()> {
+    let config = SqliteLocalConfig {
+        work_dir: "./workspace".to_string(),
+        db_file: "test.db".to_string(),
+        use_specified: true,
+    };
 
+    let mut db: DB<SqliteDatabase> = SqliteDatabase::build(config).await.unwrap().into();
+    let result = db.execute_plain("DROP TABLE IF EXISTS `user`").await?;
+    let result = db.execute_plain(
+        "CREATE TABLE IF NOT EXISTS `user`(`id` BIGINT PRIMARY KEY, `request_id` blob,  `name` VARCHAR(64), `age` INT, `birthday` DATETIME)",
+    ).await?;
+
+    // let pool = db.new_get_pool()?;
+
+    let entity1 = User {
+        id: 1,
+        request_id: Uuid::new_v4(),
+        name: "Allen".to_string(),
+        age: Some(23),
+        birthday: Some(datetime!(2019-01-01 0:00)),
+    };
+
+    test_insert_user(&mut db.clone(), &entity1).await?;
+
+    let mutaion1 = UserMutation {
+        request_id: Some(Uuid::new_v4()),
+        name: Some("Allen Woods".to_string()),
+        age: Some(25),
+        birthday: Some(datetime!(2019-01-02 0:00)),
+    };
+    let primary1 = UserPrimary { id: 1 };
+    test_update_user(&mut db.clone(), &mutaion1, &primary1).await?;
+
+    let entity1 = User {
+        id: 1,
+        request_id: Uuid::new_v4(),
+        name: "Bob".to_string(),
+        age: Some(24),
+        birthday: Some(datetime!(2020-01-03 12:59)),
+    };
+    test_upsert_user(&mut db.clone(), &entity1).await?;
+
+    let entity1 = User {
+        id: 2,
+        request_id: Uuid::new_v4(),
+        name: "Bob Woods".to_string(),
+        age: Some(24),
+        birthday: Some(datetime!(2020-01-01 0:00)),
+    };
+    test_insert_user(&mut db.clone(), &entity1).await?;
+    test_select_all(&mut db.clone(), 2).await?;
+
+    let user_primary2 = UserPrimary { id: 2 };
+    test_delete_user(&mut db.clone(), &user_primary2).await?;
+    test_select_all(&mut db.clone(), 1).await?;
+
+    let user_location: UserLocation = UserLocation {
+        request_id: None,
+        name: None,
+        age: None,
+        birthday: Some(LocationExpr::new(CmpOperator::Eq, datetime!(2020-01-03 12:59))),
+    };
+    test_select_location(&mut db.clone(), &user_location, 1 ).await?;
 
     Ok(())
 }

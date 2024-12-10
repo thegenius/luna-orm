@@ -1,4 +1,4 @@
-
+use std::marker::PhantomData;
 use crate::error::LunaOrmError;
 use crate::LunaOrmResult;
 
@@ -26,12 +26,12 @@ impl GetAffectedRows for MySqlQueryResult {
 pub trait SqlExecutorNew {
     type DB: Database;
 
-    fn new_get_pool(&self) -> LunaOrmResult<&Pool<Self::DB>> {
+    fn new_get_pool(&mut self) -> LunaOrmResult<&Pool<Self::DB>> {
         Err(LunaOrmError::NotImplement)
     }
 
     fn get_affected_rows(
-        &self,
+        &mut self,
         query_result: &<Self::DB as Database>::QueryResult,
     ) -> LunaOrmResult<u64>
     {
@@ -43,6 +43,7 @@ pub trait SqlExecutorNew {
         pool: EX,
         stmt: &'a str,
         selection: &SE::Selection,
+        _: PhantomData<A>,
     ) -> LunaOrmResult<Option<SE>>
     where
         EX: Executor<'a, Database = Self::DB>,
@@ -84,6 +85,7 @@ pub trait SqlExecutorNew {
         pool: EX,
         stmt: &'a str,
         selection: &SE::Selection,
+        _: PhantomData<A>
     ) -> LunaOrmResult<Vec<SE>>
     where
         EX: Executor<'a, Database = Self::DB>,
@@ -131,9 +133,10 @@ pub trait SqlExecutorNew {
     }
 
     async fn new_execute_plain<'a, EX, A>(
-        &self,
+        &mut self,
         pool: EX,
-        query: &'a str
+        query: &'a str,
+        _args: PhantomData<A>
     ) -> LunaOrmResult<u64>
     where
         EX: Executor<'a, Database = Self::DB>,
@@ -145,7 +148,7 @@ pub trait SqlExecutorNew {
     }
 
     async fn new_execute<'a, EX, A>(
-        &self,
+        &mut self,
         pool: EX,
         query: &'a str,
         args: A,
