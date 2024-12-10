@@ -40,7 +40,7 @@ pub trait SqlExecutorNew {
 
     async fn new_fetch_optional_plain<'a, EX, SE, A>(
         &mut self,
-        pool: EX,
+        ex: EX,
         stmt: &'a str,
         selection: &SE::Selection,
         _: PhantomData<A>,
@@ -51,7 +51,7 @@ pub trait SqlExecutorNew {
         A: IntoArguments<'a, Self::DB> + 'a + Default,
     {
         let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, Default::default());
-        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(pool).await?;
+        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(ex).await?;
         if let Some(result) = result_opt {
             Ok(Some(SE::from_row(selection, result)?))
         } else {
@@ -60,7 +60,7 @@ pub trait SqlExecutorNew {
     }
     async fn new_fetch_optional<'a, EX, SE, A>(
         &mut self,
-        pool: EX,
+        ex: EX,
         stmt: &'a str,
         selection: &SE::Selection,
         args: A
@@ -71,7 +71,7 @@ pub trait SqlExecutorNew {
         A: IntoArguments<'a, Self::DB> + 'a,
     {
         let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, args);
-        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(pool).await?;
+        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(ex).await?;
         if let Some(result) = result_opt {
             Ok(Some(SE::from_row(selection, result)?))
         } else {
@@ -82,7 +82,7 @@ pub trait SqlExecutorNew {
 
     async fn new_fetch_all_plain<'a, EX, SE, A>(
         &mut self,
-        pool: EX,
+        ex: EX,
         stmt: &'a str,
         selection: &SE::Selection,
         _: PhantomData<A>
@@ -93,7 +93,7 @@ pub trait SqlExecutorNew {
         A: IntoArguments<'a, Self::DB> + 'a + Default,
     {
         let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, Default::default());
-        let result_opt: Vec<<Self::DB as Database>::Row> = query.fetch_all(pool).await?;
+        let result_opt: Vec<<Self::DB as Database>::Row> = query.fetch_all(ex).await?;
         let mut result: Vec<SE> = Vec::new();
         for row in result_opt {
             let selected_result = SE::from_row(selection, row);
@@ -108,7 +108,7 @@ pub trait SqlExecutorNew {
 
     async fn new_fetch_all<'a, EX, SE, A>(
         &mut self,
-        pool: EX,
+        ex: EX,
         stmt: &'a str,
         selection: &SE::Selection,
         args: A
@@ -119,7 +119,7 @@ pub trait SqlExecutorNew {
         A: IntoArguments<'a, Self::DB> + 'a + Default,
     {
         let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, args);
-        let result_opt: Vec<<Self::DB as Database>::Row> = query.fetch_all(pool).await?;
+        let result_opt: Vec<<Self::DB as Database>::Row> = query.fetch_all(ex).await?;
         let mut result: Vec<SE> = Vec::new();
         for row in result_opt {
             let selected_result = SE::from_row(selection, row);
@@ -134,7 +134,7 @@ pub trait SqlExecutorNew {
 
     async fn new_execute_plain<'a, EX, A>(
         &mut self,
-        pool: EX,
+        ex: EX,
         query: &'a str,
         _args: PhantomData<A>
     ) -> LunaOrmResult<u64>
@@ -143,13 +143,13 @@ pub trait SqlExecutorNew {
         A: IntoArguments<'a, Self::DB> + 'a + Default,
     {
         let query: Query<'a, Self::DB, A> = sqlx::query_with(query, Default::default());
-        let result: <Self::DB as Database>::QueryResult = query.execute(pool).await?;
+        let result: <Self::DB as Database>::QueryResult = query.execute(ex).await?;
         self.get_affected_rows(&result)
     }
 
     async fn new_execute<'a, EX, A>(
         &mut self,
-        pool: EX,
+        ex: EX,
         query: &'a str,
         args: A,
     ) -> LunaOrmResult<u64>
@@ -158,7 +158,7 @@ pub trait SqlExecutorNew {
         A: IntoArguments<'a, Self::DB> + 'a,
     {
         let query: Query<'a, Self::DB, A> = sqlx::query_with(query, args);
-        let result: <Self::DB as Database>::QueryResult = query.execute(pool).await?;
+        let result: <Self::DB as Database>::QueryResult = query.execute(ex).await?;
         self.get_affected_rows(&result)
     }
 }
