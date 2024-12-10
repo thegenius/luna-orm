@@ -1,5 +1,4 @@
-
-use crate::database::lib2::{DB, Database, DatabaseType};
+use crate::database::lib2::{Database, DatabaseType, DB};
 use crate::{error::LunaOrmError, LunaOrmResult};
 
 use luna_orm_trait::Selection;
@@ -28,7 +27,6 @@ use tracing::debug;
 pub struct SqliteLocalConfig {
     pub work_dir: String,
     pub db_file: String,
-    pub use_specified: bool,
 }
 
 impl SqliteLocalConfig {
@@ -39,18 +37,6 @@ impl SqliteLocalConfig {
         Self {
             work_dir: work_dir.into(),
             db_file: db_file.into(),
-            use_specified: false,
-        }
-    }
-
-    pub fn new_specified<S>(work_dir: S, db_file: S) -> Self
-    where
-        S: Into<String>,
-    {
-        Self {
-            work_dir: work_dir.into(),
-            db_file: db_file.into(),
-            use_specified: true,
         }
     }
 }
@@ -89,41 +75,6 @@ impl CommandExecutorNew for SqliteDatabaseNew {
         &self.sql_generator
     }
 
-    fn gen_insert_arguments<'a>(
-        &'a self,
-        entity: &'a dyn EntityNew,
-    ) -> Result<<Self::DB as sqlx::Database>::Arguments<'a>, BoxDynError> {
-        entity.gen_insert_arguments_sqlite()
-    }
-
-    fn gen_upsert_arguments<'a>(
-        &'a self,
-        entity: &'a dyn EntityNew,
-    ) -> Result<<Self::DB as sqlx::Database>::Arguments<'a>, BoxDynError> {
-        entity.gen_upsert_arguments_sqlite()
-    }
-
-    fn gen_update_arguments<'a>(
-        &'a self,
-        update_command: &'a dyn UpdateCommand,
-    ) -> Result<<Self::DB as sqlx::Database>::Arguments<'a>, BoxDynError> {
-        update_command.gen_update_arguments_sqlite()
-    }
-
-    fn gen_primary_arguments<'a>(
-        &'a self,
-        primary: &'a dyn PrimaryNew,
-    ) -> Result<<Self::DB as sqlx::Database>::Arguments<'a>, BoxDynError> {
-        primary.gen_primary_arguments_sqlite()
-    }
-
-    fn gen_location_arguments<'a>(
-        &'a self,
-        location: &'a dyn LocationNew,
-    ) -> Result<<Self::DB as sqlx::Database>::Arguments<'a>, BoxDynError> {
-        location.gen_location_arguments_sqlite()
-    }
-
     async fn select<SE>(
         &self,
         primary: &dyn PrimaryNew,
@@ -137,7 +88,7 @@ impl CommandExecutorNew for SqliteDatabaseNew {
         debug!(target: "luna_orm", command = "select", primary = ?primary, selection = ?selection);
         let sql = self.get_generator().get_select_sql(selection, primary);
         debug!(target: "luna_orm", command = "select", sql = sql);
-        let args: SqliteArguments<'_> = self.gen_primary_arguments(primary)?;
+        let args: SqliteArguments<'_> = primary.gen_primary_arguments_sqlite()?;
         let result: Option<SE> = self
             .new_fetch_optional(&mut *conn, &sql, selection, args)
             .await?;
@@ -215,21 +166,12 @@ impl SqliteDatabaseNew {
     pub async fn build(config: SqliteLocalConfig) -> LunaOrmResult<Self> {
         let pool = SqliteDatabaseNew::init_local_sqlite(&config.work_dir, &config.db_file).await?;
         let generator = DefaultSqlGenerator::new();
-        if config.use_specified {
-            let database = SqliteDatabaseNew {
-                database_type: DatabaseType::SqliteLocal,
-                sql_generator: generator,
-                sqlite_pool: Some(pool.1),
-            };
-            Ok(database)
-        } else {
-            let database = SqliteDatabaseNew {
-                database_type: DatabaseType::SqliteLocal,
-                sql_generator: generator,
-                sqlite_pool: None,
-            };
-            Ok(database)
-        }
+        let database = SqliteDatabaseNew {
+            database_type: DatabaseType::SqliteLocal,
+            sql_generator: generator,
+            sqlite_pool: Some(pool.1),
+        };
+        Ok(database)
     }
 
     /*

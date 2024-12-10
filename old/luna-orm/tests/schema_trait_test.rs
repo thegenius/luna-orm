@@ -37,9 +37,10 @@
 //! | `uuid::fmt::Hyphenated`               | CHAR(36), VARCHAR, TEXT, UUID (MariaDB-only)         |
 //! | `uuid::fmt::Simple`                   | CHAR(32), VARCHAR, TEXT                              |
 
-use luna_orm::prelude::{SqlExecutor, SqlExecutorNew, SqliteDatabase, SqliteLocalConfig, DB};
 use luna_orm::LunaOrmResult;
-use luna_orm_trait::schema_trait::{EntityNew, LocationNew, MutationNew, PrimaryNew, SelectedEntityNew, UpdateCommand};
+use luna_orm_trait::schema_trait::{
+    EntityNew, LocationNew, MutationNew, PrimaryNew, SelectedEntityNew, UpdateCommand,
+};
 use luna_orm_trait::{CmpOperator, LocationExpr, LocationTrait, Selection, SqlxError};
 use std::marker::PhantomData;
 
@@ -55,6 +56,10 @@ use sqlx::{sqlx_macros, Database, Sqlite};
 use sqlx::Arguments;
 use sqlx::Row;
 use time::macros::datetime;
+
+use luna_orm::prelude::lib2::DB;
+use luna_orm::prelude::sqlite2::{SqliteDatabaseNew, SqliteLocalConfig};
+use luna_orm::prelude::SqlExecutorNew;
 
 #[derive(Debug)]
 pub struct User {
@@ -438,7 +443,7 @@ impl MutationNew for UserMutation {
 #[derive(Debug)]
 pub struct UserPrimaryMutationPair<'a>(&'a UserMutation, &'a UserPrimary);
 
-impl <'a> UpdateCommand for UserPrimaryMutationPair<'a> {
+impl<'a> UpdateCommand for UserPrimaryMutationPair<'a> {
     fn gen_update_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
         let mut args = SqliteArguments::default();
 
@@ -460,8 +465,6 @@ impl <'a> UpdateCommand for UserPrimaryMutationPair<'a> {
         Ok(args)
     }
 }
-
-
 
 #[derive(Debug)]
 pub struct UserLocation {
@@ -615,7 +618,6 @@ impl LocationNew for UserLocation {
     // }
 }
 
-
 #[derive(Debug)]
 pub struct UserLocationMutationPair(UserMutation, UserLocation);
 
@@ -653,7 +655,7 @@ impl UpdateCommand for UserLocationMutationPair {
     }
 }
 
-async fn test_insert_user(db: &mut DB<SqliteDatabase>, user: &User) -> LunaOrmResult<()> {
+async fn test_insert_user(db: &mut DB<SqliteDatabaseNew>, user: &User) -> LunaOrmResult<()> {
     let pool = db.new_get_pool()?;
     let mut conn = pool.acquire().await?;
 
@@ -692,7 +694,7 @@ async fn test_insert_user(db: &mut DB<SqliteDatabase>, user: &User) -> LunaOrmRe
 因为UPDATE语句固定了，所以目前要求mutation必须包含所有字段
 */
 async fn test_update_user(
-    db: &mut DB<SqliteDatabase>,
+    db: &mut DB<SqliteDatabaseNew>,
     user_mutation: &UserMutation,
     user_primary: &UserPrimary,
 ) -> LunaOrmResult<()> {
@@ -732,7 +734,7 @@ async fn test_update_user(
     Ok(())
 }
 
-async fn test_upsert_user(db: &mut DB<SqliteDatabase>, user: &User) -> LunaOrmResult<()> {
+async fn test_upsert_user(db: &mut DB<SqliteDatabaseNew>, user: &User) -> LunaOrmResult<()> {
     let pool = db.new_get_pool()?;
     let mut conn = pool.acquire().await?;
     let args: SqliteArguments = user.gen_upsert_arguments_sqlite().unwrap();
@@ -768,7 +770,7 @@ ON CONFLICT (`id`) DO UPDATE SET
 }
 
 async fn test_delete_user(
-    db: &mut DB<SqliteDatabase>,
+    db: &mut DB<SqliteDatabaseNew>,
     user_primary: &UserPrimary,
 ) -> LunaOrmResult<()> {
     let pool = db.new_get_pool()?;
@@ -802,7 +804,7 @@ async fn test_delete_user(
     Ok(())
 }
 
-async fn test_select_all(db: &mut DB<SqliteDatabase>, expect_cnt: usize) -> LunaOrmResult<()> {
+async fn test_select_all(db: &mut DB<SqliteDatabaseNew>, expect_cnt: usize) -> LunaOrmResult<()> {
     let pool = db.new_get_pool()?;
     let mut conn = pool.acquire().await?;
 
@@ -827,7 +829,7 @@ async fn test_select_all(db: &mut DB<SqliteDatabase>, expect_cnt: usize) -> Luna
 }
 
 async fn test_select_location(
-    db: &mut DB<SqliteDatabase>,
+    db: &mut DB<SqliteDatabaseNew>,
     user_location: &UserLocation,
     expect_cnt: usize,
 ) -> LunaOrmResult<()> {
@@ -871,14 +873,21 @@ pub async fn test_schema_trait() -> LunaOrmResult<()> {
     let config = SqliteLocalConfig {
         work_dir: "./workspace".to_string(),
         db_file: "test.db".to_string(),
-        use_specified: true,
     };
 
-    let mut db: DB<SqliteDatabase> = SqliteDatabase::build(config).await.unwrap().into();
-    let result = db.execute_plain("DROP TABLE IF EXISTS `user`").await?;
-    let result = db.execute_plain(
+    let mut db: DB<SqliteDatabaseNew> = SqliteDatabaseNew::build(config).await.unwrap().into();
+    let pool = db.new_get_pool()?;
+    let mut conn = pool.acquire().await.unwrap();
+    let result = db
+        .new_execute_plain(
+            &mut *conn,
+            "DROP TABLE IF EXISTS `user`",
+            PhantomData::<SqliteArguments>::default(),
+        )
+        .await?;
+    let result = db.new_execute_plain(&mut *conn,
         "CREATE TABLE IF NOT EXISTS `user`(`id` BIGINT PRIMARY KEY, `request_id` blob,  `name` VARCHAR(64), `age` INT, `birthday` DATETIME)",
-    ).await?;
+                                      PhantomData::<SqliteArguments>::default()).await?;
 
     // let pool = db.new_get_pool()?;
 
