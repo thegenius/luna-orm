@@ -19,7 +19,7 @@ rust-version = "1.56"
 
 
 [workspace.dependencies]
-sqlx = {version = "0.8.2", features = ["mysql", "sqlite", "any", "bigdecimal", "time", "uuid"]}
+sqlx = {version = "0.8.2", features = ["mysql", "sqlite", "postgres", "any", "bigdecimal", "time", "uuid"]}
 sqlx-core = {version = "0.8.2"}
 
 time = {version = "0.3.37"}

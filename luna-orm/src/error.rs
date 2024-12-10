@@ -8,6 +8,9 @@ pub enum LunaOrmError {
     #[error(transparent)]
     SqlxError(#[from] sqlx::Error),
 
+    #[error(transparent)]
+    BoxDynError(#[from] Box<dyn std::error::Error + 'static + Send + Sync>),
+
     #[error("deserialize entity from row  error")]
     FromRowToEntityError,
 
