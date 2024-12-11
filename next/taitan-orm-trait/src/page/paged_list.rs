@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
-use crate::dto::PageInfo;
 use sqlx::Database;
-use taitan_orm_trait::SelectedEntity;
+use crate::page_info::PageInfo;
+use crate::SelectedEntity;
 
 #[derive(Clone, Debug)]
 pub struct PagedList<DB, T>

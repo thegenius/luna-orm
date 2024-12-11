@@ -2,7 +2,7 @@ use taitan_orm_trait::FromClause;
 use taitan_orm_trait::JoinedConditions;
 use taitan_orm_trait::{Entity, Location, Mutation, Primary};
 use taitan_orm_trait::{OrderBy, Selection};
-use crate::Pagination;
+use taitan_orm_trait::pagination::Pagination;
 
 #[derive(Default, Debug, Clone)]
 pub struct DefaultSqlGenerator {}

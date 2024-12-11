@@ -6,10 +6,10 @@ use taitan_orm_trait::{SelectedEntity, Selection};
 
 
 #[derive(Clone, Debug, Default)]
-pub struct CountSelection {
+pub struct EmptySelection {
 }
 
-impl Selection for CountSelection {}
+impl Selection for EmptySelection {}
 
 #[derive(Clone, Debug)]
 pub struct CountResult {
@@ -18,7 +18,7 @@ pub struct CountResult {
 
 impl SelectedEntity<Sqlite> for CountResult {
 
-    type Selection = CountSelection;
+    type Selection = EmptySelection;
 
     fn from_row(_selection: &Self::Selection, row: SqliteRow) -> Result<Self, Error>
     where
@@ -31,7 +31,7 @@ impl SelectedEntity<Sqlite> for CountResult {
 
 impl SelectedEntity<MySql> for CountResult {
 
-    type Selection = CountSelection;
+    type Selection = EmptySelection;
 
     fn from_row(_selection: &Self::Selection, row: MySqlRow) -> Result<Self, Error>
     where
@@ -44,7 +44,7 @@ impl SelectedEntity<MySql> for CountResult {
 
 impl SelectedEntity<Postgres> for CountResult {
 
-    type Selection = CountSelection;
+    type Selection = EmptySelection;
 
     fn from_row(_selection: &Self::Selection, row: PgRow) -> Result<Self, Error>
     where
