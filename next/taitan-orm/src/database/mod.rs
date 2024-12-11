@@ -1,7 +1,7 @@
 pub mod sqlite;
 
 pub mod mysql;
-mod postgres;
+pub mod postgres;
 
 
 

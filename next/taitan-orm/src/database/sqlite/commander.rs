@@ -89,7 +89,7 @@ impl SqliteCommander {
         Ok(sqlite_pool)
     }
 
-    pub async fn build(config: SqliteLocalConfig) -> Result<Self> {
+    pub async fn build(config: SqliteLocalConfig<'_>) -> Result<Self> {
         let pool = SqliteCommander::init_local(&config.work_dir, &config.db_file).await?;
         let generator = DefaultSqlGenerator::new();
         let database = SqliteCommander {

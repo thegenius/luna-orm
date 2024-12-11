@@ -711,8 +711,8 @@ select all where id = 2
 #[sqlx_macros::test]
 pub async fn sql_executor_spec() -> taitan_orm::Result<()> {
     let config = SqliteLocalConfig {
-        work_dir: "./workspace".to_string(),
-        db_file: "test.db".to_string(),
+        work_dir: "./workspace".into(),
+        db_file: "test.db".into(),
     };
 
     let mut db: DB<SqliteCommander> = SqliteCommander::build(config).await.unwrap().into();
@@ -729,7 +729,6 @@ pub async fn sql_executor_spec() -> taitan_orm::Result<()> {
         "CREATE TABLE IF NOT EXISTS `user`(`id` BIGINT PRIMARY KEY, `request_id` blob,  `name` VARCHAR(64), `age` INT, `birthday` DATETIME)",
                                       PhantomData::<SqliteArguments>::default()).await?;
 
-    // let pool = db.get_pool()?;
 
     let entity1 = User {
         id: 1,
