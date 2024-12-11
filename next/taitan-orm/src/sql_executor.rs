@@ -2,26 +2,9 @@ use crate::error::LunaOrmError;
 use crate::result::Result;
 use std::marker::PhantomData;
 
-use crate::database;
-use sqlx::mysql::MySqlQueryResult;
 use sqlx::query::Query;
-use sqlx::sqlite::SqliteQueryResult;
 use sqlx::{Arguments, Database, Executor, IntoArguments, Pool};
 use taitan_orm_trait::SelectedEntity;
-// pub trait GetAffectedRows {
-//     fn get_affected_rows(&self) -> u64;
-// }
-// impl GetAffectedRows for SqliteQueryResult {
-//     fn get_affected_rows(&self) -> u64 {
-//         self.rows_affected()
-//     }
-// }
-//
-// impl GetAffectedRows for MySqlQueryResult {
-//     fn get_affected_rows(&self) -> u64 {
-//         self.rows_affected()
-//     }
-// }
 
 pub trait SqlExecutor {
     type DB: Database;

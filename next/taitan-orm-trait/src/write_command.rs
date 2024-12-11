@@ -8,14 +8,14 @@ pub enum WriteCommand {
     Upsert {
         entity: Box<dyn Entity>,
     },
-    Update {
-        mutation: Box<dyn Mutation>,
-        primary: Box<dyn Primary>,
-    },
-    Change {
-        mutation: Box<dyn Mutation>,
-        location: Box<dyn Location>,
-    },
+    // Update {
+    //     mutation: Box<dyn Mutation>,
+    //     primary: Box<dyn Primary>,
+    // },
+    // Change {
+    //     mutation: Box<dyn Mutation>,
+    //     location: Box<dyn Location>,
+    // },
     Delete {
         primary: Box<dyn Primary>,
     },

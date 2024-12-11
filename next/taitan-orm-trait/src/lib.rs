@@ -5,7 +5,6 @@ mod join;
 mod location;
 mod mutation;
 mod order_by;
-mod page;
 mod primary;
 mod selected;
 mod selection;
@@ -33,6 +32,4 @@ pub use order_by::OrderBy;
 pub use join::JoinedCondition;
 pub use join::JoinedConditions;
 
-pub use page::PageInfo;
-pub use page::Pagination;
 pub use write_command::WriteCommand;

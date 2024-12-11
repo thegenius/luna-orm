@@ -250,6 +250,8 @@ pub struct UserMutation {
 }
 
 impl Mutation for UserMutation {
+    type Primary = UserPrimary;
+    type Location = UserLocation;
     fn get_fields_name(&self) -> Vec<String> {
         let mut fields = Vec::new();
         if let Some(_) = &self.request_id {

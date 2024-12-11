@@ -1,7 +1,8 @@
 use taitan_orm_trait::FromClause;
 use taitan_orm_trait::JoinedConditions;
 use taitan_orm_trait::{Entity, Location, Mutation, Primary};
-use taitan_orm_trait::{OrderBy, Pagination, Selection};
+use taitan_orm_trait::{OrderBy, Selection};
+use crate::Pagination;
 
 #[derive(Default, Debug, Clone)]
 pub struct DefaultSqlGenerator {}
@@ -363,7 +364,7 @@ pub trait SqlGenerator {
         self.post_process(upsert_sql)
     }
 
-    fn get_update_sql(&self, mutation: &dyn Mutation, primary: &dyn Primary) -> String {
+    fn get_update_sql<M: Mutation>(&self, mutation: &M, primary: &M::Primary) -> String {
         let table_name = primary.get_table_name();
         let body_field_names = mutation.get_fields_name();
         let body_fields = wrap_locate_fields(
@@ -389,7 +390,7 @@ pub trait SqlGenerator {
         self.post_process(update_sql)
     }
 
-    fn get_change_sql(&self, mutation: &dyn Mutation, location: &dyn Location) -> String {
+    fn get_change_sql<M: Mutation>(&self, mutation: &M, location: &M::Location) -> String {
         let table_name = location.get_table_name();
         let mutation_fields = mutation.get_fields_name();
         let update_clause = wrap_locate_fields(

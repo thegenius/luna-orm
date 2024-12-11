@@ -1,8 +1,7 @@
 use crate::database::sqlite::SqliteCommander;
 use crate::Result;
 use crate::SqlExecutor;
-use sqlx::query::Query;
-use sqlx::sqlite::{SqliteArguments, SqliteRow};
+use sqlx::sqlite::{SqliteArguments};
 use sqlx::{Arguments, Database, Executor, Sqlite, SqlitePool};
 use std::marker::PhantomData;
 use taitan_orm_trait::SelectedEntity;
