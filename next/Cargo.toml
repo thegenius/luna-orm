@@ -10,8 +10,8 @@ default-members = [
 ]
 
 [workspace.package]
-version = "0.3.7"
-rust-version = "1.82"
+version = "0.1.0"
+rust-version = "1.83"
 
 
 [workspace.dependencies]

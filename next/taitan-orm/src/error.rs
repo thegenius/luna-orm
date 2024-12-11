@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -17,8 +18,8 @@ pub enum LunaOrmError {
     #[error("invalid order by fields")]
     OrderByFieldsError,
 
-    #[error("method not implement error")]
-    NotImplement,
+    #[error("method not implement error: {0}")]
+    NotImplement(String),
 
     #[error("paged template sql can't execute with no count sql")]
     PagedTemplateHasNoCountSql,

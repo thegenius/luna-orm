@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-use crate::join::{FromClause, JoinedCondition};
 use crate::join::joined_condition_array::JoinedConditionArray;
+use crate::join::{FromClause, JoinedCondition};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug)]
 #[serde(untagged)]

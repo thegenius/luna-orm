@@ -498,7 +498,7 @@ async fn test_insert_user(db: &mut DB<SqliteCommander>, user: &User) -> taitan_o
 
     let args = user.gen_insert_arguments_sqlite().unwrap();
 
-    let result = db.execute(&mut *conn, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES(?, ?, ?, ?, ?)",
+    let result = db.generic_execute(&mut *conn, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES(?, ?, ?, ?, ?)",
                                 args).await?;
     assert_eq!(result, 1);
 
@@ -510,7 +510,7 @@ async fn test_insert_user(db: &mut DB<SqliteCommander>, user: &User) -> taitan_o
     let primary = UserPrimary { id: user.id };
     let primary_args = primary.gen_primary_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
-        .fetch_optional(
+        .generic_fetch_optional(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
@@ -542,7 +542,7 @@ async fn test_update_user(
     // let args: SqliteArguments = user_primary
     //     .gen_update_arguments_sqlite(user_mutation)
     //     .unwrap();
-    let result = db.execute(&mut *conn, "UPDATE `user` SET `request_id` = ?, `name` = ?, `age` = ?, `birthday` = ? WHERE `id` = ?",
+    let result = db.generic_execute(&mut *conn, "UPDATE `user` SET `request_id` = ?, `name` = ?, `age` = ?, `birthday` = ? WHERE `id` = ?",
                                 args).await?;
     assert_eq!(result, 1);
 
@@ -554,7 +554,7 @@ async fn test_update_user(
 
     let primary_args = user_primary.gen_primary_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
-        .fetch_optional(
+        .generic_fetch_optional(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
@@ -575,7 +575,7 @@ async fn test_upsert_user(db: &mut DB<SqliteCommander>, user: &User) -> taitan_o
     let pool = db.get_pool()?;
     let mut conn = pool.acquire().await?;
     let args: SqliteArguments = user.gen_upsert_arguments_sqlite().unwrap();
-    let result = db.execute(&mut *conn, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES (?, ?, ?, ?, ?)
+    let result = db.generic_execute(&mut *conn, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES (?, ?, ?, ?, ?)
 ON CONFLICT (`id`) DO UPDATE SET
 `request_id` = ?, `name` = ?, `age` = ?, `birthday` = ?", args).await?;
     assert_eq!(result, 1);
@@ -589,7 +589,7 @@ ON CONFLICT (`id`) DO UPDATE SET
     let user_primary: UserPrimary = UserPrimary { id: user.id };
     let primary_args = user_primary.gen_primary_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
-        .fetch_optional(
+        .generic_fetch_optional(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
@@ -614,7 +614,7 @@ async fn test_delete_user(
     let mut conn = pool.acquire().await?;
     let args: SqliteArguments = user_primary.gen_primary_arguments_sqlite().unwrap();
     let result = db
-        .execute(&mut *conn, "DELETE FROM `user` WHERE `id` = ?", args)
+        .generic_execute(&mut *conn, "DELETE FROM `user` WHERE `id` = ?", args)
         .await?;
     assert_eq!(result, 1);
 
@@ -629,7 +629,7 @@ async fn test_delete_user(
     };
     let primary_args = user_primary.gen_primary_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
-        .fetch_optional(
+        .generic_fetch_optional(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
@@ -656,7 +656,7 @@ async fn test_select_all(
 
     let phantom = PhantomData::<SqliteArguments>::default();
     let entity_vec: Vec<UserSelected> = db
-        .fetch_all_plain(
+        .generic_fetch_all_plain(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user`",
             &selection,
@@ -684,7 +684,7 @@ async fn test_select_location(
     selection.birthday = true;
 
     let entities: Vec<UserSelected> = db
-        .fetch_all(
+        .generic_fetch_all(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `birthday` = ?",
             &selection,
@@ -719,16 +719,15 @@ pub async fn sql_executor_spec() -> taitan_orm::Result<()> {
     let pool = db.get_pool()?;
     let mut conn = pool.acquire().await.unwrap();
     let result = db
-        .execute_plain(
+        .generic_execute_plain(
             &mut *conn,
             "DROP TABLE IF EXISTS `user`",
             PhantomData::<SqliteArguments>::default(),
         )
         .await?;
-    let result = db.execute_plain(&mut *conn,
+    let result = db.generic_execute_plain(&mut *conn,
         "CREATE TABLE IF NOT EXISTS `user`(`id` BIGINT PRIMARY KEY, `request_id` blob,  `name` VARCHAR(64), `age` INT, `birthday` DATETIME)",
                                       PhantomData::<SqliteArguments>::default()).await?;
-
 
     let entity1 = User {
         id: 1,

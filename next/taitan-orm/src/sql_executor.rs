@@ -2,39 +2,84 @@ use crate::error::LunaOrmError;
 use crate::result::Result;
 use std::marker::PhantomData;
 
+use crate::database;
 use sqlx::mysql::MySqlQueryResult;
 use sqlx::query::Query;
 use sqlx::sqlite::SqliteQueryResult;
-use sqlx::{Database, Executor, IntoArguments, Pool};
+use sqlx::{Arguments, Database, Executor, IntoArguments, Pool};
 use taitan_orm_trait::SelectedEntity;
-
-pub trait GetAffectedRows {
-    fn get_affected_rows(&self) -> u64;
-}
-impl GetAffectedRows for SqliteQueryResult {
-    fn get_affected_rows(&self) -> u64 {
-        self.rows_affected()
-    }
-}
-
-impl GetAffectedRows for MySqlQueryResult {
-    fn get_affected_rows(&self) -> u64 {
-        self.rows_affected()
-    }
-}
+// pub trait GetAffectedRows {
+//     fn get_affected_rows(&self) -> u64;
+// }
+// impl GetAffectedRows for SqliteQueryResult {
+//     fn get_affected_rows(&self) -> u64 {
+//         self.rows_affected()
+//     }
+// }
+//
+// impl GetAffectedRows for MySqlQueryResult {
+//     fn get_affected_rows(&self) -> u64 {
+//         self.rows_affected()
+//     }
+// }
 
 pub trait SqlExecutor {
     type DB: Database;
 
     fn get_pool(&self) -> Result<&Pool<Self::DB>> {
-        Err(LunaOrmError::NotImplement)
+        Err(LunaOrmError::NotImplement("get_pool".to_string()))
     }
 
-    fn get_affected_rows(&self, _query_result: &<Self::DB as Database>::QueryResult) -> Result<u64> {
-        Err(LunaOrmError::NotImplement)
+    fn get_affected_rows(
+        &self,
+        _query_result: &<Self::DB as Database>::QueryResult,
+    ) -> Result<u64> {
+        Err(LunaOrmError::NotImplement("get_affected_rows".to_string()))
     }
 
-    async fn fetch_optional_plain<'a, EX, SE, A>(
+    async fn fetch_optional_plain<'a, SE>(
+        &'a mut self,
+        stmt: &'a str,
+        selection: &'a SE::Selection,
+    ) -> Result<Option<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin;
+
+    async fn fetch_optional<'a, SE>(
+        &'a self,
+        stmt: &'a str,
+        selection: &'a SE::Selection,
+        args: <Self::DB as Database>::Arguments<'a>,
+    ) -> Result<Option<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin;
+
+    async fn fetch_all_plain<'a, SE>(
+        &'a self,
+        stmt: &'a str,
+        selection: &'a SE::Selection,
+    ) -> Result<Vec<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin;
+
+    async fn fetch_all<'a, SE>(
+        &'a self,
+        stmt: &'a str,
+        selection: &'a SE::Selection,
+        args: <Self::DB as Database>::Arguments<'a>,
+    ) -> Result<Vec<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin;
+
+    async fn execute_plain<'a>(&'a self, stmt: &'a str) -> Result<u64>;
+
+    async fn execute<'a, A>(
+        &'a self,
+        stmt: &'a str,
+        args: <Self::DB as Database>::Arguments<'a>,
+    ) -> Result<u64>;
+
+    async fn generic_fetch_optional_plain<'a, EX, SE, A>(
         &mut self,
         ex: EX,
         stmt: &'a str,
@@ -54,7 +99,7 @@ pub trait SqlExecutor {
             Ok(None)
         }
     }
-    async fn fetch_optional<'a, EX, SE, A>(
+    async fn generic_fetch_optional<'a, EX, SE, A>(
         &self,
         ex: EX,
         stmt: &'a str,
@@ -75,7 +120,7 @@ pub trait SqlExecutor {
         }
     }
 
-    async fn fetch_all_plain<'a, EX, SE, A>(
+    async fn generic_fetch_all_plain<'a, EX, SE, A>(
         &self,
         ex: EX,
         stmt: &'a str,
@@ -101,7 +146,7 @@ pub trait SqlExecutor {
         Ok(result)
     }
 
-    async fn fetch_all<'a, EX, SE, A>(
+    async fn generic_fetch_all<'a, EX, SE, A>(
         &self,
         ex: EX,
         stmt: &'a str,
@@ -127,7 +172,7 @@ pub trait SqlExecutor {
         Ok(result)
     }
 
-    async fn execute_plain<'a, EX, A>(
+    async fn generic_execute_plain<'a, EX, A>(
         &self,
         ex: EX,
         query: &'a str,
@@ -142,7 +187,7 @@ pub trait SqlExecutor {
         self.get_affected_rows(&result)
     }
 
-    async fn execute<'a, EX, A>(&self, ex: EX, query: &'a str, args: A) -> Result<u64>
+    async fn generic_execute<'a, EX, A>(&self, ex: EX, query: &'a str, args: A) -> Result<u64>
     where
         EX: Executor<'a, Database = Self::DB>,
         A: IntoArguments<'a, Self::DB> + 'a,

@@ -1,5 +1,5 @@
-mod pagination;
 mod page_info;
+mod pagination;
 
-pub use pagination::Pagination;
 pub use page_info::PageInfo;
+pub use pagination::Pagination;

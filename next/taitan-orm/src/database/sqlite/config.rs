@@ -5,7 +5,7 @@ pub struct SqliteLocalConfig<'a> {
     pub db_file: Cow<'a, str>,
 }
 
-impl <'a> SqliteLocalConfig<'a> {
+impl<'a> SqliteLocalConfig<'a> {
     pub fn new<S>(work_dir: S, db_file: S) -> Self
     where
         S: Into<Cow<'a, str>>,

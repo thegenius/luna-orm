@@ -1,6 +1,6 @@
-use std::ops::{Deref, DerefMut};
 use crate::database::sqlite::SqliteCommander;
 use crate::SqlApi;
+use std::ops::{Deref, DerefMut};
 
 #[derive(Debug, Clone)]
 pub struct DB<T: SqlApi>(pub T);

@@ -1,5 +1,5 @@
-use serde::Serialize;
 use serde::de::Deserialize;
+use serde::Serialize;
 
 pub type JoinedFields = (JoinedField, JoinedField);
 #[derive(Serialize, PartialEq, Eq, Debug)]

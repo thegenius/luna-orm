@@ -1,6 +1,6 @@
-use std::fmt::Debug;
-use sqlx::Database;
 use crate::selection::Selection;
+use sqlx::Database;
+use std::fmt::Debug;
 
 pub trait SelectedEntity<DB: Database>: Debug {
     type Selection: Selection;

@@ -1,11 +1,19 @@
+use sqlx::pool::PoolConnection;
+use sqlx::Connection;
 use std::fmt::Debug;
+use tracing::debug;
 // use tracing::debug;
-use taitan_orm_trait::{ Primary, SelectedEntity};
-use crate::{SqlExecutor, SqlGenerator};
 use crate::result::Result;
+use crate::{SqlExecutor, SqlGenerator};
+use taitan_orm_trait::{Entity, Primary, SelectedEntity};
 pub trait SqlApi: SqlExecutor + Debug {
     type G: SqlGenerator + Sync + Debug;
     fn get_generator(&self) -> &Self::G;
+
+    // async fn get_connection(&self) -> Result<PoolConnection<Self::DB>>;
+    // IntoArguments<'_, <Self as SqlExecutor>::DB>` is not implemented for `SqliteArguments<'_>
+    // sqlx的IntoArguments还足够通用
+    async fn insert(&mut self, entity: &dyn Entity) -> Result<bool>;
 
     async fn select<SE>(
         &self,
@@ -14,14 +22,4 @@ pub trait SqlApi: SqlExecutor + Debug {
     ) -> Result<Option<SE>>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin;
-
-    // async fn insert(&mut self, entity: &dyn Entity) -> Result<bool> {
-    //     debug!(target: "luna_orm", command = "insert",  entity = ?entity);
-    //     let sql = self.get_generator().get_insert_sql(entity);
-    //     debug!(target: "luna_orm", command = "insert", sql = sql);
-    //     let args = entity.any_arguments_of_insert();
-    //     let result = self.execute(&sql, args).await?;
-    //     debug!(target: "luna_orm", command = "insert", result = ?result);
-    //     return Ok(result.rows_affected() > 0);
-    // }
 }

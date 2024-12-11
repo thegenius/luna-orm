@@ -1,12 +1,11 @@
-use std::fmt::Debug;
+use crate::NotImplementError;
 use sqlx::error::BoxDynError;
 use sqlx::mysql::MySqlArguments;
 use sqlx::postgres::PgArguments;
 use sqlx::sqlite::SqliteArguments;
-use crate::NotImplementError;
+use std::fmt::Debug;
 
 pub trait Primary: Sync + Debug {
-
     fn get_table_name(&self) -> &'static str;
 
     fn get_primary_field_names(&self) -> &'static [&'static str];

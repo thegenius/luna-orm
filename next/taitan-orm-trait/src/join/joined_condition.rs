@@ -1,5 +1,5 @@
+use crate::join::{FromClause, JoinedFields, JoinedMode};
 use serde::{Deserialize, Serialize};
-use crate::join::{FromClause, JoinedMode, JoinedFields};
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug)]
 pub struct JoinedCondition {

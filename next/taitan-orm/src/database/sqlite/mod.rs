@@ -1,6 +1,7 @@
 mod commander;
+mod config;
+mod executor;
 mod transaction;
-mod sqlite_config;
 
 pub use commander::SqliteCommander;
-pub use sqlite_config::SqliteLocalConfig;
+pub use config::SqliteLocalConfig;

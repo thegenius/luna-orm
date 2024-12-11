@@ -1,7 +1,7 @@
 use taitan_orm_trait::FromClause;
 use taitan_orm_trait::JoinedConditions;
-use taitan_orm_trait::{OrderBy, Pagination, Selection};
 use taitan_orm_trait::{Entity, Location, Mutation, Primary};
+use taitan_orm_trait::{OrderBy, Pagination, Selection};
 
 #[derive(Default, Debug, Clone)]
 pub struct DefaultSqlGenerator {}

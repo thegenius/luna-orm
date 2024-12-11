@@ -1,9 +1,9 @@
-use std::fmt::Debug;
+use crate::error::NotImplementError;
 use sqlx::error::BoxDynError;
 use sqlx::mysql::MySqlArguments;
 use sqlx::postgres::PgArguments;
 use sqlx::sqlite::SqliteArguments;
-use crate::error::NotImplementError;
+use std::fmt::Debug;
 pub trait Entity: Sync + Debug {
     fn get_table_name(&self) -> &str;
 

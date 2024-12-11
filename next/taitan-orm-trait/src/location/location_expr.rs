@@ -1,6 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::CmpOperator;
-
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct LocationExpr<T> {
@@ -11,7 +10,7 @@ pub struct LocationExpr<T> {
 pub trait LocationTrait {
     fn get_cmp_sql(&self) -> &str;
 }
-impl <T> LocationTrait for LocationExpr<T> {
+impl<T> LocationTrait for LocationExpr<T> {
     fn get_cmp_sql(&self) -> &str {
         self.cmp.get_sql()
     }

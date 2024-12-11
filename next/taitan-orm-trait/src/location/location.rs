@@ -1,12 +1,11 @@
-use std::fmt::Debug;
+use crate::NotImplementError;
 use sqlx::error::BoxDynError;
 use sqlx::mysql::MySqlArguments;
 use sqlx::postgres::PgArguments;
 use sqlx::sqlite::SqliteArguments;
-use crate::NotImplementError;
+use std::fmt::Debug;
 
 pub trait Location: Sync + Debug {
-
     fn get_table_name(&self) -> &'static str;
 
     fn get_fields_name(&self) -> Vec<String>;
