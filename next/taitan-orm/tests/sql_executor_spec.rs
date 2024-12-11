@@ -37,12 +37,9 @@
 //! | `uuid::fmt::Hyphenated`               | CHAR(36), VARCHAR, TEXT, UUID (MariaDB-only)         |
 //! | `uuid::fmt::Simple`                   | CHAR(32), VARCHAR, TEXT                              |
 
-use taitan_orm::Result;
-use taitan_orm_trait::{
-    Entity, Location, Mutation, Primary, SelectedEntity, UpdateCommand,
-};
-use taitan_orm_trait::{CmpOperator, LocationExpr, LocationTrait, Selection};
 use std::marker::PhantomData;
+use taitan_orm_trait::{CmpOperator, LocationExpr, LocationTrait, Selection};
+use taitan_orm_trait::{Entity, Location, Mutation, Primary, SelectedEntity, UpdateCommand};
 
 use serde::{Deserialize, Serialize};
 use sqlx::error::BoxDynError;
@@ -55,8 +52,9 @@ use sqlx::{sqlx_macros, Database, Sqlite};
 
 use sqlx::Arguments;
 use sqlx::Row;
+use taitan_orm::database::sqlite::{SqliteCommander, SqliteLocalConfig};
+use taitan_orm::{SqlExecutor, DB};
 use time::macros::datetime;
-
 
 #[derive(Debug)]
 pub struct User {
@@ -151,7 +149,9 @@ impl Primary for UserPrimary {
         &["id"]
     }
 
-    fn gen_primary_arguments_sqlite(&self) -> std::result::Result<SqliteArguments<'_>, BoxDynError> {
+    fn gen_primary_arguments_sqlite(
+        &self,
+    ) -> std::result::Result<SqliteArguments<'_>, BoxDynError> {
         let mut args = SqliteArguments::default();
         args.add(&self.id)?;
         Ok(args)
@@ -170,13 +170,13 @@ pub struct UserSelected {
     // ipv6addr: Option<Ipv6Addr>,
 }
 
-impl SelectedEntityNew<Sqlite> for UserSelected {
+impl SelectedEntity<Sqlite> for UserSelected {
     type Selection = UserSelection;
 
     fn from_row(
         selection: &Self::Selection,
         row: <Sqlite as Database>::Row,
-    ) -> Result<Self, SqlxError>
+    ) -> Result<Self, sqlx::Error>
     where
         Self: Sized,
     {
@@ -249,7 +249,7 @@ pub struct UserMutation {
     // ipv6addr: Option<Ipv6Addr>,
 }
 
-impl MutationNew for UserMutation {
+impl Mutation for UserMutation {
     fn get_fields_name(&self) -> Vec<String> {
         let mut fields = Vec::new();
         if let Some(_) = &self.request_id {
@@ -332,7 +332,7 @@ impl UserLocation {
     }
 }
 
-impl LocationNew for UserLocation {
+impl Location for UserLocation {
     fn get_table_name(&self) -> &'static str {
         "user"
     }
@@ -492,13 +492,13 @@ impl UpdateCommand for UserLocationMutationPair {
     }
 }
 
-async fn test_insert_user(db: &mut DB<SqliteDatabaseNew>, user: &User) -> LunaOrmResult<()> {
-    let pool = db.new_get_pool()?;
+async fn test_insert_user(db: &mut DB<SqliteCommander>, user: &User) -> taitan_orm::Result<()> {
+    let pool = db.get_pool()?;
     let mut conn = pool.acquire().await?;
 
     let args = user.gen_insert_arguments_sqlite().unwrap();
 
-    let result = db.new_execute(&mut *conn, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES(?, ?, ?, ?, ?)",
+    let result = db.execute(&mut *conn, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES(?, ?, ?, ?, ?)",
                                 args).await?;
     assert_eq!(result, 1);
 
@@ -510,7 +510,7 @@ async fn test_insert_user(db: &mut DB<SqliteDatabaseNew>, user: &User) -> LunaOr
     let primary = UserPrimary { id: user.id };
     let primary_args = primary.gen_primary_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
-        .new_fetch_optional(
+        .fetch_optional(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
@@ -531,18 +531,18 @@ async fn test_insert_user(db: &mut DB<SqliteDatabaseNew>, user: &User) -> LunaOr
 因为UPDATE语句固定了，所以目前要求mutation必须包含所有字段
 */
 async fn test_update_user(
-    db: &mut DB<SqliteDatabaseNew>,
+    db: &mut DB<SqliteCommander>,
     user_mutation: &UserMutation,
     user_primary: &UserPrimary,
-) -> LunaOrmResult<()> {
-    let pool = db.new_get_pool()?;
+) -> taitan_orm::Result<()> {
+    let pool = db.get_pool()?;
     let mut conn = pool.acquire().await?;
     let update_command = UserPrimaryMutationPair(user_mutation, user_primary);
     let args = update_command.gen_update_arguments_sqlite().unwrap();
     // let args: SqliteArguments = user_primary
     //     .gen_update_arguments_sqlite(user_mutation)
     //     .unwrap();
-    let result = db.new_execute(&mut *conn, "UPDATE `user` SET `request_id` = ?, `name` = ?, `age` = ?, `birthday` = ? WHERE `id` = ?",
+    let result = db.execute(&mut *conn, "UPDATE `user` SET `request_id` = ?, `name` = ?, `age` = ?, `birthday` = ? WHERE `id` = ?",
                                 args).await?;
     assert_eq!(result, 1);
 
@@ -554,7 +554,7 @@ async fn test_update_user(
 
     let primary_args = user_primary.gen_primary_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
-        .new_fetch_optional(
+        .fetch_optional(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
@@ -571,11 +571,11 @@ async fn test_update_user(
     Ok(())
 }
 
-async fn test_upsert_user(db: &mut DB<SqliteDatabaseNew>, user: &User) -> LunaOrmResult<()> {
-    let pool = db.new_get_pool()?;
+async fn test_upsert_user(db: &mut DB<SqliteCommander>, user: &User) -> taitan_orm::Result<()> {
+    let pool = db.get_pool()?;
     let mut conn = pool.acquire().await?;
     let args: SqliteArguments = user.gen_upsert_arguments_sqlite().unwrap();
-    let result = db.new_execute(&mut *conn, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES (?, ?, ?, ?, ?)
+    let result = db.execute(&mut *conn, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES (?, ?, ?, ?, ?)
 ON CONFLICT (`id`) DO UPDATE SET
 `request_id` = ?, `name` = ?, `age` = ?, `birthday` = ?", args).await?;
     assert_eq!(result, 1);
@@ -589,7 +589,7 @@ ON CONFLICT (`id`) DO UPDATE SET
     let user_primary: UserPrimary = UserPrimary { id: user.id };
     let primary_args = user_primary.gen_primary_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
-        .new_fetch_optional(
+        .fetch_optional(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
@@ -607,14 +607,14 @@ ON CONFLICT (`id`) DO UPDATE SET
 }
 
 async fn test_delete_user(
-    db: &mut DB<SqliteDatabaseNew>,
+    db: &mut DB<SqliteCommander>,
     user_primary: &UserPrimary,
-) -> LunaOrmResult<()> {
-    let pool = db.new_get_pool()?;
+) -> taitan_orm::Result<()> {
+    let pool = db.get_pool()?;
     let mut conn = pool.acquire().await?;
     let args: SqliteArguments = user_primary.gen_primary_arguments_sqlite().unwrap();
     let result = db
-        .new_execute(&mut *conn, "DELETE FROM `user` WHERE `id` = ?", args)
+        .execute(&mut *conn, "DELETE FROM `user` WHERE `id` = ?", args)
         .await?;
     assert_eq!(result, 1);
 
@@ -629,7 +629,7 @@ async fn test_delete_user(
     };
     let primary_args = user_primary.gen_primary_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
-        .new_fetch_optional(
+        .fetch_optional(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
@@ -641,8 +641,11 @@ async fn test_delete_user(
     Ok(())
 }
 
-async fn test_select_all(db: &mut DB<SqliteDatabaseNew>, expect_cnt: usize) -> LunaOrmResult<()> {
-    let pool = db.new_get_pool()?;
+async fn test_select_all(
+    db: &mut DB<SqliteCommander>,
+    expect_cnt: usize,
+) -> taitan_orm::Result<()> {
+    let pool = db.get_pool()?;
     let mut conn = pool.acquire().await?;
 
     let mut selection = UserSelection::default();
@@ -653,7 +656,7 @@ async fn test_select_all(db: &mut DB<SqliteDatabaseNew>, expect_cnt: usize) -> L
 
     let phantom = PhantomData::<SqliteArguments>::default();
     let entity_vec: Vec<UserSelected> = db
-        .new_fetch_all_plain(
+        .fetch_all_plain(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user`",
             &selection,
@@ -666,11 +669,11 @@ async fn test_select_all(db: &mut DB<SqliteDatabaseNew>, expect_cnt: usize) -> L
 }
 
 async fn test_select_location(
-    db: &mut DB<SqliteDatabaseNew>,
+    db: &mut DB<SqliteCommander>,
     user_location: &UserLocation,
     expect_cnt: usize,
-) -> LunaOrmResult<()> {
-    let pool = db.new_get_pool()?;
+) -> taitan_orm::Result<()> {
+    let pool = db.get_pool()?;
     let mut conn = pool.acquire().await?;
     let loc_args: SqliteArguments = user_location.gen_location_arguments_sqlite().unwrap();
 
@@ -681,7 +684,7 @@ async fn test_select_location(
     selection.birthday = true;
 
     let entities: Vec<UserSelected> = db
-        .new_fetch_all(
+        .fetch_all(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `birthday` = ?",
             &selection,
@@ -706,27 +709,27 @@ select all where id = 1
 select all where id = 2
 */
 #[sqlx_macros::test]
-pub async fn test_schema_trait() -> LunaOrmResult<()> {
+pub async fn sql_executor_spec() -> taitan_orm::Result<()> {
     let config = SqliteLocalConfig {
         work_dir: "./workspace".to_string(),
         db_file: "test.db".to_string(),
     };
 
-    let mut db: DB<SqliteDatabaseNew> = SqliteDatabaseNew::build(config).await.unwrap().into();
-    let pool = db.new_get_pool()?;
+    let mut db: DB<SqliteCommander> = SqliteCommander::build(config).await.unwrap().into();
+    let pool = db.get_pool()?;
     let mut conn = pool.acquire().await.unwrap();
     let result = db
-        .new_execute_plain(
+        .execute_plain(
             &mut *conn,
             "DROP TABLE IF EXISTS `user`",
             PhantomData::<SqliteArguments>::default(),
         )
         .await?;
-    let result = db.new_execute_plain(&mut *conn,
+    let result = db.execute_plain(&mut *conn,
         "CREATE TABLE IF NOT EXISTS `user`(`id` BIGINT PRIMARY KEY, `request_id` blob,  `name` VARCHAR(64), `age` INT, `birthday` DATETIME)",
                                       PhantomData::<SqliteArguments>::default()).await?;
 
-    // let pool = db.new_get_pool()?;
+    // let pool = db.get_pool()?;
 
     let entity1 = User {
         id: 1,

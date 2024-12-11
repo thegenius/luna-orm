@@ -15,11 +15,11 @@ rust-version = "1.82"
 
 
 [workspace.dependencies]
-sqlx = {version = "0.8.2", features = ["mysql", "sqlite", "postgres", "bigdecimal", "time", "uuid"]}
+sqlx = {version = "0.8.2", features = ["runtime-tokio", "mysql", "sqlite", "postgres", "bigdecimal", "time", "uuid"]}
 
-time = {version = "0.3.37"}
-bigdecimal = { version = "0.4.6" }
-uuid = { version = "1.11.0", features = ["v4"] }
+time = {version = "0.3.37", features = ["macros", "serde"]}
+bigdecimal = { version = "0.4.6", features = ["serde"] }
+uuid = { version = "1.11.0", features = ["v4", "serde"] }
 
 tokio = {version = "1.34.0", features = ["full"]}
 

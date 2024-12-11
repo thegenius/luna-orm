@@ -9,7 +9,12 @@ taitan-orm-trait = { path = "../taitan-orm-trait" }
 sqlx = {workspace = true}
 serde = {workspace = true}
 time = {workspace = true}
+uuid = {workspace = true}
 tracing = {workspace = true}
 thiserror = {workspace = true}
+path-absolutize = {workspace = true}
+
+[dev-dependencies]
+
 
 

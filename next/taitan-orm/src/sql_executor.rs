@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 use sqlx::mysql::MySqlQueryResult;
 use sqlx::query::Query;
 use sqlx::sqlite::SqliteQueryResult;
-use sqlx::{Database, Executor, IntoArguments};
+use sqlx::{Database, Executor, IntoArguments, Pool};
 use taitan_orm_trait::SelectedEntity;
 
 pub trait GetAffectedRows {
@@ -25,6 +25,10 @@ impl GetAffectedRows for MySqlQueryResult {
 
 pub trait SqlExecutor {
     type DB: Database;
+
+    fn get_pool(&self) -> Result<&Pool<Self::DB>> {
+        Err(LunaOrmError::NotImplement)
+    }
 
     fn get_affected_rows(&self, _query_result: &<Self::DB as Database>::QueryResult) -> Result<u64> {
         Err(LunaOrmError::NotImplement)
