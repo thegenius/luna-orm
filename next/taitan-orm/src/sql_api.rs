@@ -1,5 +1,8 @@
+use crate::dto::EmptySelection;
 use crate::result::Result;
-use crate::{SqlExecutor, SqlGenerator};
+use crate::TaitanOrmError::NotImplement;
+use crate::{CountResult, SqlExecutor, SqlGenerator};
+use sqlx::sqlite::SqliteArguments;
 use sqlx::{Connection, Database};
 use std::fmt::Debug;
 use taitan_orm_trait::paged_list::PagedList;
@@ -51,7 +54,7 @@ pub trait SqlApi: SqlExecutor + Debug {
     async fn select<SE>(
         &self,
         selection: &SE::Selection,
-        unique: &dyn Unique
+        unique: &dyn Unique,
     ) -> Result<Option<SE>>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin;
@@ -69,8 +72,8 @@ pub trait SqlApi: SqlExecutor + Debug {
         &mut self,
         selection: &SE::Selection,
         location: &dyn Location,
-        page: &Pagination,
         order_by: &dyn OrderBy,
+        page: &Pagination,
     ) -> Result<PagedList<Self::DB, SE>>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin;
@@ -78,15 +81,26 @@ pub trait SqlApi: SqlExecutor + Debug {
     /**
     根据表中所有数据
     */
-    async fn devour<SE>(&mut self, selection: &SE::Selection) -> Result<Vec<SE>>
+    async fn devour<SE>(
+        &mut self,
+        selection: &SE::Selection,
+        order_by: &dyn OrderBy,
+    ) -> Result<Vec<SE>>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin;
 
+    async fn devour_paged<SE>(
+        &mut self,
+        selection: &SE::Selection,
+        order_by: &dyn OrderBy,
+        page: &Pagination,
+    ) -> Result<PagedList<Self::DB, SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin;
 
+    async fn count(&mut self, location: &dyn Location) -> Result<u64>;
 
-    async fn count(&mut self, location: &dyn Location) -> Result<usize>;
-
-
+    async fn count_table(&mut self, table_name: &str) -> Result<u64>;
 
     async fn execute_by_template(&mut self, template: &dyn TemplateRecord) -> Result<usize>;
 
@@ -96,4 +110,6 @@ pub trait SqlApi: SqlExecutor + Debug {
     // ) -> Result<Option<SE>>
     // where
     //     SE: SelectedEntity<Self::DB> + Send + Unpin;
+
+    // sqlx is not abstract enough
 }

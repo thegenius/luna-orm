@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum LunaOrmError {
+pub enum TaitanOrmError {
     #[error("databse init fail with args: `{0}`")]
     DatabaseInitFail(String),
 

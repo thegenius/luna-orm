@@ -1,3 +1,3 @@
-use crate::LunaOrmError;
+use crate::TaitanOrmError;
 
-pub type Result<T> = std::result::Result<T, LunaOrmError>;
+pub type Result<T> = std::result::Result<T, TaitanOrmError>;

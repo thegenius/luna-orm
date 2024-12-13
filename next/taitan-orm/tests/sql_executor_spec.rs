@@ -39,7 +39,7 @@
 
 use std::marker::PhantomData;
 use taitan_orm_trait::{CmpOperator, LocationExpr, LocationTrait, Selection};
-use taitan_orm_trait::{Entity, Location, Mutation, Unique, SelectedEntity, UpdateCommand};
+use taitan_orm_trait::{Entity, Location, Mutation, SelectedEntity, Unique, UpdateCommand};
 
 use serde::{Deserialize, Serialize};
 use sqlx::error::BoxDynError;
@@ -149,9 +149,7 @@ impl Unique for UserPrimary {
         &["id"]
     }
 
-    fn gen_unique_arguments_sqlite(
-        &self,
-    ) -> std::result::Result<SqliteArguments<'_>, BoxDynError> {
+    fn gen_unique_arguments_sqlite(&self) -> std::result::Result<SqliteArguments<'_>, BoxDynError> {
         let mut args = SqliteArguments::default();
         args.add(&self.id)?;
         Ok(args)
@@ -237,9 +235,9 @@ impl Selection for UserSelection {
         fields
     }
 
-    fn all_fields() -> Self
+    fn full_fields() -> Self
     where
-        Self: Sized
+        Self: Sized,
     {
         Self {
             id: true,

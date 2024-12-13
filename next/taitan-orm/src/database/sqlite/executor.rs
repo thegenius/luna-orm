@@ -1,7 +1,7 @@
 use crate::database::sqlite::SqliteCommander;
 use crate::Result;
 use crate::SqlExecutor;
-use sqlx::sqlite::{SqliteArguments};
+use sqlx::sqlite::SqliteArguments;
 use sqlx::{Arguments, Database, Executor, Sqlite, SqlitePool};
 use std::marker::PhantomData;
 use taitan_orm_trait::SelectedEntity;
@@ -27,6 +27,23 @@ impl SqlExecutor for SqliteCommander {
         let args: PhantomData<SqliteArguments> = PhantomData::default();
         self.generic_fetch_optional_plain(&mut *ex, stmt, selection, args)
             .await
+    }
+
+    async fn fetch_execute<'a, SE>(&'a self, stmt: &'a str, args: SqliteArguments<'a>) -> Result<SE>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+    {
+        let mut ex = self.get_pool()?.acquire().await?;
+        self.generic_fetch_execute(&mut *ex, stmt, args).await
+    }
+
+    async fn fetch_execute_plain<'a, SE>(&'a self, stmt: &'a str) -> Result<SE>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+    {
+        let mut ex = self.get_pool()?.acquire().await?;
+        let args: PhantomData<SqliteArguments> = PhantomData::default();
+        self.generic_fetch_execute_plain(&mut *ex, stmt, args).await
     }
 
     async fn fetch_optional<'a, SE>(

@@ -1,4 +1,4 @@
-use crate::error::LunaOrmError;
+use crate::error::TaitanOrmError;
 use crate::result::Result;
 use std::marker::PhantomData;
 
@@ -10,14 +10,16 @@ pub trait SqlExecutor {
     type DB: Database;
 
     fn get_pool(&self) -> Result<&Pool<Self::DB>> {
-        Err(LunaOrmError::NotImplement("get_pool".to_string()))
+        Err(TaitanOrmError::NotImplement("get_pool".to_string()))
     }
 
     fn get_affected_rows(
         &self,
         _query_result: &<Self::DB as Database>::QueryResult,
     ) -> Result<u64> {
-        Err(LunaOrmError::NotImplement("get_affected_rows".to_string()))
+        Err(TaitanOrmError::NotImplement(
+            "get_affected_rows".to_string(),
+        ))
     }
 
     async fn fetch_optional_plain<'a, SE>(
@@ -25,6 +27,27 @@ pub trait SqlExecutor {
         stmt: &'a str,
         selection: &'a SE::Selection,
     ) -> Result<Option<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin;
+
+    // async fn fetch<'a, SE>(
+    //     &'a self,
+    //     stmt: &'a str,
+    //     selection: &'a SE::Selection,
+    //     args: <Self::DB as Database>::Arguments<'a>,
+    // ) -> Result<SE>
+    // where
+    //     SE: SelectedEntity<Self::DB> + Send + Unpin;
+
+    async fn fetch_execute<'a, SE>(
+        &'a self,
+        stmt: &'a str,
+        args: <Self::DB as Database>::Arguments<'a>,
+    ) -> Result<SE>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin;
+
+    async fn fetch_execute_plain<'a, SE>(&'a self, stmt: &'a str) -> Result<SE>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin;
 
@@ -82,6 +105,47 @@ pub trait SqlExecutor {
             Ok(None)
         }
     }
+
+    async fn generic_fetch_execute_plain<'a, EX, SE, A>(
+        &self,
+        ex: EX,
+        stmt: &'a str,
+        _: PhantomData<A>,
+    ) -> Result<SE>
+    where
+        EX: Executor<'a, Database = Self::DB>,
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+        A: IntoArguments<'a, Self::DB> + 'a + Default,
+    {
+        let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, Default::default());
+        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(ex).await?;
+        if let Some(result) = result_opt {
+            Ok(SE::from_row_full(result)?)
+        } else {
+            Err(sqlx::error::Error::RowNotFound.into())
+        }
+    }
+
+    async fn generic_fetch_execute<'a, EX, SE, A>(
+        &self,
+        ex: EX,
+        stmt: &'a str,
+        args: A,
+    ) -> Result<SE>
+    where
+        EX: Executor<'a, Database = Self::DB>,
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+        A: IntoArguments<'a, Self::DB> + 'a,
+    {
+        let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, args);
+        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(ex).await?;
+        if let Some(result) = result_opt {
+            Ok(SE::from_row_full(result)?)
+        } else {
+            Err(sqlx::error::Error::RowNotFound.into())
+        }
+    }
+
     async fn generic_fetch_optional<'a, EX, SE, A>(
         &self,
         ex: EX,
@@ -123,7 +187,7 @@ pub trait SqlExecutor {
             if let Ok(selected_entity) = selected_result {
                 result.push(selected_entity);
             } else {
-                return Err(LunaOrmError::FromRowToEntityError);
+                return Err(TaitanOrmError::FromRowToEntityError);
             }
         }
         Ok(result)
@@ -149,7 +213,7 @@ pub trait SqlExecutor {
             if let Ok(selected_entity) = selected_result {
                 result.push(selected_entity);
             } else {
-                return Err(LunaOrmError::FromRowToEntityError);
+                return Err(TaitanOrmError::FromRowToEntityError);
             }
         }
         Ok(result)

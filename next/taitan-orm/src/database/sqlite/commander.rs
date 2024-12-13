@@ -2,11 +2,12 @@ use crate::database::sqlite::SqliteLocalConfig;
 use crate::dto::EmptySelection;
 use crate::sql_generator::DefaultSqlGenerator;
 use crate::{CountResult, Result};
-use crate::{LunaOrmError, SqlApi, SqlExecutor, SqlGenerator};
+use crate::{SqlApi, SqlExecutor, SqlGenerator, TaitanOrmError};
 use path_absolutize::Absolutize;
+use sqlx::error::BoxDynError;
 use sqlx::pool::PoolConnection;
 use sqlx::sqlite::{SqliteArguments, SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous};
-use sqlx::{Sqlite, SqlitePool};
+use sqlx::{Database, Sqlite, SqlitePool};
 use std::fs;
 use std::marker::PhantomData;
 use std::path::Path;
@@ -29,10 +30,10 @@ impl SqliteCommander {
         let workspace = Path::new(workspace_dir);
         let workspace_absolute = workspace
             .absolutize()
-            .map_err(|_e| LunaOrmError::DatabaseInitFail("workdir absolute fail".to_string()))?;
+            .map_err(|_e| TaitanOrmError::DatabaseInitFail("workdir absolute fail".to_string()))?;
 
         fs::create_dir_all(&workspace_absolute)
-            .map_err(|_e| LunaOrmError::DatabaseInitFail("create dir fail".to_string()))?;
+            .map_err(|_e| TaitanOrmError::DatabaseInitFail("create dir fail".to_string()))?;
         let db_file_path = workspace_absolute.join(db_file);
 
         let options = SqliteConnectOptions::new()
@@ -42,7 +43,7 @@ impl SqliteCommander {
             .create_if_missing(true);
         let sqlite_pool = SqlitePool::connect_with(options)
             .await
-            .map_err(|_e| LunaOrmError::DatabaseInitFail("create is missing fail".to_string()))?;
+            .map_err(|_e| TaitanOrmError::DatabaseInitFail("create is missing fail".to_string()))?;
         Ok(sqlite_pool)
     }
 
@@ -54,6 +55,28 @@ impl SqliteCommander {
             sqlite_pool: pool,
         };
         Ok(database)
+    }
+}
+
+fn build_paged_list<DB: Database, SE>(
+    data: Vec<SE>,
+    record_count: u64,
+    page: &Pagination,
+) -> PagedList<DB, SE>
+where
+    SE: SelectedEntity<DB> + Send + Unpin,
+{
+    let page_info = PageInfo {
+        page_size: page.page_size,
+        page_num: page.page_num,
+        page_total: (record_count / page.page_size as u64),
+        total: record_count,
+    };
+
+    PagedList {
+        data,
+        page: page_info,
+        _phantom: PhantomData,
     }
 }
 
@@ -144,7 +167,7 @@ impl SqlApi for SqliteCommander {
         order_by: &dyn OrderBy,
     ) -> Result<Vec<SE>>
     where
-        SE: SelectedEntity<Self::DB> + Send + Unpin
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
         debug!(target: "taitan_orm", command = "search", location = ?location, order_by = ?order_by, selection = ?selection);
         let sql = self
@@ -161,79 +184,89 @@ impl SqlApi for SqliteCommander {
         &mut self,
         selection: &SE::Selection,
         location: &dyn Location,
-        page: &Pagination,
         order_by: &dyn OrderBy,
+        page: &Pagination,
     ) -> Result<PagedList<Self::DB, SE>>
     where
-        SE: SelectedEntity<Self::DB> + Send + Unpin
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
         debug!(target: "taitan_orm", command = "search_paged", location = ?location, order_by = ?order_by, selection = ?selection, page = ?page);
-        let args = location.gen_location_arguments_sqlite()?;
-        let count_sql = self.get_generator().get_search_count_sql(location);
-        debug!(target: "taitan_orm", command = "search_paged", count_sql = count_sql);
-        let record_count: Option<CountResult> = self
-            .fetch_optional(&count_sql, &EmptySelection::default(), args)
-            .await?;
-        if record_count.is_none() {
+        let record_count = self.count(location).await?;
+        if record_count <= 0 {
             return Ok(PagedList::empty(page.page_size, page.page_num));
         }
-        let record_count: CountResult = record_count.unwrap();
-        if record_count.count <= 0 {
-            return Ok(PagedList::empty(page.page_size, page.page_num));
-        }
-        let record_count: i64 = record_count.count;
 
-        let sql = self
-            .get_generator()
-            .get_paged_search_sql(selection, location, &Some(order_by), page);
+        let sql =
+            self.get_generator()
+                .get_search_paged_sql(selection, location, &Some(order_by), page);
         debug!(target: "taitan_orm", command = "search_paged", sql = sql);
         let args = location.gen_location_arguments_sqlite()?;
         let entity_list: Vec<SE> = self.fetch_all(&sql, selection, args).await?;
-        let page_info = PageInfo {
-            page_size: page.page_size,
-            page_num: page.page_num,
-            page_total: (record_count / page.page_size as i64) as usize,
-            total: record_count as usize,
-        };
-
-        let result = PagedList {
-            data: entity_list,
-            page: page_info,
-            _phantom: PhantomData,
-        };
+        let result = build_paged_list(entity_list, record_count, page);
         debug!(target: "taitan_orm", command = "search_paged", result = ?result);
         Ok(result)
     }
 
-    async fn devour<SE>(&mut self, selection: &SE::Selection) -> Result<Vec<SE>>
+    async fn devour<SE>(
+        &mut self,
+        selection: &SE::Selection,
+        order_by: &dyn OrderBy,
+    ) -> Result<Vec<SE>>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
-        debug!(target: "taitan_orm", command = "search_all", selection = ?selection);
-        let sql = self.get_generator().get_search_all_sql(selection);
-        debug!(target: "taitan_orm", command = "search_all", sql = sql);
+        debug!(target: "taitan_orm", command = "devour", selection = ?selection);
+        let sql = self.get_generator().get_devour_sql(selection, order_by);
+        debug!(target: "taitan_orm", command = "devour", sql = sql);
         let result: Vec<SE> = self.fetch_all_plain(&sql, selection).await?;
-        debug!(target: "taitan_orm", command = "search_all", result = ?result);
+        debug!(target: "taitan_orm", command = "devour", result = ?result);
         Ok(result)
     }
 
-    async fn count(&mut self, location: &dyn Location) -> Result<usize> {
-        debug!(target: "taitan_orm", command = "count", location = ?location);
-        let args = location.gen_location_arguments_sqlite()?;
-        let count_sql = self.get_generator().get_search_count_sql(location);
-        debug!(target: "taitan_orm", command = "count", sql = count_sql);
-        let record_count: Option<CountResult> = self
-            .fetch_optional(&count_sql, &EmptySelection::default(), args)
-            .await?;
-        debug!(target: "taitan_orm", command = "count", result = ?record_count);
-        if record_count.is_none() {
-            Ok(0)
-        } else {
-            Ok(record_count.unwrap().count as usize)
+    async fn devour_paged<SE>(
+        &mut self,
+        selection: &SE::Selection,
+        order_by: &dyn OrderBy,
+        page: &Pagination,
+    ) -> Result<PagedList<Self::DB, SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+    {
+        debug!(target: "taitan_orm", command = "devour_paged", order_by = ?order_by, selection = ?selection, page = ?page);
+        let record_count = self.count_table(selection.get_table_name()).await?;
+        if record_count <= 0 {
+            return Ok(PagedList::empty(page.page_size, page.page_num));
         }
+
+        debug!(target: "taitan_orm", command = "devour_paged", selection = ?selection);
+        let sql = self.get_generator().get_devour_sql(selection, order_by);
+        debug!(target: "taitan_orm", command = "devour_paged", sql = sql);
+        let entity_list: Vec<SE> = self.fetch_all_plain(&sql, selection).await?;
+        let result = build_paged_list(entity_list, record_count, page);
+        debug!(target: "taitan_orm", command = "devour_paged", result = ?result);
+        Ok(result)
     }
 
-    //
+    async fn count(&mut self, location: &dyn Location) -> Result<u64> {
+        debug!(target: "taitan_orm", command = "count", location = ?location);
+        let args = location.gen_location_arguments_sqlite()?;
+        let count_sql = self.get_generator().get_count_sql(location);
+        debug!(target: "taitan_orm", command = "count", sql = count_sql);
+        let record_count: CountResult = self.fetch_execute(&count_sql, args).await?;
+        debug!(target: "taitan_orm", command = "count", result = ?record_count);
+        Ok(record_count.count)
+    }
+
+    async fn count_table(&mut self, table_name: &str) -> Result<u64> {
+        debug!(target: "taitan_orm", command = "count", table_name = ?table_name);
+        let count_sql = self.get_generator().get_count_table_sql(table_name);
+        debug!(target: "taitan_orm", command = "count", sql = count_sql);
+        let record_count: CountResult = self.fetch_execute_plain(&count_sql).await?;
+        debug!(target: "taitan_orm", command = "count", result = ?record_count);
+        Ok(record_count.count)
+    }
+
+
     // async fn search_joined<SE>(
     //     &mut self,
     //     joined_conds: JoinedConditions,

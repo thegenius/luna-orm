@@ -5,5 +5,5 @@ pub trait Selection: Sync + Debug {
 
     fn get_selected_fields(&self) -> Vec<String>;
 
-    fn all_fields() -> Self where Self: Sized;
+    fn full_fields() -> Self where Self: Sized;
 }
