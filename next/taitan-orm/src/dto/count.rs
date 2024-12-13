@@ -9,7 +9,19 @@ use taitan_orm_trait::{SelectedEntity, Selection};
 pub struct EmptySelection {
 }
 
-impl Selection for EmptySelection {}
+impl Selection for EmptySelection {
+    fn get_table_name(&self) -> &'static str {
+        todo!()
+    }
+
+    fn get_selected_fields(&self) -> Vec<String> {
+        todo!()
+    }
+
+    fn all_fields() -> Self {
+        todo!()
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct CountResult {

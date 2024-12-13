@@ -14,7 +14,7 @@ use taitan_orm_trait::page_info::PageInfo;
 use taitan_orm_trait::paged_list::PagedList;
 use taitan_orm_trait::pagination::Pagination;
 use taitan_orm_trait::{
-    Entity, Location, Mutation, OrderBy, Primary, SelectedEntity, Selection, TemplateRecord,
+    Entity, Location, Mutation, OrderBy, SelectedEntity, Selection, TemplateRecord, Unique,
 };
 use tracing::debug;
 
@@ -84,23 +84,6 @@ impl SqlApi for SqliteCommander {
         Ok(result > 0)
     }
 
-    async fn select<SE>(
-        &self,
-        primary: &dyn Primary,
-        selection: &SE::Selection,
-    ) -> Result<Option<SE>>
-    where
-        SE: SelectedEntity<Self::DB> + Send + Unpin,
-    {
-        debug!(target: "taitan_orm", command = "select", primary = ?primary, selection = ?selection);
-        let sql = self.get_generator().get_select_sql(selection, primary);
-        debug!(target: "taitan_orm", command = "select", sql = sql);
-        let args: SqliteArguments<'_> = primary.gen_primary_arguments_sqlite()?;
-        let result: Option<SE> = self.fetch_optional(&sql, selection, args).await?;
-        debug!(target: "taitan_orm", command = "select", result = ?result);
-        Ok(result)
-    }
-
     async fn update<M: Mutation>(&mut self, mutation: &M, primary: &M::Primary) -> Result<bool> {
         debug!(target: "taitan_orm", command = "update", mutation = ?mutation, primary = ?primary);
         let sql = self.get_generator().get_update_sql(mutation, primary);
@@ -111,89 +94,94 @@ impl SqlApi for SqliteCommander {
         Ok(result > 0)
     }
 
-    async fn delete(&mut self, primary: &dyn Primary) -> Result<bool> {
-        debug!(target: "taitan_orm", command = "delete", primary = ?primary);
-        let sql = self.get_generator().get_delete_sql(primary);
+    async fn change<M: Mutation>(&mut self, mutation: &M, location: &M::Location) -> Result<bool> {
+        debug!(target: "taitan_orm", command = "change", mutation = ?mutation, location = ?location);
+        let sql = self.get_generator().get_change_sql(mutation, location);
+        debug!(target: "taitan_orm", command = "change", sql = sql);
+        let mut args = mutation.gen_change_arguments_sqlite(location)?;
+        let result = self.execute::<SqliteArguments>(&sql, args).await?;
+        debug!(target: "taitan_orm", command = "change", result = ?result);
+        Ok(result > 0)
+    }
+
+    async fn delete(&mut self, unique: &dyn Unique) -> Result<bool> {
+        debug!(target: "taitan_orm", command = "delete", primary = ?unique);
+        let sql = self.get_generator().get_delete_sql(unique);
         debug!(target: "taitan_orm", command = "delete", sql = sql);
-        let args = primary.gen_primary_arguments_sqlite()?;
+        let args = unique.gen_unique_arguments_sqlite()?;
         let result = self.execute::<SqliteArguments>(&sql, args).await?;
         debug!(target: "taitan_orm", command = "delete", result = ?result);
         Ok(result > 0)
     }
 
-    async fn fetch<SE>(&mut self, selection: &SE::Selection) -> Result<Vec<SE>>
+    async fn purify(&mut self, location: &dyn Location) -> Result<usize> {
+        debug!(target: "taitan_orm", command = "purify", location = ?location);
+        let sql = self.get_generator().get_purify_sql(location);
+        debug!(target: "taitan_orm", command = "purify", sql = sql);
+        let args = location.gen_location_arguments_sqlite()?;
+        let result = self.execute::<SqliteArguments>(&sql, args).await?;
+        debug!(target: "taitan_orm", command = "purify", result = ?result);
+        Ok(result as usize)
+    }
+
+    async fn select<SE>(&self, selection: &SE::Selection, unique: &dyn Unique) -> Result<Option<SE>>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
-        debug!(target: "taitan_orm", command = "search_all", selection = ?selection);
-        let sql = self.get_generator().get_search_all_sql(selection);
-        debug!(target: "taitan_orm", command = "search_all", sql = sql);
-        let result: Vec<SE> = self.fetch_all_plain(&sql, selection).await?;
-        debug!(target: "taitan_orm", command = "search_all", result = ?result);
+        debug!(target: "taitan_orm", command = "select", primary = ?unique, selection = ?selection);
+        let sql = self.get_generator().get_select_sql(selection, unique);
+        debug!(target: "taitan_orm", command = "select", sql = sql);
+        let args: SqliteArguments<'_> = unique.gen_unique_arguments_sqlite()?;
+        let result: Option<SE> = self.fetch_optional(&sql, selection, args).await?;
+        debug!(target: "taitan_orm", command = "select", result = ?result);
         Ok(result)
     }
 
-    async fn search<SE>(
+    async fn search<SE, O>(
         &mut self,
         selection: &SE::Selection,
         location: &dyn Location,
-        order_by: Option<&dyn OrderBy>,
+        order_by: &O,
     ) -> Result<Vec<SE>>
     where
-        SE: SelectedEntity<Self::DB> + Send + Unpin,
+        SE: SelectedEntity<Self::DB> + Send + Unpin, O: OrderBy
     {
         debug!(target: "taitan_orm", command = "search", location = ?location, order_by = ?order_by, selection = ?selection);
         let sql = self
             .get_generator()
-            .get_search_sql(selection, location, order_by);
+            .get_search_sql(selection, location, &Some(order_by));
         debug!(target: "taitan_orm", command = "search", sql = sql);
-        if order_by.is_some() {
-            let order_by_fields = order_by.unwrap().get_order_by_fields();
-            let valid_order_by = location.check_valid_order_by(order_by_fields);
-            if !valid_order_by {
-                return Err(LunaOrmError::OrderByFieldsError);
-            }
-        }
+
+        // let order_by_fields = order_by.unique_fields();
+        // let valid_order_by = location.check_valid_order_by(order_by_fields);
+        // if !valid_order_by {
+        //     return Err(LunaOrmError::OrderByFieldsError);
+        // }
+
         let args = location.gen_location_arguments_sqlite()?;
         let result: Vec<SE> = self.fetch_all(&sql, selection, args).await?;
         debug!(target: "taitan_orm", command = "search", result = ?result);
         Ok(result)
     }
 
-    async fn count(&mut self, location: &dyn Location) -> Result<usize> {
-        debug!(target: "taitan_orm", command = "count", location = ?location);
-        let args = location.gen_location_arguments_sqlite()?;
-        let count_sql = self.get_generator().get_search_count_sql(location);
-        debug!(target: "taitan_orm", command = "count", sql = count_sql);
-        let record_count: Option<CountResult> = self
-            .fetch_optional(&count_sql, &EmptySelection::default(), args)
-            .await?;
-        debug!(target: "taitan_orm", command = "count", result = ?record_count);
-        if record_count.is_none() {
-            Ok(0)
-        } else {
-            Ok(record_count.unwrap().count as usize)
-        }
-    }
-
-    async fn search_paged<SE>(
+    async fn search_paged<SE, O>(
         &mut self,
         selection: &SE::Selection,
         location: &dyn Location,
         page: &Pagination,
-        order_by: Option<&dyn OrderBy>,
+        order_by: &O,
     ) -> Result<PagedList<Self::DB, SE>>
     where
-        SE: SelectedEntity<Self::DB> + Send + Unpin,
+        SE: SelectedEntity<Self::DB> + Send + Unpin, O: OrderBy
     {
         debug!(target: "taitan_orm", command = "search_paged", location = ?location, order_by = ?order_by, selection = ?selection, page = ?page);
-        if order_by.is_some() {
-            let order_by_fields = order_by.unwrap().get_order_by_fields();
-            let valid_order_by = location.check_valid_order_by(order_by_fields);
-            if !valid_order_by {
-                return Err(LunaOrmError::OrderByFieldsError);
-            }
-        }
+        // if order_by.is_some() {
+        //     let order_by_fields = order_by.unwrap().unique_fields();
+        //     let valid_order_by = location.check_valid_order_by(order_by_fields);
+        //     if !valid_order_by {
+        //         return Err(LunaOrmError::OrderByFieldsError);
+        //     }
+        // }
         let args = location.gen_location_arguments_sqlite()?;
         let count_sql = self.get_generator().get_search_count_sql(location);
         debug!(target: "taitan_orm", command = "search_paged", count_sql = count_sql);
@@ -211,7 +199,7 @@ impl SqlApi for SqliteCommander {
 
         let sql = self
             .get_generator()
-            .get_paged_search_sql(selection, location, order_by, page);
+            .get_paged_search_sql(selection, location, &Some(order_by), page);
         debug!(target: "taitan_orm", command = "search_paged", sql = sql);
         let args = location.gen_location_arguments_sqlite()?;
         let entity_list: Vec<SE> = self.fetch_all(&sql, selection, args).await?;
@@ -229,6 +217,34 @@ impl SqlApi for SqliteCommander {
         };
         debug!(target: "taitan_orm", command = "search_paged", result = ?result);
         Ok(result)
+    }
+
+    async fn fetch<SE>(&mut self, selection: &SE::Selection) -> Result<Vec<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+    {
+        debug!(target: "taitan_orm", command = "search_all", selection = ?selection);
+        let sql = self.get_generator().get_search_all_sql(selection);
+        debug!(target: "taitan_orm", command = "search_all", sql = sql);
+        let result: Vec<SE> = self.fetch_all_plain(&sql, selection).await?;
+        debug!(target: "taitan_orm", command = "search_all", result = ?result);
+        Ok(result)
+    }
+
+    async fn count(&mut self, location: &dyn Location) -> Result<usize> {
+        debug!(target: "taitan_orm", command = "count", location = ?location);
+        let args = location.gen_location_arguments_sqlite()?;
+        let count_sql = self.get_generator().get_search_count_sql(location);
+        debug!(target: "taitan_orm", command = "count", sql = count_sql);
+        let record_count: Option<CountResult> = self
+            .fetch_optional(&count_sql, &EmptySelection::default(), args)
+            .await?;
+        debug!(target: "taitan_orm", command = "count", result = ?record_count);
+        if record_count.is_none() {
+            Ok(0)
+        } else {
+            Ok(record_count.unwrap().count as usize)
+        }
     }
 
     //
@@ -252,26 +268,6 @@ impl SqlApi for SqliteCommander {
     //         page,
     //     )
     // }
-
-    async fn purify(&mut self, location: &dyn Location) -> Result<usize> {
-        debug!(target: "taitan_orm", command = "purify", location = ?location);
-        let sql = self.get_generator().get_purify_sql(location);
-        debug!(target: "taitan_orm", command = "purify", sql = sql);
-        let args = location.gen_location_arguments_sqlite()?;
-        let result = self.execute::<SqliteArguments>(&sql, args).await?;
-        debug!(target: "taitan_orm", command = "purify", result = ?result);
-        Ok(result as usize)
-    }
-
-    async fn change<M: Mutation>(&mut self, mutation: &M, location: &M::Location) -> Result<bool> {
-        debug!(target: "taitan_orm", command = "change", mutation = ?mutation, location = ?location);
-        let sql = self.get_generator().get_change_sql(mutation, location);
-        debug!(target: "taitan_orm", command = "change", sql = sql);
-        let mut args = mutation.gen_change_arguments_sqlite(location)?;
-        let result = self.execute::<SqliteArguments>(&sql, args).await?;
-        debug!(target: "taitan_orm", command = "change", result = ?result);
-        Ok(result > 0)
-    }
 
     async fn execute_by_template(&mut self, template: &dyn TemplateRecord) -> Result<usize> {
         debug!(target: "taitan_orm", command = "execute_by_template", template = ?template);
@@ -300,7 +296,6 @@ impl SqlApi for SqliteCommander {
     //     debug!(target: "taitan_orm", command = "select_by_template", result = ?result);
     //     return Ok(result);
     // }
-
 
     // async fn search_by_template<SE>(
     //     &mut self,

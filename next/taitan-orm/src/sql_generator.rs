@@ -1,6 +1,7 @@
+use std::borrow::Cow;
 use taitan_orm_trait::FromClause;
 use taitan_orm_trait::JoinedConditions;
-use taitan_orm_trait::{Entity, Location, Mutation, Primary};
+use taitan_orm_trait::{Entity, Location, Mutation, Unique};
 use taitan_orm_trait::{OrderBy, Selection};
 use taitan_orm_trait::pagination::Pagination;
 
@@ -112,11 +113,11 @@ pub trait SqlGenerator {
         "SELECT last_insert_rowid() as `last_row_id`"
     }
 
-    fn get_select_sql(&self, selection: &dyn Selection, primary: &dyn Primary) -> String {
+    fn get_select_sql(&self, selection: &dyn Selection, primary: &dyn Unique) -> String {
         let table_name = primary.get_table_name();
         let selected_fields: Vec<String> = selection.get_selected_fields();
         let select_clause = wrap_fields(&selected_fields, self.get_wrap_char());
-        let located_fields = primary.get_primary_field_names();
+        let located_fields = primary.get_unique_field_names();
         let where_clause = wrap_locate_str_fields(
             located_fields,
             self.get_wrap_char(),
@@ -166,12 +167,12 @@ pub trait SqlGenerator {
         self.post_process(select_sql)
     }
 
-    fn get_search_sql(
+    fn get_search_sql<S>(
         &self,
         selection: &dyn Selection,
         location: &dyn Location,
-        order_by: Option<&dyn OrderBy>,
-    ) -> String {
+        order_by: &Option<S>,
+    ) -> String  where S: OrderBy {
         let selected_field_names = selection.get_selected_fields();
         let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());
         let table_name = location.get_table_name();
@@ -188,8 +189,8 @@ pub trait SqlGenerator {
             .to_string();
             self.post_process(select_sql)
         } else {
-            let order_by_field_names = order_by.unwrap().get_order_by_fields();
-            let order_by_fields = wrap_str_fields(&order_by_field_names, self.get_wrap_char());
+            let order_by_field_names = order_by.as_ref().unwrap().get_fields();
+            let order_by_fields = wrap_cow_str_fields(&order_by_field_names, self.get_wrap_char());
             let select_sql = format!(
                 "SELECT {} FROM {}{}{} WHERE {} ORDER BY {}",
                 selected_fields,
@@ -210,13 +211,13 @@ pub trait SqlGenerator {
         return format!("{}, {}", offset, count);
     }
 
-    fn get_paged_search_sql(
+    fn get_paged_search_sql<S>(
         &self,
         selection: &dyn Selection,
         location: &dyn Location,
-        order_by: Option<&dyn OrderBy>,
+        order_by: &Option<S>,
         page: &Pagination,
-    ) -> String {
+    ) -> String where S: OrderBy {
         let selected_field_names = selection.get_selected_fields();
         let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());
         let table_name = location.get_table_name();
@@ -237,8 +238,8 @@ pub trait SqlGenerator {
             .to_string();
             self.post_process(select_sql)
         } else {
-            let order_by_field_names = order_by.unwrap().get_order_by_fields();
-            let order_by_fields = wrap_str_fields(order_by_field_names, self.get_wrap_char());
+            let order_by_field_names = order_by.as_ref().unwrap().get_fields();
+            let order_by_fields = wrap_cow_str_fields(order_by_field_names, self.get_wrap_char());
             let select_sql = format!(
                 "SELECT {} FROM {}{}{} WHERE {} ORDER BY {} LIMIT {},{}",
                 selected_fields,
@@ -255,14 +256,14 @@ pub trait SqlGenerator {
         }
     }
 
-    fn get_page_joined_search_sql(
+    fn get_page_joined_search_sql<S>(
         &self,
         joined_conds: &JoinedConditions,
         locations: &Vec<&dyn Location>,
-        _order_by: Option<&dyn OrderBy>,
+        _order_by: &Option<S>,
         selections: &Vec<&dyn Selection>,
         _page: &Pagination,
-    ) -> String {
+    ) -> String where S: OrderBy {
         let mut selected_field_names: Vec<String> = Vec::new();
         for selection in selections {
             let fields = selection.get_selected_fields();
@@ -372,7 +373,7 @@ pub trait SqlGenerator {
             self.get_wrap_char(),
             self.get_place_holder(),
         );
-        let primary_field_names = primary.get_primary_field_names();
+        let primary_field_names = primary.get_unique_field_names();
         let primary_fields = wrap_locate_str_fields(
             &primary_field_names,
             self.get_wrap_char(),
@@ -412,9 +413,9 @@ pub trait SqlGenerator {
         self.post_process(update_sql)
     }
 
-    fn get_delete_sql(&self, primary: &dyn Primary) -> String {
+    fn get_delete_sql(&self, primary: &dyn Unique) -> String {
         let table_name = primary.get_table_name();
-        let field_names = primary.get_primary_field_names();
+        let field_names = primary.get_unique_field_names();
         let where_clause =
             wrap_locate_str_fields(field_names, self.get_wrap_char(), self.get_place_holder());
         let delete_sql = format!(
@@ -468,6 +469,16 @@ fn wrap_str_fields(fields: &[&str], wrap_char: char) -> String {
         .collect::<Vec<String>>()
         .join(",")
 }
+
+#[inline]
+fn wrap_cow_str_fields(fields: &[Cow<'_, str>], wrap_char: char) -> String {
+    fields
+        .iter()
+        .map(|e| format!("{}{}{}", wrap_char, e, wrap_char))
+        .collect::<Vec<String>>()
+        .join(",")
+}
+
 
 #[inline]
 fn wrap_locate_str_fields(fields: &[&str], wrap_char: char, place_holder: char) -> String {

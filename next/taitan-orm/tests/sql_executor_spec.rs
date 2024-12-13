@@ -39,7 +39,7 @@
 
 use std::marker::PhantomData;
 use taitan_orm_trait::{CmpOperator, LocationExpr, LocationTrait, Selection};
-use taitan_orm_trait::{Entity, Location, Mutation, Primary, SelectedEntity, UpdateCommand};
+use taitan_orm_trait::{Entity, Location, Mutation, Unique, SelectedEntity, UpdateCommand};
 
 use serde::{Deserialize, Serialize};
 use sqlx::error::BoxDynError;
@@ -140,16 +140,16 @@ pub struct UserPrimary {
     id: i64,
 }
 
-impl Primary for UserPrimary {
+impl Unique for UserPrimary {
     fn get_table_name(&self) -> &'static str {
         "user"
     }
 
-    fn get_primary_field_names(&self) -> &'static [&'static str] {
+    fn get_unique_field_names(&self) -> &'static [&'static str] {
         &["id"]
     }
 
-    fn gen_primary_arguments_sqlite(
+    fn gen_unique_arguments_sqlite(
         &self,
     ) -> std::result::Result<SqliteArguments<'_>, BoxDynError> {
         let mut args = SqliteArguments::default();
@@ -235,6 +235,19 @@ impl Selection for UserSelection {
             fields.push("birthday".to_string());
         }
         fields
+    }
+
+    fn all_fields() -> Self
+    where
+        Self: Sized
+    {
+        Self {
+            id: true,
+            request_id: true,
+            name: true,
+            age: true,
+            birthday: true,
+        }
     }
 }
 
@@ -398,10 +411,6 @@ impl Location for UserLocation {
         sql
     }
 
-    fn check_valid_order_by(&self, fields: &[&str]) -> bool {
-        todo!()
-    }
-
     fn gen_location_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
         let mut args = SqliteArguments::default();
 
@@ -510,7 +519,7 @@ async fn test_insert_user(db: &mut DB<SqliteCommander>, user: &User) -> taitan_o
     selection.age = true;
     selection.birthday = true;
     let primary = UserPrimary { id: user.id };
-    let primary_args = primary.gen_primary_arguments_sqlite().unwrap();
+    let primary_args = primary.gen_unique_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
         .generic_fetch_optional(
             &mut *conn,
@@ -554,7 +563,7 @@ async fn test_update_user(
     selection.age = true;
     selection.birthday = true;
 
-    let primary_args = user_primary.gen_primary_arguments_sqlite().unwrap();
+    let primary_args = user_primary.gen_unique_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
         .generic_fetch_optional(
             &mut *conn,
@@ -589,7 +598,7 @@ ON CONFLICT (`id`) DO UPDATE SET
     selection.birthday = true;
 
     let user_primary: UserPrimary = UserPrimary { id: user.id };
-    let primary_args = user_primary.gen_primary_arguments_sqlite().unwrap();
+    let primary_args = user_primary.gen_unique_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
         .generic_fetch_optional(
             &mut *conn,
@@ -614,7 +623,7 @@ async fn test_delete_user(
 ) -> taitan_orm::Result<()> {
     let pool = db.get_pool()?;
     let mut conn = pool.acquire().await?;
-    let args: SqliteArguments = user_primary.gen_primary_arguments_sqlite().unwrap();
+    let args: SqliteArguments = user_primary.gen_unique_arguments_sqlite().unwrap();
     let result = db
         .generic_execute(&mut *conn, "DELETE FROM `user` WHERE `id` = ?", args)
         .await?;
@@ -629,7 +638,7 @@ async fn test_delete_user(
     let user_primary: UserPrimary = UserPrimary {
         id: user_primary.id,
     };
-    let primary_args = user_primary.gen_primary_arguments_sqlite().unwrap();
+    let primary_args = user_primary.gen_unique_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
         .generic_fetch_optional(
             &mut *conn,
@@ -717,17 +726,17 @@ pub async fn sql_executor_spec() -> taitan_orm::Result<()> {
         db_file: "test.db".into(),
     };
 
-    let mut db: DB<SqliteCommander> = SqliteCommander::build(config).await.unwrap().into();
+    let db: DB<SqliteCommander> = SqliteCommander::build(config).await.unwrap().into();
     let pool = db.get_pool()?;
     let mut conn = pool.acquire().await.unwrap();
-    let result = db
+    let _result = db
         .generic_execute_plain(
             &mut *conn,
             "DROP TABLE IF EXISTS `user`",
             PhantomData::<SqliteArguments>::default(),
         )
         .await?;
-    let result = db.generic_execute_plain(&mut *conn,
+    let _result = db.generic_execute_plain(&mut *conn,
         "CREATE TABLE IF NOT EXISTS `user`(`id` BIGINT PRIMARY KEY, `request_id` blob,  `name` VARCHAR(64), `age` INT, `birthday` DATETIME)",
                                       PhantomData::<SqliteArguments>::default()).await?;
 
