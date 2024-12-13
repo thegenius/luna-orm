@@ -10,10 +10,46 @@ sql api: 操作API
 ## API Design
 
 ```rust
-async fn insert(&mut self, entity: &dyn Entity) -> Result<bool>;
-async fn upsert(&mut self, entity: &dyn Entity) -> Result<bool>;
-async fn update<M: Mutation>(&mut self, mutation: &M, unique: &M::Primary) -> Result<bool>;
-async fn change<M: Mutation>(&mut self, mutation: &M, location: &M::Location) -> Result<bool>;
-async fn delete(&mut self, unique: &dyn Unique) -> Result<bool>;
-async fn purify(&mut self, location: &dyn Location) -> Result<usize>;
+async fn insert(entity: &dyn Entity) -> Result<bool>;
+async fn upsert(entity: &dyn Entity) -> Result<bool>;
+async fn update<M: Mutation>(mutation: &M, unique: &M::Primary) -> Result<bool>;
+async fn change<M: Mutation>(mutation: &M, location: &M::Location) -> Result<bool>;
+async fn delete(unique: &dyn Unique) -> Result<bool>;
+async fn purify(location: &dyn Location) -> Result<usize>;
+```
+
+```rust
+async fn select<SE>(
+    selection: &SE::Selection, 
+    unique: &dyn Unique
+) -> Result<Option<SE>>;
+
+async fn search<SE>(
+    selection: &SE::Selection, 
+    location: &dyn Location, 
+    order_by: &dyn OrderBy
+) -> Result<Vec<SE>>;
+
+async fn search_paged<SE>(
+    selection: &SE::Selection,
+    location: &dyn Location,
+    order_by: &dyn OrderBy,
+    page: &Pagination,
+) -> Result<PagedList<Self::DB, SE>>;
+
+async fn devour<SE>(
+    selection: &SE::Selection, 
+    order_by: &dyn OrderBy
+) -> Result<Vec<SE>>;
+
+async fn devour_paged<SE>(
+    selection: &SE::Selection, 
+    order_by: &dyn OrderBy, 
+    page: &Pagination
+) -> Result<PagedList<Self::DB, SE>>;
+
+async fn count(location: &dyn Location) -> Result<u64>;
+
+async fn count_table(table_name: &str) -> Result<u64>;
+
 ```
