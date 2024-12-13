@@ -1,4 +1,4 @@
-use crate::{Entity, Location, Mutation, Primary};
+use crate::{Entity, Location, Mutation, Unique};
 
 #[derive(Debug)]
 pub enum WriteCommand {
@@ -17,7 +17,7 @@ pub enum WriteCommand {
     //     location: Box<dyn Location>,
     // },
     Delete {
-        primary: Box<dyn Primary>,
+        primary: Box<dyn Unique>,
     },
 
     Purify {

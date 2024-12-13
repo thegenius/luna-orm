@@ -3,10 +3,10 @@ use sqlx::error::BoxDynError;
 use sqlx::mysql::MySqlArguments;
 use sqlx::postgres::PgArguments;
 use sqlx::sqlite::SqliteArguments;
-use crate::{Location, NotImplementError, Primary};
+use crate::{Location, NotImplementError, Unique};
 
 pub trait Mutation: Sync + Debug {
-    type Primary: Primary;
+    type Primary: Unique;
 
     type Location: Location;
 

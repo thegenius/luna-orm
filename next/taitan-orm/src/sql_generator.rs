@@ -211,13 +211,13 @@ pub trait SqlGenerator {
         return format!("{}, {}", offset, count);
     }
 
-    fn get_paged_search_sql<S>(
+    fn get_paged_search_sql(
         &self,
         selection: &dyn Selection,
         location: &dyn Location,
-        order_by: &Option<S>,
+        order_by: &Option<&dyn OrderBy>,
         page: &Pagination,
-    ) -> String where S: OrderBy {
+    ) -> String  {
         let selected_field_names = selection.get_selected_fields();
         let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());
         let table_name = location.get_table_name();
@@ -256,14 +256,14 @@ pub trait SqlGenerator {
         }
     }
 
-    fn get_page_joined_search_sql<S>(
+    fn get_page_joined_search_sql(
         &self,
         joined_conds: &JoinedConditions,
         locations: &Vec<&dyn Location>,
-        _order_by: &Option<S>,
+        _order_by: &Option<&dyn OrderBy>,
         selections: &Vec<&dyn Selection>,
         _page: &Pagination,
-    ) -> String where S: OrderBy {
+    ) -> String {
         let mut selected_field_names: Vec<String> = Vec::new();
         for selection in selections {
             let fields = selection.get_selected_fields();

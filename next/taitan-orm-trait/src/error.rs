@@ -6,3 +6,13 @@ impl std::fmt::Display for NotImplementError {
         write!(f, "method {} is not implements", self.0)
     }
 }
+
+
+#[derive(Debug)]
+pub struct NotValidOrderByError(pub String);
+impl std::error::Error for NotValidOrderByError {}
+impl std::fmt::Display for NotValidOrderByError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "order by fields: {} is not valid", self.0)
+    }
+}

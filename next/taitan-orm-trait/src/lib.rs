@@ -5,7 +5,7 @@ mod join;
 mod location;
 mod mutation;
 mod order_by;
-mod primary;
+mod unique;
 mod selected;
 mod selection;
 mod update_command;
@@ -14,11 +14,12 @@ mod template_record;
 mod page;
 
 pub use error::NotImplementError;
+pub use error::NotValidOrderByError;
 
 pub use entity::Entity;
 
 pub use mutation::Mutation;
-pub use primary::Primary;
+pub use unique::Unique;
 pub use update_command::UpdateCommand;
 
 pub use selected::SelectedEntity;

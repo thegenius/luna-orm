@@ -12,7 +12,7 @@ pub trait Location: Sync + Debug {
 
     fn get_where_clause(&self, wrap_char: char, place_holder: char) -> String;
 
-    fn check_valid_order_by(&self, fields: &[&str]) -> bool;
+    // fn check_valid_order_by(&self, fields: &[&str]) -> bool;
 
     fn gen_location_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
         Err(NotImplementError("gen_primary_arguments_sqlite".to_string()).into())
