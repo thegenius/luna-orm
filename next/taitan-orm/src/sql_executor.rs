@@ -3,7 +3,7 @@ use crate::result::Result;
 use std::marker::PhantomData;
 
 use sqlx::query::Query;
-use sqlx::{Arguments, Database, Executor, IntoArguments, Pool};
+use sqlx::{Database, Executor, IntoArguments, Pool};
 use taitan_orm_trait::SelectedEntity;
 
 pub trait SqlExecutor {

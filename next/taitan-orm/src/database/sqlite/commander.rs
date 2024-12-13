@@ -1,13 +1,11 @@
 use crate::database::sqlite::SqliteLocalConfig;
-use crate::dto::EmptySelection;
 use crate::sql_generator::DefaultSqlGenerator;
 use crate::{CountResult, Result};
 use crate::{SqlApi, SqlExecutor, SqlGenerator, TaitanOrmError};
 use path_absolutize::Absolutize;
-use sqlx::error::BoxDynError;
-use sqlx::pool::PoolConnection;
+// use sqlx::error::BoxDynError;
 use sqlx::sqlite::{SqliteArguments, SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous};
-use sqlx::{Database, Sqlite, SqlitePool};
+use sqlx::{Database, SqlitePool};
 use std::fs;
 use std::marker::PhantomData;
 use std::path::Path;
@@ -117,14 +115,14 @@ impl SqlApi for SqliteCommander {
         Ok(result > 0)
     }
 
-    async fn change<M: Mutation>(&mut self, mutation: &M, location: &M::Location) -> Result<bool> {
+    async fn change<M: Mutation>(&mut self, mutation: &M, location: &M::Location) -> Result<u64> {
         debug!(target: "taitan_orm", command = "change", mutation = ?mutation, location = ?location);
         let sql = self.get_generator().get_change_sql(mutation, location);
         debug!(target: "taitan_orm", command = "change", sql = sql);
-        let mut args = mutation.gen_change_arguments_sqlite(location)?;
+        let args = mutation.gen_change_arguments_sqlite(location)?;
         let result = self.execute::<SqliteArguments>(&sql, args).await?;
         debug!(target: "taitan_orm", command = "change", result = ?result);
-        Ok(result > 0)
+        Ok(result)
     }
 
     async fn delete(&mut self, unique: &dyn Unique) -> Result<bool> {
@@ -137,14 +135,14 @@ impl SqlApi for SqliteCommander {
         Ok(result > 0)
     }
 
-    async fn purify(&mut self, location: &dyn Location) -> Result<usize> {
+    async fn purify(&mut self, location: &dyn Location) -> Result<u64> {
         debug!(target: "taitan_orm", command = "purify", location = ?location);
         let sql = self.get_generator().get_purify_sql(location);
         debug!(target: "taitan_orm", command = "purify", sql = sql);
         let args = location.gen_location_arguments_sqlite()?;
         let result = self.execute::<SqliteArguments>(&sql, args).await?;
         debug!(target: "taitan_orm", command = "purify", result = ?result);
-        Ok(result as usize)
+        Ok(result)
     }
 
     async fn select<SE>(&self, selection: &SE::Selection, unique: &dyn Unique) -> Result<Option<SE>>

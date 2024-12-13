@@ -1,16 +1,14 @@
-use crate::dto::EmptySelection;
+
 use crate::result::Result;
-use crate::TaitanOrmError::NotImplement;
-use crate::{CountResult, SqlExecutor, SqlGenerator};
-use sqlx::sqlite::SqliteArguments;
-use sqlx::{Connection, Database};
+use crate::{SqlExecutor, SqlGenerator};
+// use sqlx::{Connection, Database};
 use std::fmt::Debug;
 use taitan_orm_trait::paged_list::PagedList;
 use taitan_orm_trait::pagination::Pagination;
 use taitan_orm_trait::{
     Entity, Location, Mutation, OrderBy, SelectedEntity, TemplateRecord, Unique,
 };
-use tracing::debug;
+// use tracing::debug;
 
 pub trait SqlApi: SqlExecutor + Debug {
     type G: SqlGenerator + Sync + Debug;
@@ -19,9 +17,9 @@ pub trait SqlApi: SqlExecutor + Debug {
     async fn insert(&mut self, entity: &dyn Entity) -> Result<bool>;
     async fn upsert(&mut self, entity: &dyn Entity) -> Result<bool>;
     async fn update<M: Mutation>(&mut self, mutation: &M, unique: &M::Primary) -> Result<bool>;
-    async fn change<M: Mutation>(&mut self, mutation: &M, location: &M::Location) -> Result<bool>;
+    async fn change<M: Mutation>(&mut self, mutation: &M, location: &M::Location) -> Result<u64>;
     async fn delete(&mut self, unique: &dyn Unique) -> Result<bool>;
-    async fn purify(&mut self, location: &dyn Location) -> Result<usize>;
+    async fn purify(&mut self, location: &dyn Location) -> Result<u64>;
 
     /**
     查询语义设计：

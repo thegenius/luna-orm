@@ -1,7 +1,7 @@
 use sqlx::mysql::MySqlRow;
 use sqlx::postgres::PgRow;
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Database, Error, FromRow, MySql, Postgres, Row, Sqlite};
+use sqlx::{Error, MySql, Postgres, Row, Sqlite};
 use taitan_orm_trait::{SelectedEntity, Selection};
 
 #[derive(Clone, Debug, Default)]
