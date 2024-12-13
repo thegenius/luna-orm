@@ -39,10 +39,10 @@ pub trait SqlApi: SqlExecutor + Debug {
     select(selection, unique) -> option<SE>
 
     search(selection, location, order_by)
-    search_page(selection, location, page, order_by)
+    search_paged(selection, location, page, order_by)
 
     devour(selection, order_by)
-    devour_page(selection, page, order_by)
+    devour_paged(selection, page, order_by)
     */
 
     /**
@@ -56,29 +56,29 @@ pub trait SqlApi: SqlExecutor + Debug {
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin;
 
-    async fn search<SE, O>(
+    async fn search<SE>(
         &mut self,
         selection: &SE::Selection,
         location: &dyn Location,
-        order_by: &O,
+        order_by: &dyn OrderBy,
     ) -> Result<Vec<SE>>
     where
-        SE: SelectedEntity<Self::DB> + Send + Unpin, O: OrderBy;
+        SE: SelectedEntity<Self::DB> + Send + Unpin;
 
-    async fn search_paged<SE, O>(
+    async fn search_paged<SE>(
         &mut self,
         selection: &SE::Selection,
         location: &dyn Location,
         page: &Pagination,
-        order_by: &O,
+        order_by: &dyn OrderBy,
     ) -> Result<PagedList<Self::DB, SE>>
     where
-        SE: SelectedEntity<Self::DB> + Send + Unpin, O: OrderBy;
+        SE: SelectedEntity<Self::DB> + Send + Unpin;
 
     /**
     根据表中所有数据
     */
-    async fn fetch<SE>(&mut self, selection: &SE::Selection) -> Result<Vec<SE>>
+    async fn devour<SE>(&mut self, selection: &SE::Selection) -> Result<Vec<SE>>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin;
 

@@ -137,51 +137,37 @@ impl SqlApi for SqliteCommander {
         Ok(result)
     }
 
-    async fn search<SE, O>(
+    async fn search<SE>(
         &mut self,
         selection: &SE::Selection,
         location: &dyn Location,
-        order_by: &O,
+        order_by: &dyn OrderBy,
     ) -> Result<Vec<SE>>
     where
-        SE: SelectedEntity<Self::DB> + Send + Unpin, O: OrderBy
+        SE: SelectedEntity<Self::DB> + Send + Unpin
     {
         debug!(target: "taitan_orm", command = "search", location = ?location, order_by = ?order_by, selection = ?selection);
         let sql = self
             .get_generator()
-            .get_search_sql(selection, location, &Some(order_by));
+            .get_search_sql(selection, location, Some(order_by));
         debug!(target: "taitan_orm", command = "search", sql = sql);
-
-        // let order_by_fields = order_by.unique_fields();
-        // let valid_order_by = location.check_valid_order_by(order_by_fields);
-        // if !valid_order_by {
-        //     return Err(LunaOrmError::OrderByFieldsError);
-        // }
-
         let args = location.gen_location_arguments_sqlite()?;
         let result: Vec<SE> = self.fetch_all(&sql, selection, args).await?;
         debug!(target: "taitan_orm", command = "search", result = ?result);
         Ok(result)
     }
 
-    async fn search_paged<SE, O>(
+    async fn search_paged<SE>(
         &mut self,
         selection: &SE::Selection,
         location: &dyn Location,
         page: &Pagination,
-        order_by: &O,
+        order_by: &dyn OrderBy,
     ) -> Result<PagedList<Self::DB, SE>>
     where
-        SE: SelectedEntity<Self::DB> + Send + Unpin, O: OrderBy
+        SE: SelectedEntity<Self::DB> + Send + Unpin
     {
         debug!(target: "taitan_orm", command = "search_paged", location = ?location, order_by = ?order_by, selection = ?selection, page = ?page);
-        // if order_by.is_some() {
-        //     let order_by_fields = order_by.unwrap().unique_fields();
-        //     let valid_order_by = location.check_valid_order_by(order_by_fields);
-        //     if !valid_order_by {
-        //         return Err(LunaOrmError::OrderByFieldsError);
-        //     }
-        // }
         let args = location.gen_location_arguments_sqlite()?;
         let count_sql = self.get_generator().get_search_count_sql(location);
         debug!(target: "taitan_orm", command = "search_paged", count_sql = count_sql);
@@ -219,7 +205,7 @@ impl SqlApi for SqliteCommander {
         Ok(result)
     }
 
-    async fn fetch<SE>(&mut self, selection: &SE::Selection) -> Result<Vec<SE>>
+    async fn devour<SE>(&mut self, selection: &SE::Selection) -> Result<Vec<SE>>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {

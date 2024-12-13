@@ -167,12 +167,12 @@ pub trait SqlGenerator {
         self.post_process(select_sql)
     }
 
-    fn get_search_sql<S>(
+    fn get_search_sql(
         &self,
         selection: &dyn Selection,
         location: &dyn Location,
-        order_by: &Option<S>,
-    ) -> String  where S: OrderBy {
+        order_by: Option<&dyn OrderBy>,
+    ) -> String  {
         let selected_field_names = selection.get_selected_fields();
         let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());
         let table_name = location.get_table_name();
@@ -189,7 +189,7 @@ pub trait SqlGenerator {
             .to_string();
             self.post_process(select_sql)
         } else {
-            let order_by_field_names = order_by.as_ref().unwrap().get_fields();
+            let order_by_field_names = order_by.unwrap().get_fields();
             let order_by_fields = wrap_cow_str_fields(&order_by_field_names, self.get_wrap_char());
             let select_sql = format!(
                 "SELECT {} FROM {}{}{} WHERE {} ORDER BY {}",
