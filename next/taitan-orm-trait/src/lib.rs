@@ -5,13 +5,13 @@ mod join;
 mod location;
 mod mutation;
 mod order_by;
-mod unique;
+mod page;
 mod selected;
 mod selection;
+mod template_record;
+mod unique;
 mod update_command;
 mod write_command;
-mod template_record;
-mod page;
 
 pub use error::NotImplementError;
 pub use error::NotValidOrderByError;
@@ -30,14 +30,14 @@ pub use location::CmpOperator;
 pub use location::Location;
 pub use location::LocationExpr;
 pub use location::LocationTrait;
-pub use order_by::OrderBy;
 pub use order_by::validate_order_by;
+pub use order_by::OrderBy;
 
 pub use join::JoinedCondition;
 pub use join::JoinedConditions;
 
-pub use page::paged_list;
 pub use page::page_info;
+pub use page::paged_list;
 pub use page::pagination;
 
 pub use template_record::TemplateRecord;

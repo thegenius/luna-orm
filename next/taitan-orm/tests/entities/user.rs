@@ -1,15 +1,18 @@
-use std::borrow::Cow;
-use std::error::Error;
 use serde::{Deserialize, Serialize};
 use sqlx::error::BoxDynError;
-use sqlx::{Database, Row, Sqlite};
 use sqlx::sqlite::SqliteArguments;
 use sqlx::Arguments;
-use time::PrimitiveDateTime;
-use uuid::Uuid;
+use sqlx::{Database, Row, Sqlite};
+use std::borrow::Cow;
+use std::error::Error;
 use taitan_orm::database::sqlite::SqliteDatabase;
 use taitan_orm::SqlExecutor;
-use taitan_orm_trait::{validate_order_by, Entity, Location, LocationExpr, LocationTrait, Mutation, OrderBy, SelectedEntity, Selection, Unique, UpdateCommand};
+use taitan_orm_trait::{
+    validate_order_by, Entity, Location, LocationExpr, LocationTrait, Mutation, OrderBy,
+    SelectedEntity, Selection, Unique, UpdateCommand,
+};
+use time::PrimitiveDateTime;
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct User {
@@ -22,12 +25,16 @@ pub struct User {
 
 pub async fn prepare_user_table(db: &mut SqliteDatabase) -> taitan_orm::Result<()> {
     let _result = db.execute_plain("DROP TABLE IF EXISTS `user`").await?;
-    let _= db.execute_plain("CREATE TABLE IF NOT EXISTS `user`\
+    let _ = db
+        .execute_plain(
+            "CREATE TABLE IF NOT EXISTS `user`\
     (`id` BIGINT PRIMARY KEY, \
     `request_id` blob,  \
     `name` VARCHAR(64), \
     `age` INT, \
-    `birthday` DATETIME)").await?;
+    `birthday` DATETIME)",
+        )
+        .await?;
     Ok(())
 }
 
@@ -264,7 +271,10 @@ impl Mutation for UserMutation {
         fields
     }
 
-    fn gen_update_arguments_sqlite<'a>(&'a self, primary: &'a Self::Primary) -> Result<SqliteArguments<'a>, BoxDynError> {
+    fn gen_update_arguments_sqlite<'a>(
+        &'a self,
+        primary: &'a Self::Primary,
+    ) -> Result<SqliteArguments<'a>, BoxDynError> {
         let mut args = SqliteArguments::default();
         if let Some(request_id) = &self.request_id {
             args.add(request_id)?;

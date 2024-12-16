@@ -1,12 +1,12 @@
+use crate::database::sqlite::SqliteCommander;
 use crate::result::Result;
-use crate::{SqlExecutor,  TaitanOrmError};
+use crate::sql_generator::DefaultSqlGenerator;
+use crate::{SqlExecutor, TaitanOrmError};
+use sqlx::query::Query;
 use sqlx::sqlite::{SqliteArguments, SqliteQueryResult};
 use sqlx::{query_with, Database, Sqlite};
-use sqlx::query::Query;
+use taitan_orm_trait::SelectedEntity;
 use tracing::debug;
-use taitan_orm_trait::{SelectedEntity};
-use crate::database::sqlite::SqliteCommander;
-use crate::sql_generator::DefaultSqlGenerator;
 
 #[derive(Debug)]
 pub struct SqliteTransaction<'a> {
@@ -15,27 +15,25 @@ pub struct SqliteTransaction<'a> {
 }
 
 impl<'a> SqliteTransaction<'a> {
-        pub fn new(trx: sqlx::Transaction<'a, Sqlite>, sql_generator: &'a DefaultSqlGenerator) -> Self {
-            Self {
-                transaction: trx,
-                sql_generator,
-            }
+    pub fn new(trx: sqlx::Transaction<'a, Sqlite>, sql_generator: &'a DefaultSqlGenerator) -> Self {
+        Self {
+            transaction: trx,
+            sql_generator,
         }
-
-        #[inline]
-        pub async fn commit(self) -> Result<()> {
-            Ok(self.transaction.commit().await?)
-        }
-
-        #[inline]
-        pub async fn rollback(self) -> Result<()> {
-            Ok(self.transaction.rollback().await?)
-        }
-
     }
 
-impl<'s> SqlExecutor for SqliteTransaction<'s>
-{
+    #[inline]
+    pub async fn commit(self) -> Result<()> {
+        Ok(self.transaction.commit().await?)
+    }
+
+    #[inline]
+    pub async fn rollback(self) -> Result<()> {
+        Ok(self.transaction.rollback().await?)
+    }
+}
+
+impl<'s> SqlExecutor for SqliteTransaction<'s> {
     type DB = Sqlite;
 
     fn get_affected_rows(&mut self, query_result: &SqliteQueryResult) -> Result<u64> {
@@ -51,7 +49,8 @@ impl<'s> SqlExecutor for SqliteTransaction<'s>
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
         let query: Query<'a, Self::DB, SqliteArguments<'a>> = query_with(stmt, Default::default());
-        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(&mut *self.transaction).await?;
+        let result_opt: Option<<Self::DB as Database>::Row> =
+            query.fetch_optional(&mut *self.transaction).await?;
         if let Some(result) = result_opt {
             Ok(Some(SE::from_row(selection, result)?))
         } else {
@@ -69,7 +68,8 @@ impl<'s> SqlExecutor for SqliteTransaction<'s>
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
         let query: Query<'a, Self::DB, SqliteArguments<'a>> = query_with(stmt, args);
-        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(&mut *self.transaction).await?;
+        let result_opt: Option<<Self::DB as Database>::Row> =
+            query.fetch_optional(&mut *self.transaction).await?;
         if let Some(result) = result_opt {
             Ok(Some(SE::from_row(selection, result)?))
         } else {
@@ -86,7 +86,8 @@ impl<'s> SqlExecutor for SqliteTransaction<'s>
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
         let query: Query<'a, Self::DB, SqliteArguments<'a>> = query_with(stmt, Default::default());
-        let result_opt: Vec<<Self::DB as Database>::Row> = query.fetch_all(&mut *self.transaction).await?;
+        let result_opt: Vec<<Self::DB as Database>::Row> =
+            query.fetch_all(&mut *self.transaction).await?;
         let mut result: Vec<SE> = Vec::new();
         for row in result_opt {
             let selected_result = SE::from_row(selection, row);
@@ -109,7 +110,8 @@ impl<'s> SqlExecutor for SqliteTransaction<'s>
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
         let query: Query<'a, Self::DB, SqliteArguments<'a>> = query_with(stmt, args);
-        let result_opt: Vec<<Self::DB as Database>::Row> = query.fetch_all(&mut *self.transaction).await?;
+        let result_opt: Vec<<Self::DB as Database>::Row> =
+            query.fetch_all(&mut *self.transaction).await?;
         let mut result: Vec<SE> = Vec::new();
         for row in result_opt {
             let selected_result = SE::from_row(selection, row);
@@ -124,7 +126,8 @@ impl<'s> SqlExecutor for SqliteTransaction<'s>
 
     async fn execute_plain<'a>(&'a mut self, stmt: &'a str) -> Result<u64> {
         let query: Query<'a, Self::DB, SqliteArguments<'a>> = query_with(stmt, Default::default());
-        let result: <Self::DB as Database>::QueryResult = query.execute(&mut *self.transaction).await?;
+        let result: <Self::DB as Database>::QueryResult =
+            query.execute(&mut *self.transaction).await?;
         self.get_affected_rows(&result)
     }
 
@@ -139,7 +142,8 @@ impl<'s> SqlExecutor for SqliteTransaction<'s>
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
         let query: Query<'a, Self::DB, SqliteArguments<'a>> = query_with(stmt, Default::default());
-        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(&mut *self.transaction).await?;
+        let result_opt: Option<<Self::DB as Database>::Row> =
+            query.fetch_optional(&mut *self.transaction).await?;
         if let Some(result) = result_opt {
             Ok(SE::from_row_full(result)?)
         } else {
@@ -156,7 +160,8 @@ impl<'s> SqlExecutor for SqliteTransaction<'s>
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
         let query: Query<'a, Self::DB, SqliteArguments<'a>> = query_with(stmt, args);
-        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(&mut *self.transaction).await?;
+        let result_opt: Option<<Self::DB as Database>::Row> =
+            query.fetch_optional(&mut *self.transaction).await?;
         if let Some(result) = result_opt {
             Ok(SE::from_row_full(result)?)
         } else {
@@ -165,13 +170,10 @@ impl<'s> SqlExecutor for SqliteTransaction<'s>
     }
 }
 
-impl <'a> SqliteCommander for SqliteTransaction<'a> {
+impl<'a> SqliteCommander for SqliteTransaction<'a> {
     type G = DefaultSqlGenerator;
 
     fn get_generator(&mut self) -> &Self::G {
         &self.sql_generator
     }
 }
-
-
-

@@ -7,7 +7,6 @@ impl std::fmt::Display for NotImplementError {
     }
 }
 
-
 #[derive(Debug)]
 pub struct NotValidOrderByError(pub String);
 impl std::error::Error for NotValidOrderByError {}

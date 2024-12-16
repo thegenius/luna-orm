@@ -1,12 +1,12 @@
-use std::fmt::Debug;
+use crate::page::count_sql::CountSql;
+use crate::pagination::Pagination;
+use crate::NotImplementError;
 use sqlx::any::AnyArguments;
 use sqlx::error::BoxDynError;
 use sqlx::mysql::MySqlArguments;
 use sqlx::postgres::PgArguments;
 use sqlx::sqlite::SqliteArguments;
-use crate::NotImplementError;
-use crate::page::count_sql::CountSql;
-use crate::pagination::Pagination;
+use std::fmt::Debug;
 
 pub trait TemplateRecord: Sync + Debug {
     fn get_sql(&self, page: Option<&Pagination>) -> String;

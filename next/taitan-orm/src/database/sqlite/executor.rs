@@ -1,17 +1,20 @@
+use crate::database::sqlite::database::SqliteDatabase;
 use crate::Result;
 use crate::SqlExecutor;
 use sqlx::sqlite::SqliteArguments;
 use sqlx::{Database, Sqlite, SqlitePool};
 use std::marker::PhantomData;
 use taitan_orm_trait::SelectedEntity;
-use crate::database::sqlite::database::SqliteDatabase;
 
 impl SqlExecutor for SqliteDatabase {
     type DB = Sqlite;
     fn get_pool(&mut self) -> Result<&SqlitePool> {
         Ok(&self.sqlite_pool)
     }
-    fn get_affected_rows(&mut self, query_result: &<Self::DB as Database>::QueryResult) -> Result<u64> {
+    fn get_affected_rows(
+        &mut self,
+        query_result: &<Self::DB as Database>::QueryResult,
+    ) -> Result<u64> {
         Ok(query_result.rows_affected())
     }
 
@@ -29,7 +32,11 @@ impl SqlExecutor for SqliteDatabase {
             .await
     }
 
-    async fn fetch_execute<'a, SE>(&'a mut self, stmt: &'a str, args: SqliteArguments<'a>) -> Result<SE>
+    async fn fetch_execute<'a, SE>(
+        &'a mut self,
+        stmt: &'a str,
+        args: SqliteArguments<'a>,
+    ) -> Result<SE>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {

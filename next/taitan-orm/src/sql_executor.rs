@@ -30,7 +30,6 @@ pub trait SqlExecutor {
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin;
 
-
     async fn fetch_optional<'a, SE>(
         &'a mut self,
         stmt: &'a str,
@@ -65,7 +64,6 @@ pub trait SqlExecutor {
         args: <Self::DB as Database>::Arguments<'a>,
     ) -> Result<u64>;
 
-
     async fn fetch_execute_plain<'a, SE>(&'a mut self, stmt: &'a str) -> Result<SE>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin;
@@ -77,7 +75,6 @@ pub trait SqlExecutor {
     ) -> Result<SE>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin;
-
 
     async fn generic_fetch_optional_plain<'a, EX, SE, A>(
         &mut self,

@@ -1,11 +1,11 @@
-use std::fs;
-use std::path::Path;
-use path_absolutize::Absolutize;
-use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous};
-use sqlx::SqlitePool;
 use crate::database::sqlite::{SqliteCommander, SqliteLocalConfig, SqliteTransaction};
 use crate::sql_generator::DefaultSqlGenerator;
 use crate::{SqlApi, SqlExecutor, TaitanOrmError};
+use path_absolutize::Absolutize;
+use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous};
+use sqlx::SqlitePool;
+use std::fs;
+use std::path::Path;
 
 #[derive(Debug, Clone)]
 pub struct SqliteDatabase {
@@ -46,7 +46,7 @@ impl SqliteDatabase {
     }
 
     pub async fn transaction<'a>(&'a mut self) -> crate::Result<SqliteTransaction<'a>> {
-        let trx = self.get_pool ()?.begin().await?;
+        let trx = self.get_pool()?.begin().await?;
         let generator = self.get_generator();
         let transaction = SqliteTransaction::new(trx, generator);
         Ok(transaction)

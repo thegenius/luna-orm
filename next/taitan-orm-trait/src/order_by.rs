@@ -1,9 +1,7 @@
+use crate::NotValidOrderByError;
 use std::borrow::Cow;
 use std::error::Error;
 use std::fmt::Debug;
-use crate::NotValidOrderByError;
-
-
 
 pub fn validate_order_by<'a, I, S>(
     fields: I,
@@ -15,7 +13,10 @@ where
 {
     let valid = unique_fields_vec.iter().any(|unique_fields| {
         unique_fields.iter().all(|unique_field| {
-            fields.clone().into_iter().any(|field| field.as_ref() == *unique_field)
+            fields
+                .clone()
+                .into_iter()
+                .any(|field| field.as_ref() == *unique_field)
         })
     });
     if valid {
@@ -42,9 +43,6 @@ impl<T: OrderBy + Debug> OrderBy for &T {
         (*self).get_fields()
     }
 }
-
-
-
 
 #[cfg(test)]
 mod test {
@@ -80,15 +78,17 @@ mod test {
         }
     }
 
-
-
     #[test]
     pub fn test_order_by() -> Result<(), Box<dyn Error + 'static>> {
         let fields = vec!["first_name", "second_name"];
         let order_by = TestOrderBy::build(fields)?;
 
         assert_eq!(
-            order_by.get_fields().iter().map(|cow| cow.as_ref()).collect::<Vec<_>>(),
+            order_by
+                .get_fields()
+                .iter()
+                .map(|cow| cow.as_ref())
+                .collect::<Vec<_>>(),
             ["first_name", "second_name"]
         );
 

@@ -49,12 +49,11 @@ use sqlx::{sqlx_macros, Database};
 use sqlx::Arguments;
 use sqlx::Row;
 use taitan_orm::database::sqlite::{SqliteDatabase, SqliteLocalConfig};
-use taitan_orm::{SqlExecutor};
+use taitan_orm::SqlExecutor;
 use time::macros::datetime;
 
 mod entities;
 use entities::user::*;
-
 
 async fn test_insert_user(db: &mut SqliteDatabase, user: &User) -> taitan_orm::Result<()> {
     let pool = db.get_pool()?;
@@ -205,10 +204,7 @@ async fn test_delete_user(
     Ok(())
 }
 
-async fn test_select_all(
-    db: &mut SqliteDatabase,
-    expect_cnt: usize,
-) -> taitan_orm::Result<()> {
+async fn test_select_all(db: &mut SqliteDatabase, expect_cnt: usize) -> taitan_orm::Result<()> {
     let pool = db.get_pool()?;
     let mut conn = pool.acquire().await?;
 

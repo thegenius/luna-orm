@@ -1,7 +1,7 @@
-use std::marker::PhantomData;
-use sqlx::Database;
 use crate::page_info::PageInfo;
 use crate::SelectedEntity;
+use sqlx::Database;
+use std::marker::PhantomData;
 
 #[derive(Clone, Debug)]
 pub struct PagedList<DB, T>
@@ -11,7 +11,7 @@ where
 {
     pub data: Vec<T>,
     pub page: PageInfo,
-    pub _phantom: PhantomData<DB>
+    pub _phantom: PhantomData<DB>,
 }
 
 impl<DB, T> PagedList<DB, T>
@@ -23,7 +23,7 @@ where
         Self {
             page: PageInfo::empty(page_size, page_num),
             data: Vec::new(),
-            _phantom: PhantomData
+            _phantom: PhantomData,
         }
     }
 }

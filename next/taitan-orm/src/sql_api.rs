@@ -1,8 +1,8 @@
 use crate::result::Result;
 use crate::{SqlExecutor, SqlGenerator};
 // use sqlx::{Connection, Database};
-use std::fmt::Debug;
 use sqlx::Database;
+use std::fmt::Debug;
 use taitan_orm_trait::paged_list::PagedList;
 use taitan_orm_trait::pagination::Pagination;
 use taitan_orm_trait::{
@@ -38,33 +38,31 @@ pub trait SqlApi {
     // type G: SqlGenerator + Sync + Debug;
     // fn get_generator(&mut self) -> &Self::G;
 
-    async fn insert(&mut self, entity: &dyn Entity) -> Result<bool> ;
-    async fn upsert(&mut self, entity: &dyn Entity) -> Result<bool> ;
-    async fn update<M: Mutation>(&mut self, mutation: &M, unique: &M::Primary) -> Result<bool> ;
-    async fn change<M: Mutation>(&mut self, mutation: &M, location: &M::Location) -> Result<u64> ;
-    async fn delete(&mut self, unique: &dyn Unique) -> Result<bool> ;
-    async fn purify(&mut self, location: &dyn Location) -> Result<u64> ;
+    async fn insert(&mut self, entity: &dyn Entity) -> Result<bool>;
+    async fn upsert(&mut self, entity: &dyn Entity) -> Result<bool>;
+    async fn update<M: Mutation>(&mut self, mutation: &M, unique: &M::Primary) -> Result<bool>;
+    async fn change<M: Mutation>(&mut self, mutation: &M, location: &M::Location) -> Result<u64>;
+    async fn delete(&mut self, unique: &dyn Unique) -> Result<bool>;
+    async fn purify(&mut self, location: &dyn Location) -> Result<u64>;
 
-    async fn select<DB:Database, SE>(
+    async fn select<DB: Database, SE>(
         &mut self,
         selection: &SE::Selection,
         unique: &dyn Unique,
     ) -> Result<Option<SE>>
     where
-        SE: SelectedEntity<DB> + Send + Unpin,
-    ;
+        SE: SelectedEntity<DB> + Send + Unpin;
 
-    async fn search<DB:Database,SE>(
+    async fn search<DB: Database, SE>(
         &mut self,
         selection: &SE::Selection,
         location: &dyn Location,
         order_by: &dyn OrderBy,
     ) -> Result<Vec<SE>>
     where
-        SE: SelectedEntity<DB> + Send + Unpin,
-    ;
+        SE: SelectedEntity<DB> + Send + Unpin;
 
-    async fn search_paged<DB:Database,SE>(
+    async fn search_paged<DB: Database, SE>(
         &mut self,
         selection: &SE::Selection,
         location: &dyn Location,
@@ -72,36 +70,33 @@ pub trait SqlApi {
         page: &Pagination,
     ) -> Result<PagedList<DB, SE>>
     where
-        SE: SelectedEntity<DB> + Send + Unpin,
-   ;
+        SE: SelectedEntity<DB> + Send + Unpin;
 
     /**
     根据表中所有数据
     */
-    async fn devour<DB:Database,SE>(
+    async fn devour<DB: Database, SE>(
         &mut self,
         selection: &SE::Selection,
         order_by: &dyn OrderBy,
     ) -> Result<Vec<SE>>
     where
-        SE: SelectedEntity<DB> + Send + Unpin,
-    ;
+        SE: SelectedEntity<DB> + Send + Unpin;
 
-    async fn devour_paged<DB:Database,SE>(
+    async fn devour_paged<DB: Database, SE>(
         &mut self,
         selection: &SE::Selection,
         order_by: &dyn OrderBy,
         page: &Pagination,
     ) -> Result<PagedList<DB, SE>>
     where
-        SE: SelectedEntity<DB> + Send + Unpin,
-    ;
+        SE: SelectedEntity<DB> + Send + Unpin;
 
-    async fn count(&mut self, location: &dyn Location) -> Result<u64> ;
+    async fn count(&mut self, location: &dyn Location) -> Result<u64>;
 
-    async fn count_table(&mut self, table_name: &str) -> Result<u64> ;
+    async fn count_table(&mut self, table_name: &str) -> Result<u64>;
 
-    async fn execute_by_template(&mut self, template: &dyn TemplateRecord) -> Result<usize> ;
+    async fn execute_by_template(&mut self, template: &dyn TemplateRecord) -> Result<usize>;
 
     // async fn select_by_template<SE>(
     //     &mut self,
@@ -111,8 +106,6 @@ pub trait SqlApi {
     //     SE: SelectedEntity<Self::DB> + Send + Unpin;
 
     // sqlx is not abstract enough
-
-
 
     // async fn _insert(&mut self, entity: &dyn Entity) -> Result<bool>;
     // async fn _upsert(&mut self, entity: &dyn Entity) -> Result<bool>;

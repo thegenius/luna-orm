@@ -1,9 +1,9 @@
-use std::fmt::Debug;
 use crate::database::sqlite::SqliteLocalConfig;
 use crate::sql_generator::DefaultSqlGenerator;
 use crate::{CountResult, Result};
 use crate::{SqlApi, SqlExecutor, SqlGenerator, TaitanOrmError};
 use path_absolutize::Absolutize;
+use std::fmt::Debug;
 // use sqlx::error::BoxDynError;
 use sqlx::sqlite::{SqliteArguments, SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous};
 use sqlx::{Database, Sqlite, SqlitePool};
@@ -17,7 +17,6 @@ use taitan_orm_trait::{
     Entity, Location, Mutation, OrderBy, SelectedEntity, Selection, TemplateRecord, Unique,
 };
 use tracing::debug;
-
 
 fn build_paged_list<DB: Database, SE>(
     data: Vec<SE>,
@@ -41,7 +40,7 @@ where
     }
 }
 
-pub trait SqliteCommander: SqlExecutor<DB = Sqlite>  {
+pub trait SqliteCommander: SqlExecutor<DB = Sqlite> {
     type G: SqlGenerator + Sync + Debug;
 
     fn get_generator(&mut self) -> &Self::G;
@@ -105,7 +104,11 @@ pub trait SqliteCommander: SqlExecutor<DB = Sqlite>  {
         Ok(result)
     }
 
-    async fn select<SE>(&mut self, selection: &SE::Selection, unique: &dyn Unique) -> Result<Option<SE>>
+    async fn select<SE>(
+        &mut self,
+        selection: &SE::Selection,
+        unique: &dyn Unique,
+    ) -> Result<Option<SE>>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
@@ -223,7 +226,6 @@ pub trait SqliteCommander: SqlExecutor<DB = Sqlite>  {
         debug!(target: "taitan_orm", command = "count", result = ?record_count);
         Ok(record_count.count)
     }
-
 
     // async fn search_joined<SE>(
     //     &mut self,
