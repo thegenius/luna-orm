@@ -1,5 +1,8 @@
 mod parser;
 mod mapper;
+mod entity_parser;
+
+
 
 pub use mapper::FieldMapType;
 pub use mapper::FieldMapper;

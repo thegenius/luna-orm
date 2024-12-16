@@ -89,8 +89,14 @@ pub fn generate_entity_impl(
         }
     };
 
-    let insert_args = FieldsParser::from_named(fields).get_insert_args();
-    let upsert_args = FieldsParser::from_named(fields).get_upsert_args();
+    // let insert_args = FieldsParser::from_named(fields).get_insert_args();
+    let insert_args_sqlite = FieldsParser::from_named(fields).get_insert_args_sqlite();
+    let insert_args_mysql = FieldsParser::from_named(fields).get_insert_args_mysql();
+    let insert_args_postgres = FieldsParser::from_named(fields).get_insert_args_postgres();
+
+    let upsert_args_sqlite = FieldsParser::from_named(fields).get_upsert_args_sqlite();
+    let upsert_args_mysql = FieldsParser::from_named(fields).get_upsert_args_mysql();
+    let upsert_args_postgres = FieldsParser::from_named(fields).get_upsert_args_postgres();
 
     let output = quote! {
         impl Entity for #ident {
@@ -116,27 +122,27 @@ pub fn generate_entity_impl(
             }
 
             fn gen_insert_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
-                Err(NotImplementError("gen_insert_arguments_sqlite".to_string()).into())
+                #insert_args_sqlite
             }
 
             fn gen_upsert_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
-                Err(NotImplementError("gen_upsert_arguments_sqlite".to_string()).into())
+                #upsert_args_sqlite
             }
 
             fn gen_insert_arguments_mysql(&self) -> Result<MySqlArguments, BoxDynError> {
-                Err(NotImplementError("gen_insert_arguments_mysql".to_string()).into())
+                #insert_args_mysql
             }
 
             fn gen_upsert_arguments_mysql(&self) -> Result<MySqlArguments, BoxDynError> {
-                Err(NotImplementError("gen_upsert_arguments_mysql".to_string()).into())
+                #upsert_args_mysql
             }
 
             fn gen_insert_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
-                Err(NotImplementError("gen_insert_arguments_postgres".to_string()).into())
+                #insert_args_postgres
             }
 
             fn gen_upsert_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
-                Err(NotImplementError("gen_upsert_arguments_postgres".to_string()).into())
+                #upsert_args_postgres
             }
         }
     };

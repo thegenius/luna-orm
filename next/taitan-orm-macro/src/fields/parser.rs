@@ -3,10 +3,15 @@ use proc_macro2::TokenStream;
 use quote::{quote, quote_spanned};
 use syn::Field;
 use syn::FieldsNamed;
+use taitan_orm_trait::NotImplementError;
 use crate::types::{DefaultTypeChecker, TypeChecker};
 use crate::types::{DefaultTypeExtractor, TypeExtractor};
 use crate::attrs::{AttrParser, DefaultAttrParser};
 use crate::fields::{FieldMapType, DefaultFieldMapper, FieldMapper};
+
+
+
+
 
 
 pub struct FieldsParser {
@@ -14,12 +19,12 @@ pub struct FieldsParser {
 }
 
 impl FieldsParser {
-    pub fn from_vec(fields: &Vec<Field>) -> FieldsParser {
+    pub fn from_vec(fields: &Vec<Field>) -> Self {
         Self {
             fields: fields.clone(),
         }
     }
-    pub fn from_named(fields: &FieldsNamed) -> FieldsParser {
+    pub fn from_named(fields: &FieldsNamed) -> Self {
         let fields: Vec<Field> = fields.clone().named.into_iter().collect();
         Self { fields }
     }
@@ -249,6 +254,24 @@ impl FieldsParser {
         }
     }
 
+    pub fn get_maybe_option_args_mysql(&self) -> TokenStream {
+        let args_add_clause = <DefaultFieldMapper as FieldMapper>::map_field_vec(&self.fields, &<DefaultFieldMapper as FieldMapper>::map_to_maybe_option_args_add);
+        quote! {
+            let mut args = MySqlArguments::default();
+            #(#args_add_clause)*
+            Ok(args)
+        }
+    }
+
+    pub fn get_maybe_option_args_postgres(&self) -> TokenStream {
+        let args_add_clause = <DefaultFieldMapper as FieldMapper>::map_field_vec(&self.fields, &<DefaultFieldMapper as FieldMapper>::map_to_maybe_option_args_add);
+        quote! {
+            let mut args = PgArguments::default();
+            #(#args_add_clause)*
+            Ok(args)
+        }
+    }
+
     pub fn get_maybe_option_args(&self) -> TokenStream {
         let args_add_clause = <DefaultFieldMapper as FieldMapper>::map_field_vec(&self.fields, &<DefaultFieldMapper as FieldMapper>::map_to_any_args_add);
         quote! {
@@ -329,15 +352,49 @@ impl FieldsParser {
         }
     }
 
-    pub fn get_insert_args(&self) -> TokenStream {
+    // pub fn get_insert_args(&self) -> TokenStream {
+    //     let all_fields = FieldsParser::from_vec(&self.fields).get_insert_fields();
+    //     FieldsParser::from_vec(&all_fields).get_maybe_option_args()
+    // }
+
+    pub fn get_insert_args_sqlite(&self) -> TokenStream {
         let all_fields = FieldsParser::from_vec(&self.fields).get_insert_fields();
-        FieldsParser::from_vec(&all_fields).get_maybe_option_args()
+        FieldsParser::from_vec(&all_fields).get_maybe_option_args_sqlite()
     }
 
-    pub fn get_upsert_args(&self) -> TokenStream {
-        let all_fields = FieldsParser::from_vec(&self.fields).get_upsert_fields();
-        FieldsParser::from_vec(&all_fields).get_maybe_option_args()
+    pub fn get_insert_args_mysql(&self) -> TokenStream {
+        let all_fields = FieldsParser::from_vec(&self.fields).get_insert_fields();
+        FieldsParser::from_vec(&all_fields).get_maybe_option_args_mysql()
     }
+
+    pub fn get_insert_args_postgres(&self) -> TokenStream {
+        let all_fields = FieldsParser::from_vec(&self.fields).get_insert_fields();
+        FieldsParser::from_vec(&all_fields).get_maybe_option_args_postgres()
+    }
+
+    // pub fn get_upsert_args(&self) -> TokenStream {
+    //     let all_fields = FieldsParser::from_vec(&self.fields).get_upsert_fields();
+    //     FieldsParser::from_vec(&all_fields).get_maybe_option_args()
+    // }
+
+    pub fn get_upsert_args_sqlite(&self) -> TokenStream {
+        let all_fields = FieldsParser::from_vec(&self.fields).get_upsert_fields();
+        FieldsParser::from_vec(&all_fields).get_maybe_option_args_sqlite()
+    }
+
+    pub fn get_upsert_args_mysql(&self) -> TokenStream {
+        let all_fields = FieldsParser::from_vec(&self.fields).get_upsert_fields();
+        FieldsParser::from_vec(&all_fields).get_maybe_option_args_mysql()
+    }
+
+    pub fn get_upsert_args_postgres(&self) -> TokenStream {
+        let all_fields = FieldsParser::from_vec(&self.fields).get_upsert_fields();
+        FieldsParser::from_vec(&all_fields).get_maybe_option_args_postgres()
+    }
+
+
+
+
 
     pub fn get_where_clause(&self) -> TokenStream {
         let where_clause_members = <DefaultFieldMapper as FieldMapper>::map_field_vec(&self.fields, &<DefaultFieldMapper as FieldMapper>::map_to_where_field);

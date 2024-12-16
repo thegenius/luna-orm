@@ -6,6 +6,7 @@ use sqlx::sqlite::SqliteArguments;
 use sqlx::postgres::PgArguments;
 use sqlx::error::BoxDynError;
 use taitan_orm_trait::NotImplementError;
+use sqlx::Arguments;
 
 #[derive(Schema, Clone, Debug)]
 #[TableName = "user"]
@@ -21,7 +22,6 @@ pub struct UserEntity {
 
 #[sqlx_macros::test]
 pub async fn entity_macro_spec() -> taitan_orm::Result<()> {
-
 
 
 
