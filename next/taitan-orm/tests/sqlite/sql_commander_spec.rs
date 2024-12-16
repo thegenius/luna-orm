@@ -1,12 +1,12 @@
-use crate::entities::user::{UserPrimary, UserSelection};
+// use crate::entities::user::{UserPrimary, UserSelection};
 use sqlx::sqlx_macros;
 use taitan_orm::database::sqlite::{SqliteCommander, SqliteDatabase, SqliteLocalConfig};
 use taitan_orm::SqlExecutor;
 use time::macros::datetime;
 use uuid::Uuid;
+use crate::entities::user::*;
 
-mod entities;
-use entities::user::*;
+// use entities::user::*;
 use taitan_orm_trait::{
     CmpOperator, Entity, Location, LocationExpr, Selection, Unique, UpdateCommand,
 };

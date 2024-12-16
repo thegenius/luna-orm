@@ -115,12 +115,28 @@ pub fn generate_entity_impl(
                 #set_auto_field_token
             }
 
-            fn any_arguments_of_insert(&self) -> AnyArguments<'_> {
-                #insert_args
+            fn gen_insert_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
+                Err(NotImplementError("gen_insert_arguments_sqlite".to_string()).into())
             }
 
-            fn any_arguments_of_upsert(&self) -> AnyArguments<'_> {
-                #upsert_args
+            fn gen_upsert_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
+                Err(NotImplementError("gen_upsert_arguments_sqlite".to_string()).into())
+            }
+
+            fn gen_insert_arguments_mysql(&self) -> Result<MySqlArguments, BoxDynError> {
+                Err(NotImplementError("gen_insert_arguments_mysql".to_string()).into())
+            }
+
+            fn gen_upsert_arguments_mysql(&self) -> Result<MySqlArguments, BoxDynError> {
+                Err(NotImplementError("gen_upsert_arguments_mysql".to_string()).into())
+            }
+
+            fn gen_insert_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
+                Err(NotImplementError("gen_insert_arguments_postgres".to_string()).into())
+            }
+
+            fn gen_upsert_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
+                Err(NotImplementError("gen_upsert_arguments_postgres".to_string()).into())
             }
         }
     };

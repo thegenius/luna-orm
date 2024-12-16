@@ -12,6 +12,6 @@ mod util;
     Schema,
     attributes(TableName, PrimaryKey, UniqueIndex, AutoIncrement, Generated)
 )]
-pub fn expand_auto_entity_macro(input: TokenStream) -> TokenStream {
+pub fn expand_schema_macro(input: TokenStream) -> TokenStream {
     impl_schema_macro(input)
 }

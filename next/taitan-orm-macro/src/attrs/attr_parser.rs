@@ -1,11 +1,28 @@
 use proc_macro2::Ident;
 use syn::{Attribute, Path};
 
+pub trait AttrParser {
+    fn extract_val_from_attr(attr: &Attribute, name: &str) -> Option<String>;
+
+    fn check_is_attr(attr: &Attribute, name: &str) -> bool;
+
+    fn extract_val_from_attrs(attrs: &Vec<Attribute>, name: &str) -> Option<String>;
+
+    fn extract_val_vev_from_attrs(attrs: &Vec<Attribute>, name: &str) -> Vec<String>;
+
+    fn check_has_attr(attrs: &Vec<Attribute>, name: &str) -> bool;
+
+    fn extract_table_name(ident: &Ident, attrs: &Vec<Attribute>) -> String;
+
+    fn extract_template_sql(attrs: &Vec<Attribute>) -> Option<String>;
+    fn extract_template_count_sql(attrs: &Vec<Attribute>) -> Option<String>;
+
+    fn extract_unique_index(attrs: &Vec<Attribute>) -> Vec<Vec<String>>;
+}
+
 pub struct DefaultAttrParser {}
 
-impl AttrParser for DefaultAttrParser {}
-
-pub trait AttrParser {
+impl AttrParser for DefaultAttrParser {
     fn extract_val_from_attr(attr: &Attribute, name: &str) -> Option<String> {
         let path: &Path = &attr.path;
         let path_ident = path.get_ident().unwrap();
@@ -70,7 +87,8 @@ pub trait AttrParser {
 
     fn extract_table_name(ident: &Ident, attrs: &Vec<Attribute>) -> String {
         let mut name = ident.to_string();
-        name = <DefaultAttrParser as AttrParser>::extract_val_from_attrs(attrs, "TableName").unwrap_or(name);
+        name = <DefaultAttrParser as AttrParser>::extract_val_from_attrs(attrs, "TableName")
+            .unwrap_or(name);
         return name;
     }
 
@@ -82,7 +100,8 @@ pub trait AttrParser {
     }
 
     fn extract_unique_index(attrs: &Vec<Attribute>) -> Vec<Vec<String>> {
-        let indexes = <DefaultAttrParser as AttrParser>::extract_val_vev_from_attrs(attrs, "UniqueIndex");
+        let indexes =
+            <DefaultAttrParser as AttrParser>::extract_val_vev_from_attrs(attrs, "UniqueIndex");
         let result: Vec<Vec<String>> = indexes
             .iter()
             .map(|s| s.split(',').map(|e| e.trim().to_string()).collect())

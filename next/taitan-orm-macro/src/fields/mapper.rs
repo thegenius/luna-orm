@@ -29,6 +29,24 @@ pub enum FieldMapType {
 }
 
 pub trait FieldMapper {
+
+    fn map_to_maybe_option_args_add(field: Field) -> TokenStream {
+        let field_name = field.ident.unwrap();
+        let span = field_name.span();
+        let field_type = field.ty;
+        if <DefaultTypeChecker as TypeChecker>::type_is_option(&field_type) {
+            quote_spanned! { span =>
+                if let Some(#field_name) = &self.#field_name {
+                    args.add(#field_name)?;
+                }
+            }
+        } else {
+            quote_spanned! { span =>
+                args.add(&self.#field_name)?;
+            }
+        }
+    }
+
     fn map_to_any_args_add(field: Field) -> TokenStream {
         let field_name = field.ident.unwrap();
         let span = field_name.span();
@@ -36,12 +54,12 @@ pub trait FieldMapper {
         if <DefaultTypeChecker as TypeChecker>::type_is_option(&field_type) {
             quote_spanned! { span =>
                 if let Some(#field_name) = &self.#field_name {
-                    luna_add_arg(&mut arguments, &#field_name);
+                    args.add(#field_name)?;
                 }
             }
         } else {
             quote_spanned! { span =>
-                luna_add_arg(&mut arguments, &self.#field_name);
+                args.add(#field_name)?;
             }
         }
     }

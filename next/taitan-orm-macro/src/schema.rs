@@ -27,6 +27,6 @@ pub fn impl_schema_macro(input: TokenStream) -> TokenStream {
     // output.extend(generated_selected_entity);
     // output.extend(generated_mutation);
     // output.extend(generated_location);
-    //panic!("{}", output);
+    // panic!("{}", output);
     output.into()
 }

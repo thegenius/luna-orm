@@ -6,6 +6,7 @@ rust-version.workspace = true
 
 [dependencies]
 taitan-orm-trait = { path = "../taitan-orm-trait" }
+taitan-orm-macro = { path = "../taitan-orm-macro" }
 sqlx = {workspace = true}
 serde = {workspace = true}
 time = {workspace = true}

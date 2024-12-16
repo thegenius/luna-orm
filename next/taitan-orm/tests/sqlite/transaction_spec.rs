@@ -5,8 +5,8 @@ use taitan_orm::database::sqlite::{
 use time::macros::datetime;
 use uuid::Uuid;
 
-mod entities;
-use entities::user::*;
+
+use crate::entities::user::*;
 use taitan_orm_trait::Selection;
 
 #[sqlx_macros::test]

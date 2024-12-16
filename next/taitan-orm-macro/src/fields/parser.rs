@@ -240,6 +240,15 @@ impl FieldsParser {
         }
     }
 
+    pub fn get_maybe_option_args_sqlite(&self) -> TokenStream {
+        let args_add_clause = <DefaultFieldMapper as FieldMapper>::map_field_vec(&self.fields, &<DefaultFieldMapper as FieldMapper>::map_to_maybe_option_args_add);
+        quote! {
+            let mut args = SqliteArguments::default();
+            #(#args_add_clause)*
+            Ok(args)
+        }
+    }
+
     pub fn get_maybe_option_args(&self) -> TokenStream {
         let args_add_clause = <DefaultFieldMapper as FieldMapper>::map_field_vec(&self.fields, &<DefaultFieldMapper as FieldMapper>::map_to_any_args_add);
         quote! {

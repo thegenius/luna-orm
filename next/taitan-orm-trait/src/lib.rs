@@ -12,6 +12,9 @@ mod template_record;
 mod unique;
 mod update_command;
 mod write_command;
+mod schema;
+
+pub use schema::Schema;
 
 pub use error::NotImplementError;
 pub use error::NotValidOrderByError;
