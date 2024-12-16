@@ -10,7 +10,7 @@ use entities::user::*;
 use taitan_orm_trait::{CmpOperator, Entity, Location, LocationExpr, Selection, Unique, UpdateCommand};
 
 #[sqlx_macros::test]
-pub async fn sql_executor_spec() -> taitan_orm::Result<()> {
+pub async fn sql_commander_spec() -> taitan_orm::Result<()> {
     let config = SqliteLocalConfig {
         work_dir: "./workspace".into(),
         db_file: "test.db".into(),
