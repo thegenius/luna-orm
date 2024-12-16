@@ -305,7 +305,7 @@ impl FieldsParser {
         }
     }
 
-    pub fn get_sorted_fields(&self) -> Vec<Field> {
+    pub fn get_sorted_fields_vec(&self) -> Vec<Field> {
         let primary_fields =
             FieldsParser::from_vec(&self.fields).filter_annotated_fields("PrimaryKey");
         let body_fields =
@@ -316,7 +316,7 @@ impl FieldsParser {
         all_fields
     }
 
-    pub fn get_insert_fields(&self) -> Vec<Field> {
+    pub fn get_insert_fields_vec(&self) -> Vec<Field> {
         let primary_fields =
             FieldsParser::from_vec(&self.fields).filter_annotated_fields("PrimaryKey");
         let body_fields =
@@ -328,7 +328,7 @@ impl FieldsParser {
         all_fields
     }
 
-    pub fn get_upsert_fields(&self) -> Vec<Field> {
+    pub fn get_upsert_fields_vec(&self) -> Vec<Field> {
         let primary_fields =
             FieldsParser::from_vec(&self.fields).filter_annotated_fields("PrimaryKey");
         let body_fields =
@@ -341,7 +341,7 @@ impl FieldsParser {
         all_fields
     }
 
-    pub fn get_upsert_set_fields(&self) -> Vec<Field> {
+    pub fn get_upsert_set_fields_vec(&self) -> Vec<Field> {
         let mut body_fields =
             FieldsParser::from_vec(&self.fields).filter_not_annotated_fields("PrimaryKey");
         body_fields = FieldsParser::from_vec(&body_fields).filter_not_auto_generated();

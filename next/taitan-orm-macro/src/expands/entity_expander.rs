@@ -58,38 +58,36 @@ pub fn generate_entity_impl(
 ) -> proc_macro2::TokenStream {
     validate_fields(fields);
 
-    // let table_name = <DefaultAttrParser as AttrParser>::extract_table_name(ident, attrs);
+
     let table_name = FieldsParser::get_table_name(ident, attrs);
+    let insert_fields_name = FieldsParser::from_named(fields).get_insert_fields();
+    let upsert_set_fields_name = FieldsParser::from_named(fields).get_upsert_set_fields();
 
-    let insert_fields = FieldsParser::from_named(fields).get_insert_fields();
-    let insert_fields_name = FieldsParser::from_vec(&insert_fields).get_maybe_option_name_vec();
 
-    let upsert_set_fields = FieldsParser::from_named(fields).get_upsert_set_fields();
-    let upsert_set_fields_name =
-        FieldsParser::from_vec(&upsert_set_fields).get_maybe_option_name_vec();
+    // let auto_field_token = if auto_field_opt.is_none() {
+    //     quote! { None }
+    // } else {
+    //     let auto_field = auto_field_opt.clone().unwrap();
+    //     let auto_field_name =
+    //         <DefaultFieldMapper as FieldMapper>::map_field(auto_field, FieldMapType::Str);
+    //     quote! {
+    //         Some(#auto_field_name)
+    //     }
+    // };
+    let auto_field_token = FieldsParser::from_named(fields).get_auto_increment_field();
 
-    let auto_field_opt = FieldsParser::from_named(fields).get_auto_increment_field();
-    let auto_field_token = if auto_field_opt.is_none() {
-        quote! { None }
-    } else {
-        let auto_field = auto_field_opt.clone().unwrap();
-        let auto_field_name =
-            <DefaultFieldMapper as FieldMapper>::map_field(auto_field, FieldMapType::Str);
-        quote! {
-            Some(#auto_field_name)
-        }
-    };
-
-    let set_auto_field_token = if auto_field_opt.is_none() {
-        quote! { false }
-    } else {
-        let auto_field = auto_field_opt.unwrap();
-        let auto_field_name = auto_field.ident.unwrap();
-        quote! {
-            self.#auto_field_name = value;
-            true
-        }
-    };
+    // let auto_field_opt = FieldsParser::from_named(fields).get_auto_increment_field();
+    // let set_auto_field_token = if auto_field_opt.is_none() {
+    //     quote! { false }
+    // } else {
+    //     let auto_field = auto_field_opt.unwrap();
+    //     let auto_field_name = auto_field.ident.unwrap();
+    //     quote! {
+    //         self.#auto_field_name = value;
+    //         true
+    //     }
+    // };
+    let set_auto_field_token = FieldsParser::from_named(fields).set_auto_increment_field();
 
 
     let insert_args_sqlite = FieldsParser::from_named(fields).gen_insert_arguments_sqlite();
