@@ -1,6 +1,6 @@
 use crate::database::sqlite::{SqliteCommander, SqliteLocalConfig, SqliteTransaction};
 use crate::sql_generator::DefaultSqlGenerator;
-use crate::{SqlApi, SqlExecutor, TaitanOrmError};
+use crate::{SqlExecutor, TaitanOrmError};
 use path_absolutize::Absolutize;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous};
 use sqlx::SqlitePool;
