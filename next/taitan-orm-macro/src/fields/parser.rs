@@ -30,8 +30,15 @@ impl FieldsParser {
     }
 }
 
+pub trait FieldsContainer {
+    fn get_fields(&self) -> &Vec<Field>;
+}
 
-
+impl FieldsContainer for FieldsParser {
+    fn get_fields(&self) -> &Vec<Field> {
+        &self.fields
+    }
+}
 
 
 
@@ -350,46 +357,6 @@ impl FieldsParser {
         } else {
             return Some(first_one.unwrap().to_owned());
         }
-    }
-
-    // pub fn get_insert_args(&self) -> TokenStream {
-    //     let all_fields = FieldsParser::from_vec(&self.fields).get_insert_fields();
-    //     FieldsParser::from_vec(&all_fields).get_maybe_option_args()
-    // }
-
-    pub fn get_insert_args_sqlite(&self) -> TokenStream {
-        let all_fields = FieldsParser::from_vec(&self.fields).get_insert_fields();
-        FieldsParser::from_vec(&all_fields).get_maybe_option_args_sqlite()
-    }
-
-    pub fn get_insert_args_mysql(&self) -> TokenStream {
-        let all_fields = FieldsParser::from_vec(&self.fields).get_insert_fields();
-        FieldsParser::from_vec(&all_fields).get_maybe_option_args_mysql()
-    }
-
-    pub fn get_insert_args_postgres(&self) -> TokenStream {
-        let all_fields = FieldsParser::from_vec(&self.fields).get_insert_fields();
-        FieldsParser::from_vec(&all_fields).get_maybe_option_args_postgres()
-    }
-
-    // pub fn get_upsert_args(&self) -> TokenStream {
-    //     let all_fields = FieldsParser::from_vec(&self.fields).get_upsert_fields();
-    //     FieldsParser::from_vec(&all_fields).get_maybe_option_args()
-    // }
-
-    pub fn get_upsert_args_sqlite(&self) -> TokenStream {
-        let all_fields = FieldsParser::from_vec(&self.fields).get_upsert_fields();
-        FieldsParser::from_vec(&all_fields).get_maybe_option_args_sqlite()
-    }
-
-    pub fn get_upsert_args_mysql(&self) -> TokenStream {
-        let all_fields = FieldsParser::from_vec(&self.fields).get_upsert_fields();
-        FieldsParser::from_vec(&all_fields).get_maybe_option_args_mysql()
-    }
-
-    pub fn get_upsert_args_postgres(&self) -> TokenStream {
-        let all_fields = FieldsParser::from_vec(&self.fields).get_upsert_fields();
-        FieldsParser::from_vec(&all_fields).get_maybe_option_args_postgres()
     }
 
 

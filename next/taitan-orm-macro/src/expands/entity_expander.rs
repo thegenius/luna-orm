@@ -3,6 +3,7 @@ use crate::fields::{DefaultFieldMapper, FieldMapper};
 use crate::fields::{FieldMapType, FieldsParser};
 use crate::types::{DefaultTypeChecker, TypeChecker};
 use crate::types::{DefaultTypeExtractor, TypeExtractor};
+use crate::fields::EntityParser;
 use proc_macro2::Ident;
 use quote::quote;
 use syn::{Attribute, FieldsNamed};
@@ -57,7 +58,8 @@ pub fn generate_entity_impl(
 ) -> proc_macro2::TokenStream {
     validate_fields(fields);
 
-    let table_name = <DefaultAttrParser as AttrParser>::extract_table_name(ident, attrs);
+    // let table_name = <DefaultAttrParser as AttrParser>::extract_table_name(ident, attrs);
+    let table_name = FieldsParser::get_table_name(ident, attrs);
 
     let insert_fields = FieldsParser::from_named(fields).get_insert_fields();
     let insert_fields_name = FieldsParser::from_vec(&insert_fields).get_maybe_option_name_vec();
@@ -89,14 +91,14 @@ pub fn generate_entity_impl(
         }
     };
 
-    // let insert_args = FieldsParser::from_named(fields).get_insert_args();
-    let insert_args_sqlite = FieldsParser::from_named(fields).get_insert_args_sqlite();
-    let insert_args_mysql = FieldsParser::from_named(fields).get_insert_args_mysql();
-    let insert_args_postgres = FieldsParser::from_named(fields).get_insert_args_postgres();
 
-    let upsert_args_sqlite = FieldsParser::from_named(fields).get_upsert_args_sqlite();
-    let upsert_args_mysql = FieldsParser::from_named(fields).get_upsert_args_mysql();
-    let upsert_args_postgres = FieldsParser::from_named(fields).get_upsert_args_postgres();
+    let insert_args_sqlite = FieldsParser::from_named(fields).gen_insert_arguments_sqlite();
+    let insert_args_mysql = FieldsParser::from_named(fields).gen_insert_arguments_mysql();
+    let insert_args_postgres = FieldsParser::from_named(fields).gen_insert_arguments_postgres();
+
+    let upsert_args_sqlite = FieldsParser::from_named(fields).gen_upsert_arguments_sqlite();
+    let upsert_args_mysql = FieldsParser::from_named(fields).gen_upsert_arguments_mysql();
+    let upsert_args_postgres = FieldsParser::from_named(fields).gen_upsert_arguments_postgres();
 
     let output = quote! {
         impl Entity for #ident {
