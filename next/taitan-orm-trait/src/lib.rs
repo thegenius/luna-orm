@@ -31,6 +31,7 @@ pub use location::Location;
 pub use location::LocationExpr;
 pub use location::LocationTrait;
 pub use order_by::OrderBy;
+pub use order_by::validate_order_by;
 
 pub use join::JoinedCondition;
 pub use join::JoinedConditions;
