@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-use sqlx::sqlite::SqliteArguments;
 use crate::entities::user::{UserPrimary, UserSelection};
 use sqlx::sqlx_macros;
 use taitan_orm::database::sqlite::{SqliteCommander, SqliteDatabase, SqliteLocalConfig};
