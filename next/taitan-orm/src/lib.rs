@@ -12,7 +12,7 @@ mod dto;
 mod sql_executor;
 mod sql_generator;
 
-pub use db::DB;
+// pub use db::DB;
 pub use dto::CountResult;
 pub use error::TaitanOrmError;
 pub use result::Result;

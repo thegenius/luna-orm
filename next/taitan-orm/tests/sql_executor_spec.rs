@@ -52,8 +52,8 @@ use sqlx::{sqlx_macros, Database, Sqlite};
 
 use sqlx::Arguments;
 use sqlx::Row;
-use taitan_orm::database::sqlite::{SqliteCommander, SqliteLocalConfig};
-use taitan_orm::{SqlExecutor, DB};
+use taitan_orm::database::sqlite::{SqliteDatabase, SqliteLocalConfig};
+use taitan_orm::{SqlExecutor};
 use time::macros::datetime;
 
 #[derive(Debug)]
@@ -501,7 +501,7 @@ impl UpdateCommand for UserLocationMutationPair {
     }
 }
 
-async fn test_insert_user(db: &mut DB<SqliteCommander>, user: &User) -> taitan_orm::Result<()> {
+async fn test_insert_user(db: &mut SqliteDatabase, user: &User) -> taitan_orm::Result<()> {
     let pool = db.get_pool()?;
     let mut conn = pool.acquire().await?;
 
@@ -540,7 +540,7 @@ async fn test_insert_user(db: &mut DB<SqliteCommander>, user: &User) -> taitan_o
 因为UPDATE语句固定了，所以目前要求mutation必须包含所有字段
 */
 async fn test_update_user(
-    db: &mut DB<SqliteCommander>,
+    db: &mut SqliteDatabase,
     user_mutation: &UserMutation,
     user_primary: &UserPrimary,
 ) -> taitan_orm::Result<()> {
@@ -580,7 +580,7 @@ async fn test_update_user(
     Ok(())
 }
 
-async fn test_upsert_user(db: &mut DB<SqliteCommander>, user: &User) -> taitan_orm::Result<()> {
+async fn test_upsert_user(db: &mut SqliteDatabase, user: &User) -> taitan_orm::Result<()> {
     let pool = db.get_pool()?;
     let mut conn = pool.acquire().await?;
     let args: SqliteArguments = user.gen_upsert_arguments_sqlite().unwrap();
@@ -616,7 +616,7 @@ ON CONFLICT (`id`) DO UPDATE SET
 }
 
 async fn test_delete_user(
-    db: &mut DB<SqliteCommander>,
+    db: &mut SqliteDatabase,
     user_primary: &UserPrimary,
 ) -> taitan_orm::Result<()> {
     let pool = db.get_pool()?;
@@ -651,7 +651,7 @@ async fn test_delete_user(
 }
 
 async fn test_select_all(
-    db: &mut DB<SqliteCommander>,
+    db: &mut SqliteDatabase,
     expect_cnt: usize,
 ) -> taitan_orm::Result<()> {
     let pool = db.get_pool()?;
@@ -678,7 +678,7 @@ async fn test_select_all(
 }
 
 async fn test_select_location(
-    db: &mut DB<SqliteCommander>,
+    db: &mut SqliteDatabase,
     user_location: &UserLocation,
     expect_cnt: usize,
 ) -> taitan_orm::Result<()> {
@@ -724,7 +724,7 @@ pub async fn sql_executor_spec() -> taitan_orm::Result<()> {
         db_file: "test.db".into(),
     };
 
-    let db: DB<SqliteCommander> = SqliteCommander::build(config).await.unwrap().into();
+    let mut db: SqliteDatabase = SqliteDatabase::build(config).await.unwrap();
     let pool = db.get_pool()?;
     let mut conn = pool.acquire().await.unwrap();
     let _result = db

@@ -53,3 +53,48 @@ async fn count(location: &dyn Location) -> Result<u64>;
 async fn count_table(table_name: &str) -> Result<u64>;
 
 ```
+
+
+
+## executor design
+```rust
+ async fn fetch_optional_plain<'a, SE>(
+    stmt: &'a str,
+    selection: &'a SE::Selection,
+) -> Result<Option<SE>>;
+
+async fn fetch_optional<'a, SE>(
+    stmt: &'a str,
+    selection: &'a SE::Selection,
+    args: <Self::DB as Database>::Arguments<'a>,
+) -> Result<Option<SE>>;
+
+async fn fetch_all_plain<'a, SE>(
+    stmt: &'a str,
+    selection: &'a SE::Selection,
+) -> Result<Vec<SE>>;
+
+async fn fetch_all<'a, SE>(
+    stmt: &'a str,
+    selection: &'a SE::Selection,
+    args: <Self::DB as Database>::Arguments<'a>,
+) -> Result<Vec<SE>>;
+
+async fn execute_plain<'a>(
+    stmt: &'a str
+) -> Result<u64>;
+
+async fn execute<'a, A>(
+    stmt: &'a str,
+    args: <Self::DB as Database>::Arguments<'a>,
+) -> Result<u64>;
+
+async fn fetch_execute_plain<'a, SE>(
+    stmt: &'a str
+) -> Result<SE>;
+
+async fn fetch_execute<'a, SE>(
+    stmt: &'a str,
+    args: <Self::DB as Database>::Arguments<'a>,
+) -> Result<SE>;
+```

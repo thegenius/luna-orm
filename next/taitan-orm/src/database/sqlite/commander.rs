@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use crate::database::sqlite::SqliteLocalConfig;
 use crate::sql_generator::DefaultSqlGenerator;
 use crate::{CountResult, Result};
@@ -5,7 +6,7 @@ use crate::{SqlApi, SqlExecutor, SqlGenerator, TaitanOrmError};
 use path_absolutize::Absolutize;
 // use sqlx::error::BoxDynError;
 use sqlx::sqlite::{SqliteArguments, SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous};
-use sqlx::{Database, SqlitePool};
+use sqlx::{Database, Sqlite, SqlitePool};
 use std::fs;
 use std::marker::PhantomData;
 use std::path::Path;
@@ -17,44 +18,6 @@ use taitan_orm_trait::{
 };
 use tracing::debug;
 
-#[derive(Debug, Clone)]
-pub struct SqliteCommander {
-    sql_generator: DefaultSqlGenerator,
-    pub(crate) sqlite_pool: SqlitePool,
-}
-
-impl SqliteCommander {
-    async fn init_local(workspace_dir: &str, db_file: &str) -> Result<SqlitePool> {
-        let workspace = Path::new(workspace_dir);
-        let workspace_absolute = workspace
-            .absolutize()
-            .map_err(|_e| TaitanOrmError::DatabaseInitFail("workdir absolute fail".to_string()))?;
-
-        fs::create_dir_all(&workspace_absolute)
-            .map_err(|_e| TaitanOrmError::DatabaseInitFail("create dir fail".to_string()))?;
-        let db_file_path = workspace_absolute.join(db_file);
-
-        let options = SqliteConnectOptions::new()
-            .filename(db_file_path.clone())
-            .synchronous(SqliteSynchronous::Full)
-            .journal_mode(SqliteJournalMode::Wal)
-            .create_if_missing(true);
-        let sqlite_pool = SqlitePool::connect_with(options)
-            .await
-            .map_err(|_e| TaitanOrmError::DatabaseInitFail("create is missing fail".to_string()))?;
-        Ok(sqlite_pool)
-    }
-
-    pub async fn build(config: SqliteLocalConfig<'_>) -> Result<Self> {
-        let pool = SqliteCommander::init_local(&config.work_dir, &config.db_file).await?;
-        let generator = DefaultSqlGenerator::new();
-        let database = SqliteCommander {
-            sql_generator: generator,
-            sqlite_pool: pool,
-        };
-        Ok(database)
-    }
-}
 
 fn build_paged_list<DB: Database, SE>(
     data: Vec<SE>,
@@ -78,13 +41,10 @@ where
     }
 }
 
-impl SqlApi for SqliteCommander {
-    type G = DefaultSqlGenerator;
+pub trait SqliteCommander: SqlExecutor<DB = Sqlite>  {
+    type G: SqlGenerator + Sync + Debug;
 
-    fn get_generator(&self) -> &Self::G {
-        &self.sql_generator
-    }
-
+    fn get_generator(&mut self) -> &Self::G;
     async fn insert(&mut self, entity: &dyn Entity) -> Result<bool> {
         debug!(target: "taitan_orm", command = "insert",  entity = ?entity);
         let sql = self.get_generator().get_insert_sql(entity);
@@ -145,7 +105,7 @@ impl SqlApi for SqliteCommander {
         Ok(result)
     }
 
-    async fn select<SE>(&self, selection: &SE::Selection, unique: &dyn Unique) -> Result<Option<SE>>
+    async fn select<SE>(&mut self, selection: &SE::Selection, unique: &dyn Unique) -> Result<Option<SE>>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {

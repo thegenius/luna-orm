@@ -1,17 +1,17 @@
-use crate::database::sqlite::SqliteCommander;
 use crate::Result;
 use crate::SqlExecutor;
 use sqlx::sqlite::SqliteArguments;
 use sqlx::{Database, Sqlite, SqlitePool};
 use std::marker::PhantomData;
 use taitan_orm_trait::SelectedEntity;
+use crate::database::sqlite::database::SqliteDatabase;
 
-impl SqlExecutor for SqliteCommander {
+impl SqlExecutor for SqliteDatabase {
     type DB = Sqlite;
-    fn get_pool(&self) -> Result<&SqlitePool> {
+    fn get_pool(&mut self) -> Result<&SqlitePool> {
         Ok(&self.sqlite_pool)
     }
-    fn get_affected_rows(&self, query_result: &<Self::DB as Database>::QueryResult) -> Result<u64> {
+    fn get_affected_rows(&mut self, query_result: &<Self::DB as Database>::QueryResult) -> Result<u64> {
         Ok(query_result.rows_affected())
     }
 
@@ -29,7 +29,7 @@ impl SqlExecutor for SqliteCommander {
             .await
     }
 
-    async fn fetch_execute<'a, SE>(&'a self, stmt: &'a str, args: SqliteArguments<'a>) -> Result<SE>
+    async fn fetch_execute<'a, SE>(&'a mut self, stmt: &'a str, args: SqliteArguments<'a>) -> Result<SE>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
@@ -37,7 +37,7 @@ impl SqlExecutor for SqliteCommander {
         self.generic_fetch_execute(&mut *ex, stmt, args).await
     }
 
-    async fn fetch_execute_plain<'a, SE>(&'a self, stmt: &'a str) -> Result<SE>
+    async fn fetch_execute_plain<'a, SE>(&'a mut self, stmt: &'a str) -> Result<SE>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
@@ -47,7 +47,7 @@ impl SqlExecutor for SqliteCommander {
     }
 
     async fn fetch_optional<'a, SE>(
-        &'a self,
+        &'a mut self,
         stmt: &'a str,
         selection: &'a SE::Selection,
         args: SqliteArguments<'a>,
@@ -61,7 +61,7 @@ impl SqlExecutor for SqliteCommander {
     }
 
     async fn fetch_all_plain<'a, SE>(
-        &'a self,
+        &'a mut self,
         stmt: &'a str,
         selection: &'a SE::Selection,
     ) -> Result<Vec<SE>>
@@ -75,7 +75,7 @@ impl SqlExecutor for SqliteCommander {
     }
 
     async fn fetch_all<'a, SE>(
-        &'a self,
+        &'a mut self,
         stmt: &'a str,
         selection: &'a SE::Selection,
         args: SqliteArguments<'a>,
@@ -88,13 +88,13 @@ impl SqlExecutor for SqliteCommander {
             .await
     }
 
-    async fn execute_plain<'a>(&'a self, stmt: &'a str) -> Result<u64> {
+    async fn execute_plain<'a>(&'a mut self, stmt: &'a str) -> Result<u64> {
         let mut ex = self.get_pool()?.acquire().await?;
         let args: PhantomData<SqliteArguments> = PhantomData::default();
         self.generic_execute_plain(&mut *ex, stmt, args).await
     }
 
-    async fn execute<'a, A>(&'a self, stmt: &'a str, args: SqliteArguments<'a>) -> Result<u64> {
+    async fn execute<'a, A>(&'a mut self, stmt: &'a str, args: SqliteArguments<'a>) -> Result<u64> {
         let mut ex = self.get_pool()?.acquire().await?;
         self.generic_execute(&mut *ex, stmt, args).await
     }
