@@ -28,13 +28,14 @@ pub enum FieldMapType {
     ArgsAddClone,
 }
 
-pub trait FieldMapper {
 
+
+pub trait FieldMapper {
     fn map_to_maybe_option_args_add(field: Field) -> TokenStream {
         let field_name = field.ident.unwrap();
         let span = field_name.span();
         let field_type = field.ty;
-        if <DefaultTypeChecker as TypeChecker>::type_is_option(&field_type) {
+        if DefaultTypeChecker::type_is_option(&field_type) {
             quote_spanned! { span =>
                 if let Some(#field_name) = &self.#field_name {
                     args.add(#field_name)?;
@@ -46,6 +47,41 @@ pub trait FieldMapper {
             }
         }
     }
+
+
+    // 从entity的字段中实现primary的arguments时，可能需要忽略原来是否是option
+    fn map_to_not_option_args_add(field: Field) -> TokenStream {
+        let field_name = field.ident.unwrap();
+        let span = field_name.span();
+        quote_spanned! { span =>
+            args.add(&self.#field_name)?;
+        }
+    }
+
+    // mutation的字段全部都是option的，无论原来的field是否是option
+    fn map_to_option_args_add(field: Field) -> TokenStream {
+        let field_name = field.ident.unwrap();
+        let span = field_name.span();
+        quote_spanned! { span =>
+            if let Some(#field_name) = &self.#field_name {
+                args.add(#field_name)?;
+            }
+        }
+    }
+
+    // location的args构建会需要用option + val
+    fn map_to_option_args_add_val(field: Field) -> TokenStream {
+        let field_name = field.ident.unwrap();
+        let span = field_name.span();
+        quote_spanned! { span =>
+            if let Some(#field_name) = &self.#field_name {
+                args.add(#field_name.val)?;
+            }
+        }
+    }
+
+
+
 
     fn map_to_any_args_add(field: Field) -> TokenStream {
         let field_name = field.ident.unwrap();
@@ -68,7 +104,7 @@ pub trait FieldMapper {
         let field_name = field.ident.unwrap();
         let span = field_name.span();
         let field_type = field.ty;
-        if <DefaultTypeChecker as TypeChecker>::type_is_option(&field_type) {
+        if DefaultTypeChecker::type_is_option(&field_type) {
             quote_spanned! { span =>
                 if let Some(#field_name) = &self.#field_name {
                     arguments.add(&self.#field_name);
@@ -198,9 +234,9 @@ pub trait FieldMapper {
         }
     }
 
-    fn map_fields<F>(field_list: &FieldsNamed, wrap_fn: &F) -> Vec<proc_macro2::TokenStream>
+    fn map_fields<F>(field_list: &FieldsNamed, wrap_fn: &F) -> Vec<TokenStream>
     where
-        F: Fn(Field) -> proc_macro2::TokenStream,
+        F: Fn(Field) -> TokenStream,
     {
         let cloned_names = field_list.named.clone();
         cloned_names
@@ -209,9 +245,9 @@ pub trait FieldMapper {
             .collect::<Vec<TokenStream>>()
     }
 
-    fn map_field_vec<F>(field_list: &Vec<Field>, wrap_fn: &F) -> Vec<proc_macro2::TokenStream>
+    fn map_field_vec<F>(field_list: &Vec<Field>, wrap_fn: &F) -> Vec<TokenStream>
     where
-        F: Fn(Field) -> proc_macro2::TokenStream,
+        F: Fn(Field) -> TokenStream,
     {
         let cloned_names = field_list.clone();
         cloned_names

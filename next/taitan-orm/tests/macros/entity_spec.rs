@@ -1,12 +1,13 @@
-use sqlx::sqlx_macros;
-use taitan_orm_macro::Schema;
-use taitan_orm_trait::{Entity, Schema};
-use sqlx::mysql::MySqlArguments;
-use sqlx::sqlite::SqliteArguments;
-use sqlx::postgres::PgArguments;
 use sqlx::error::BoxDynError;
-use taitan_orm_trait::NotImplementError;
+use sqlx::mysql::MySqlArguments;
+use sqlx::postgres::PgArguments;
+use sqlx::sqlite::SqliteArguments;
+use sqlx::sqlx_macros;
 use sqlx::Arguments;
+use taitan_orm_macro::Schema;
+use taitan_orm_trait::NotImplementError;
+use taitan_orm_trait::{Entity, Unique, Schema};
+
 
 #[derive(Schema, Clone, Debug)]
 #[TableName = "user"]
@@ -22,9 +23,5 @@ pub struct UserEntity {
 
 #[sqlx_macros::test]
 pub async fn entity_macro_spec() -> taitan_orm::Result<()> {
-
-
-
-
     Ok(())
 }

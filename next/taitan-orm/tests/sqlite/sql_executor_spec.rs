@@ -52,7 +52,6 @@ use taitan_orm::database::sqlite::{SqliteDatabase, SqliteLocalConfig};
 use taitan_orm::SqlExecutor;
 use time::macros::datetime;
 
-
 use crate::entities::user::*;
 
 async fn test_insert_user(db: &mut SqliteDatabase, user: &User) -> taitan_orm::Result<()> {

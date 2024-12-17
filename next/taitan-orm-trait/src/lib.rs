@@ -6,13 +6,13 @@ mod location;
 mod mutation;
 mod order_by;
 mod page;
+mod schema;
 mod selected;
 mod selection;
 mod template_record;
 mod unique;
 mod update_command;
 mod write_command;
-mod schema;
 
 pub use schema::Schema;
 

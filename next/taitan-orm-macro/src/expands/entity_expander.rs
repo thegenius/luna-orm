@@ -1,25 +1,24 @@
 use crate::attrs::{AttrParser, DefaultAttrParser};
+use crate::fields::{EntityParser, TableNameParser};
+use crate::fields::FieldsFilter;
 use crate::fields::{DefaultFieldMapper, FieldMapper};
 use crate::fields::{FieldMapType, FieldsParser};
 use crate::types::{DefaultTypeChecker, TypeChecker};
 use crate::types::{DefaultTypeExtractor, TypeExtractor};
-use crate::fields::EntityParser;
 use proc_macro2::Ident;
 use quote::quote;
 use syn::{Attribute, FieldsNamed};
 
-fn validate_fields(fields: &FieldsNamed) {
+fn validate_primary_fields(fields: &FieldsNamed) {
     let primary_fields = FieldsParser::from_named(fields).filter_annotated_fields("PrimaryKey");
     if primary_fields.is_empty() {
         panic!("Entity must has at least one PrimaryKey!")
     }
 
     for field in primary_fields {
-        let is_generated =
-            <DefaultAttrParser as AttrParser>::check_has_attr(&field.attrs, "Generated");
-        let is_auto =
-            <DefaultAttrParser as AttrParser>::check_has_attr(&field.attrs, "AutoIncrement");
-        if <DefaultTypeChecker as TypeChecker>::type_is_option(&field.ty) {
+        let is_generated = DefaultAttrParser::check_has_attr(&field.attrs, "Generated");
+        let is_auto = DefaultAttrParser::check_has_attr(&field.attrs, "AutoIncrement");
+        if DefaultTypeChecker::type_is_option(&field.ty) {
             if (!is_generated) && (!is_auto) {
                 panic!(
                     "Primary Key with Option type must annotated with Generated or AutoIncrement"
@@ -51,49 +50,26 @@ fn validate_fields(fields: &FieldsNamed) {
     }
 }
 
+fn validate_schema_fields(fields: &FieldsNamed) {
+    validate_primary_fields(fields);
+}
+
 pub fn generate_entity_impl(
     ident: &Ident,
     attrs: &Vec<Attribute>,
     fields: &FieldsNamed,
 ) -> proc_macro2::TokenStream {
-    validate_fields(fields);
 
+    validate_schema_fields(fields);
 
     let table_name = FieldsParser::get_table_name(ident, attrs);
     let insert_fields_name = FieldsParser::from_named(fields).get_insert_fields();
     let upsert_set_fields_name = FieldsParser::from_named(fields).get_upsert_set_fields();
-
-
-    // let auto_field_token = if auto_field_opt.is_none() {
-    //     quote! { None }
-    // } else {
-    //     let auto_field = auto_field_opt.clone().unwrap();
-    //     let auto_field_name =
-    //         <DefaultFieldMapper as FieldMapper>::map_field(auto_field, FieldMapType::Str);
-    //     quote! {
-    //         Some(#auto_field_name)
-    //     }
-    // };
     let auto_field_token = FieldsParser::from_named(fields).get_auto_increment_field();
-
-    // let auto_field_opt = FieldsParser::from_named(fields).get_auto_increment_field();
-    // let set_auto_field_token = if auto_field_opt.is_none() {
-    //     quote! { false }
-    // } else {
-    //     let auto_field = auto_field_opt.unwrap();
-    //     let auto_field_name = auto_field.ident.unwrap();
-    //     quote! {
-    //         self.#auto_field_name = value;
-    //         true
-    //     }
-    // };
     let set_auto_field_token = FieldsParser::from_named(fields).set_auto_increment_field();
-
-
     let insert_args_sqlite = FieldsParser::from_named(fields).gen_insert_arguments_sqlite();
     let insert_args_mysql = FieldsParser::from_named(fields).gen_insert_arguments_mysql();
     let insert_args_postgres = FieldsParser::from_named(fields).gen_insert_arguments_postgres();
-
     let upsert_args_sqlite = FieldsParser::from_named(fields).gen_upsert_arguments_sqlite();
     let upsert_args_mysql = FieldsParser::from_named(fields).gen_upsert_arguments_mysql();
     let upsert_args_postgres = FieldsParser::from_named(fields).gen_upsert_arguments_postgres();

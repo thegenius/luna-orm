@@ -1,15 +1,14 @@
-
 use proc_macro2::{self, Ident, Span};
 use quote::quote;
 
+use crate::attrs::{AttrParser, DefaultAttrParser};
+use crate::fields::{DefaultFieldMapper, FieldMapType, FieldMapper};
+use crate::types::{DefaultTypeChecker, TypeChecker};
 use syn::{
     token::{self, Comma},
     Attribute, Data, DataEnum, DataStruct, DataUnion, Error, Field, Fields, FieldsNamed, LitStr,
     Path, Result, Variant,
 };
-use crate::attrs::{AttrParser, DefaultAttrParser};
-use crate::fields::{DefaultFieldMapper, FieldMapType, FieldMapper};
-use crate::types::{DefaultTypeChecker, TypeChecker};
 
 pub fn build_fields_name(fields: &Vec<Field>) -> Vec<proc_macro2::TokenStream> {
     DefaultFieldMapper::map_field_vec(fields, &|field: Field| {
@@ -22,7 +21,7 @@ pub fn build_fields_name_with_option(fields: &Vec<Field>) -> Vec<proc_macro2::To
     result.push(quote!(
         let mut fields: Vec<String> = Vec::new();
     ));
-    let push_stmt =DefaultFieldMapper::map_field_vec(fields, &|field: Field| {
+    let push_stmt = DefaultFieldMapper::map_field_vec(fields, &|field: Field| {
         if DefaultTypeChecker::field_is_option(&field) {
             DefaultFieldMapper::map_field(field, FieldMapType::OptionNamePush)
         } else {
@@ -36,21 +35,31 @@ pub fn build_fields_name_with_option(fields: &Vec<Field>) -> Vec<proc_macro2::To
 
 pub fn build_args_add_clause(fields: &Vec<Field>, cloned: bool) -> Vec<proc_macro2::TokenStream> {
     if cloned {
-        DefaultFieldMapper::map_field_vec(fields, &|f: Field| DefaultFieldMapper::map_field(f, FieldMapType::ArgsAddClone))
+        DefaultFieldMapper::map_field_vec(fields, &|f: Field| {
+            DefaultFieldMapper::map_field(f, FieldMapType::ArgsAddClone)
+        })
     } else {
-        DefaultFieldMapper::map_field_vec(fields, &|f: Field| DefaultFieldMapper::map_field(f, FieldMapType::ArgsAdd))
+        DefaultFieldMapper::map_field_vec(fields, &|f: Field| {
+            DefaultFieldMapper::map_field(f, FieldMapType::ArgsAdd)
+        })
     }
 }
 pub fn build_args_add_ref_clause_by_vec(fields: &Vec<Field>) -> Vec<proc_macro2::TokenStream> {
-    DefaultFieldMapper::map_field_vec(fields, &|f: Field| DefaultFieldMapper::map_field(f, FieldMapType::ArgsAddClone))
+    DefaultFieldMapper::map_field_vec(fields, &|f: Field| {
+        DefaultFieldMapper::map_field(f, FieldMapType::ArgsAddClone)
+    })
 }
 
 pub fn build_args_push_clause(fields: &FieldsNamed) -> Vec<proc_macro2::TokenStream> {
-    DefaultFieldMapper::map_fields(fields, &|f: Field| DefaultFieldMapper::map_field(f, FieldMapType::ArgsAdd))
+    DefaultFieldMapper::map_fields(fields, &|f: Field| {
+        DefaultFieldMapper::map_field(f, FieldMapType::ArgsAdd)
+    })
 }
 
 pub fn build_args_add_ref_clause(fields: &FieldsNamed) -> Vec<proc_macro2::TokenStream> {
-    DefaultFieldMapper::map_fields(fields, &|f: Field| DefaultFieldMapper::map_field(f, FieldMapType::ArgsAddRef))
+    DefaultFieldMapper::map_fields(fields, &|f: Field| {
+        DefaultFieldMapper::map_field(f, FieldMapType::ArgsAddRef)
+    })
 }
 
 pub fn build_args_add_option_ref_clause(fields: &FieldsNamed) -> Vec<proc_macro2::TokenStream> {
@@ -145,7 +154,9 @@ pub fn extract_order_by_fields_name(fields: &FieldsNamed) -> Vec<proc_macro2::To
 }
 
 pub fn extract_fields_name_str(fields: &FieldsNamed) -> Vec<proc_macro2::TokenStream> {
-    DefaultFieldMapper::map_fields(fields, &|field: Field| DefaultFieldMapper::map_field(field, FieldMapType::Str))
+    DefaultFieldMapper::map_fields(fields, &|field: Field| {
+        DefaultFieldMapper::map_field(field, FieldMapType::Str)
+    })
 }
 
 pub fn extract_fields_name(fields: &FieldsNamed) -> Vec<proc_macro2::TokenStream> {
@@ -153,8 +164,6 @@ pub fn extract_fields_name(fields: &FieldsNamed) -> Vec<proc_macro2::TokenStream
         DefaultFieldMapper::map_field(field, FieldMapType::String)
     })
 }
-
-
 
 pub fn extract_annotated_fields(fields: &FieldsNamed, name: &str) -> Vec<Field> {
     let mut result: Vec<Field> = Vec::new();
