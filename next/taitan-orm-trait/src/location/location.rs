@@ -8,7 +8,7 @@ use std::fmt::Debug;
 pub trait Location: Sync + Debug {
     fn get_table_name(&self) -> &'static str;
 
-    fn get_fields_name(&self) -> Vec<String>;
+    fn get_location_fields_name(&self) -> Vec<String>;
 
     fn get_where_clause(&self, wrap_char: char, place_holder: char) -> String;
 

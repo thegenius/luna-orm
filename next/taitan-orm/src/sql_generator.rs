@@ -409,7 +409,7 @@ pub trait SqlGenerator {
 
     fn get_update_sql<M: Mutation>(&self, mutation: &M, primary: &M::Primary) -> String {
         let table_name = primary.get_table_name();
-        let body_field_names = mutation.get_fields_name();
+        let body_field_names = mutation.get_mutation_fields_name();
         let body_fields = wrap_locate_fields(
             &body_field_names,
             self.get_wrap_char(),
@@ -435,7 +435,7 @@ pub trait SqlGenerator {
 
     fn get_change_sql<M: Mutation>(&self, mutation: &M, location: &M::Location) -> String {
         let table_name = location.get_table_name();
-        let mutation_fields = mutation.get_fields_name();
+        let mutation_fields = mutation.get_mutation_fields_name();
         let update_clause = wrap_locate_fields(
             &mutation_fields,
             self.get_wrap_char(),

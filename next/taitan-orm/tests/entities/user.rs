@@ -245,7 +245,7 @@ pub struct UserMutation {
 impl Mutation for UserMutation {
     type Primary = UserPrimary;
     type Location = UserLocation;
-    fn get_fields_name(&self) -> Vec<String> {
+    fn get_mutation_fields_name(&self) -> Vec<String> {
         let mut fields = Vec::new();
         if let Some(_) = &self.request_id {
             fields.push("request_id".to_string());
@@ -353,7 +353,7 @@ impl Location for UserLocation {
         "user"
     }
 
-    fn get_fields_name(&self) -> Vec<String> {
+    fn get_location_fields_name(&self) -> Vec<String> {
         let mut fields = Vec::new();
         if let Some(_) = &self.request_id {
             fields.push("request_id".to_string());

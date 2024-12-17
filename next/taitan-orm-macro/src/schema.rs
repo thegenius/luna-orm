@@ -1,4 +1,4 @@
-use crate::expands::{generate_entity_impl, generate_unique_structs_and_impls};
+use crate::expands::{generate_entity_impl, generate_location_struct_and_impl, generate_unique_structs_and_impls};
 use crate::util::extract_fields;
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput};
@@ -12,6 +12,8 @@ pub fn impl_schema_macro(input: TokenStream) -> TokenStream {
     let mut output = generate_entity_impl(&ident, &attrs, &fields);
 
     let primary_struct_stream =  generate_unique_structs_and_impls(&ident, &attrs, &fields);
+    let location_struct_stream = generate_location_struct_and_impl(&ident, &attrs, &fields);
+
     //
     // let primary_fields = FieldsParser::from_named(&fields).filter_annotated_fields("PrimaryKey");
     // let body_fields = FieldsParser::from_named(&fields).filter_not_annotated_fields("PrimaryKey");
@@ -32,6 +34,7 @@ pub fn impl_schema_macro(input: TokenStream) -> TokenStream {
 
 
     output.extend(primary_struct_stream);
+    output.extend(location_struct_stream);
     // panic!("{}", output);
     output.into()
 }

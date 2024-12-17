@@ -10,7 +10,7 @@ pub trait Mutation: Sync + Debug {
 
     type Location: Location;
 
-    fn get_fields_name(&self) -> Vec<String>;
+    fn get_mutation_fields_name(&self) -> Vec<String>;
 
     fn gen_update_arguments_sqlite<'a>(
         &'a self,

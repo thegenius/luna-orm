@@ -4,6 +4,9 @@ use quote::quote;
 use syn::{Attribute, FieldsNamed};
 use crate::attrs::{AttrParser, DefaultAttrParser};
 use crate::fields::{FieldsFilter, FieldsParser, UniqueParser};
+use crate::fields::StructConstructor;
+use crate::fields::LocationParser;
+
 
 pub fn generate_location_struct_and_impl(
     ident: &Ident,
@@ -11,43 +14,49 @@ pub fn generate_location_struct_and_impl(
     fields: &FieldsNamed,
 ) -> TokenStream {
     let table_name = DefaultAttrParser::extract_table_name(ident, attrs);
-    let fields_vec = FieldsParser::from_named(fields).filter_not_annotated_fields("PrimaryKey");
+    // let fields_vec = FieldsParser::from_named(fields).filter_not_annotated_fields("PrimaryKey");
     let struct_name =  format!("{}Location", table_name.to_camel());
 
 
-    let unique_field_names = FieldsParser::from_vec(&fields_vec).get_unique_field_names();
-    let unique_arguments_sqlite = FieldsParser::from_vec(&fields_vec).gen_unique_arguments_sqlite();
-    let unique_arguments_mysql = FieldsParser::from_vec(&fields_vec).gen_unique_arguments_mysql();
-    let unique_arguments_postgres = FieldsParser::from_vec(&fields_vec).gen_unique_arguments_postgres();
+    let parser = FieldsParser::from_named(fields);
+
+    let where_clause = FieldsParser::from_named(fields).get_where_clause();
+    let location_fields_name = parser.get_location_fields_name();
+    let location_arguments_sqlite = FieldsParser::from_named(fields).gen_location_arguments_sqlite();
+    let location_arguments_mysql = FieldsParser::from_named(fields).gen_location_arguments_mysql();
+    let location_arguments_postgres = FieldsParser::from_named(fields).gen_location_arguments_postgres();
 
     let struct_ident = Ident::new(&struct_name, Span::call_site());
-    let fields_tokens = FieldsParser::from_vec(&fields_vec).get_not_option_fields();
+    let struct_stream = FieldsParser::from_named(fields).of_location(&struct_name);
 
     let output = quote! {
-        #[derive(Default, Debug, Clone)]
-        pub struct #struct_ident {
-            #fields_tokens
-        }
 
-        impl Unique for #struct_ident {
+        #struct_stream
+
+        impl Location for #struct_ident {
+
             fn get_table_name(&self) -> &'static str {
                 #table_name
             }
 
-            fn get_unique_field_names(&self) -> &'static [&'static str] {
-                #unique_field_names
+            fn get_location_fields_name(&self) -> Vec<String> {
+                #location_fields_name
             }
 
-            fn gen_unique_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
-                #unique_arguments_sqlite
+            fn get_where_clause(&self, wrap_char: char, place_holder: char) -> String {
+                #where_clause
             }
 
-            fn gen_unique_arguments_mysql(&self) -> Result<MySqlArguments, BoxDynError> {
-                #unique_arguments_mysql
+            fn gen_location_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
+                #location_arguments_sqlite
             }
 
-            fn gen_unique_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
-                #unique_arguments_postgres
+            fn gen_location_arguments_mysql(&self) -> Result<MySqlArguments, BoxDynError> {
+                #location_arguments_mysql
+            }
+
+            fn gen_location_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
+                #location_arguments_postgres
             }
         }
     };

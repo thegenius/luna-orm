@@ -59,7 +59,7 @@ pub trait ArgsAddConstructor {
         let span = field_name.span();
         quote_spanned! { span =>
             if let Some(#field_name) = &self.#field_name {
-                args.add(#field_name.val)?;
+                args.add(&#field_name.val)?;
             }
         }
     }

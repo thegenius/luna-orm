@@ -20,3 +20,6 @@ pub use field_mapper::FieldMapType;
 pub use field_mapper::FieldMapper;
 pub use parser::FieldsContainer;
 pub use parser::FieldsParser;
+
+pub use mappers::StructConstructor;
+pub use location_parser::LocationParser;

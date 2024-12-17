@@ -6,7 +6,7 @@ use sqlx::sqlx_macros;
 use sqlx::Arguments;
 use taitan_orm_macro::Schema;
 use taitan_orm_trait::NotImplementError;
-use taitan_orm_trait::{Entity, Unique, Schema};
+use taitan_orm_trait::{Entity, Unique, Location, Schema, LocationExpr};
 
 
 #[derive(Schema, Clone, Debug)]

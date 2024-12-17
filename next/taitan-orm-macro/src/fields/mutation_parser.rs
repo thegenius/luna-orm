@@ -3,7 +3,7 @@ use proc_macro2::TokenStream;
 use std::fmt::Debug;
 
 pub trait MutationParser: FieldsContainer {
-    fn get_fields_name(&self) -> TokenStream;
+    fn get_mutation_fields_name(&self) -> TokenStream;
     fn gen_update_arguments_sqlite(&self) -> TokenStream;
     fn gen_update_arguments_mysql(&self) -> TokenStream;
     fn gen_update_arguments_postgres(&self) -> TokenStream;
@@ -13,7 +13,7 @@ pub trait MutationParser: FieldsContainer {
 }
 
 impl MutationParser for FieldsParser {
-    fn get_fields_name(&self) -> TokenStream {
+    fn get_mutation_fields_name(&self) -> TokenStream {
         todo!()
     }
 
