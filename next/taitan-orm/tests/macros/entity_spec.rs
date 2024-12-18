@@ -1,15 +1,9 @@
-use sqlx::error::BoxDynError;
-use sqlx::mysql::MySqlArguments;
-use sqlx::postgres::PgArguments;
-use sqlx::sqlite::SqliteArguments;
+
 use sqlx::sqlx_macros;
-use sqlx::Arguments;
 use taitan_orm_macro::Schema;
-use taitan_orm_trait::NotImplementError;
-use taitan_orm_trait::{Entity, Unique, Location, Schema, LocationExpr, Mutation, Selection, SelectedEntity};
-use sqlx::{Sqlite, MySql, Postgres};
-use sqlx::Database;
-use sqlx::Row;
+
+use sqlx::Arguments; // 大量使用args.add，没法去掉
+use sqlx::Row; // 因为使用了try_get
 
 #[derive(Schema, Clone, Debug)]
 #[TableName = "user"]

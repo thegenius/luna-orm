@@ -23,13 +23,17 @@ pub fn generate_selected_struct_and_impl(
     let postgres_ident = Ident::new("Postgres", Span::call_site());
 
     let sqlite_impl = generate_selected_and_impl(fields, &selected_ident, &selection_ident, &sqlite_ident);
-    // let mysql_impl = generate_selected_and_impl(fields, &selected_ident, &selection_ident, &mysql_ident);
-    // let postgres_impl = generate_selected_and_impl(fields, &selected_ident, &selection_ident, &postgres_ident);
+    let mysql_impl = generate_selected_and_impl(fields, &selected_ident, &selection_ident, &mysql_ident);
+    let postgres_impl = generate_selected_and_impl(fields, &selected_ident, &selection_ident, &postgres_ident);
 
     let output = quote! {
         #struct_stream
 
         #sqlite_impl
+
+        #mysql_impl
+
+        #postgres_impl
     };
 
     output
@@ -43,16 +47,16 @@ fn generate_selected_and_impl(fields: &FieldsNamed, selected_ident: &Ident, sele
     let full_row_construct = parser.gen_full_row();
 
     let output = quote! {
-        impl SelectedEntity<#db_ident> for #selected_ident {
+        impl taitan_orm::traits::SelectedEntity<sqlx::#db_ident> for #selected_ident {
             type Selection = #selection_ident;
 
-             fn from_row(selection: &Self::Selection, row: <#db_ident as Database>::Row) -> Result<Self, sqlx::Error>
+             fn from_row(selection: &Self::Selection, row: <sqlx::#db_ident as sqlx::Database>::Row) -> Result<Self, sqlx::Error>
             where
                 Self: Sized {
                 #selected_row_construct
             }
 
-            fn from_row_full(row: <#db_ident as Database>::Row) -> Result<Self, sqlx::Error>
+            fn from_row_full(row: <sqlx::#db_ident as sqlx::Database>::Row) -> Result<Self, sqlx::Error>
             where
                 Self: Sized,
             {

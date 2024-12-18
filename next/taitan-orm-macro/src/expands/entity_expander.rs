@@ -75,7 +75,7 @@ pub fn generate_entity_impl(
     let upsert_args_postgres = FieldsParser::from_named(fields).gen_upsert_arguments_postgres();
 
     let output = quote! {
-        impl Entity for #ident {
+        impl taitan_orm::traits::Entity for #ident {
 
             fn get_table_name(&self) -> &'static str {
                 #table_name
@@ -97,27 +97,27 @@ pub fn generate_entity_impl(
                 #set_auto_field_token
             }
 
-            fn gen_insert_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
+            fn gen_insert_arguments_sqlite(&self) -> Result<sqlx::sqlite::SqliteArguments<'_>, sqlx::error::BoxDynError> {
                 #insert_args_sqlite
             }
 
-            fn gen_upsert_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
+            fn gen_upsert_arguments_sqlite(&self) -> Result<sqlx::sqlite::SqliteArguments<'_>, sqlx::error::BoxDynError> {
                 #upsert_args_sqlite
             }
 
-            fn gen_insert_arguments_mysql(&self) -> Result<MySqlArguments, BoxDynError> {
+            fn gen_insert_arguments_mysql(&self) -> Result<sqlx::mysql::MySqlArguments, sqlx::error::BoxDynError> {
                 #insert_args_mysql
             }
 
-            fn gen_upsert_arguments_mysql(&self) -> Result<MySqlArguments, BoxDynError> {
+            fn gen_upsert_arguments_mysql(&self) -> Result<sqlx::mysql::MySqlArguments, sqlx::error::BoxDynError> {
                 #upsert_args_mysql
             }
 
-            fn gen_insert_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
+            fn gen_insert_arguments_postgres(&self) -> Result<sqlx::postgres::PgArguments, sqlx::error::BoxDynError> {
                 #insert_args_postgres
             }
 
-            fn gen_upsert_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
+            fn gen_upsert_arguments_postgres(&self) -> Result<sqlx::postgres::PgArguments, sqlx::error::BoxDynError> {
                 #upsert_args_postgres
             }
         }

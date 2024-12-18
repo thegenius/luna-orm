@@ -24,7 +24,7 @@ pub fn generate_selection_struct_and_impl(
 
         #struct_stream
 
-        impl Selection for #struct_ident {
+        impl taitan_orm::traits::Selection for #struct_ident {
 
             fn get_table_name(&self) -> &'static str {
                 #table_name

@@ -43,11 +43,11 @@ pub trait StructFieldConstructor {
         if DefaultTypeChecker::type_is_option(&field_ty) {
             let inner_type = DefaultTypeExtractor::get_option_inner_type(&field_ty);
             quote! {
-                #field_ident: Option<LocationExpr<#inner_type>>
+                #field_ident: Option<taitan_orm::traits::LocationExpr<#inner_type>>
             }
         } else {
             quote! {
-                #field_ident: Option<LocationExpr<#field_ty>>
+                #field_ident: Option<taitan_orm::traits::LocationExpr<#field_ty>>
             }
         }
     }

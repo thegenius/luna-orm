@@ -41,7 +41,7 @@ pub fn generate_mutation_struct_and_impl(
 
         #struct_stream
 
-        impl Mutation for #struct_ident {
+        impl taitan_orm::traits::Mutation for #struct_ident {
 
             type Primary = #primary_struct_ident;
 
@@ -54,38 +54,38 @@ pub fn generate_mutation_struct_and_impl(
             fn gen_update_arguments_sqlite<'a>(
                 &'a self,
                 primary: &'a Self::Primary,
-            ) -> Result<SqliteArguments<'a>, BoxDynError> {
+            ) -> Result<sqlx::sqlite::SqliteArguments<'a>, sqlx::error::BoxDynError> {
                 #update_args_sqlite
             }
             fn gen_update_arguments_mysql<'a>(
                 &'a self,
                 primary: &'a Self::Primary,
-            ) -> Result<MySqlArguments, BoxDynError> {
+            ) -> Result<sqlx::mysql::MySqlArguments, sqlx::error::BoxDynError> {
                 #update_args_mysql
             }
             fn gen_update_arguments_postgres<'a>(
                 &'a self,
                 primary: &'a Self::Primary,
-            ) -> Result<PgArguments, BoxDynError> {
+            ) -> Result<sqlx::postgres::PgArguments, sqlx::error::BoxDynError> {
                 #update_args_postgres
             }
 
             fn gen_change_arguments_sqlite<'a>(
                 &'a self,
                 location: &'a Self::Location,
-            ) -> Result<SqliteArguments<'a>, BoxDynError> {
+            ) -> Result<sqlx::sqlite::SqliteArguments<'a>, sqlx::error::BoxDynError> {
                 #change_args_sqlite
             }
             fn gen_change_arguments_mysql<'a>(
                 &'a self,
                 location: &'a Self::Location,
-            ) -> Result<MySqlArguments, BoxDynError> {
+            ) -> Result<sqlx::mysql::MySqlArguments, sqlx::error::BoxDynError> {
                 #change_args_mysql
             }
             fn gen_change_arguments_postgres<'a>(
                 &'a self,
                 location: &'a Self::Location,
-            ) -> Result<PgArguments, BoxDynError> {
+            ) -> Result<sqlx::postgres::PgArguments, sqlx::error::BoxDynError> {
                 #change_args_postgres
             }
         }

@@ -22,7 +22,7 @@ fn generate_struct_and_impl(table_name: &str, struct_name: &str, fields: &Vec<Fi
             #fields_tokens
         }
 
-        impl Unique for #struct_ident {
+        impl taitan_orm::traits::Unique for #struct_ident {
             fn get_table_name(&self) -> &'static str {
                 #table_name
             }
@@ -31,15 +31,15 @@ fn generate_struct_and_impl(table_name: &str, struct_name: &str, fields: &Vec<Fi
                 #unique_field_names
             }
 
-            fn gen_unique_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
+            fn gen_unique_arguments_sqlite(&self) -> Result<sqlx::sqlite::SqliteArguments<'_>, sqlx::error::BoxDynError> {
                 #unique_arguments_sqlite
             }
 
-            fn gen_unique_arguments_mysql(&self) -> Result<MySqlArguments, BoxDynError> {
+            fn gen_unique_arguments_mysql(&self) -> Result<sqlx::mysql::MySqlArguments, sqlx::error::BoxDynError> {
                 #unique_arguments_mysql
             }
 
-            fn gen_unique_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
+            fn gen_unique_arguments_postgres(&self) -> Result<sqlx::postgres::PgArguments, sqlx::error::BoxDynError> {
                 #unique_arguments_postgres
             }
         }

@@ -31,7 +31,7 @@ pub fn generate_location_struct_and_impl(
 
         #struct_stream
 
-        impl Location for #struct_ident {
+        impl taitan_orm::traits::Location for #struct_ident {
 
             fn get_table_name(&self) -> &'static str {
                 #table_name
@@ -45,15 +45,15 @@ pub fn generate_location_struct_and_impl(
                 #where_clause
             }
 
-            fn gen_location_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
+            fn gen_location_arguments_sqlite(&self) -> Result<sqlx::sqlite::SqliteArguments<'_>, sqlx::error::BoxDynError> {
                 #location_arguments_sqlite
             }
 
-            fn gen_location_arguments_mysql(&self) -> Result<MySqlArguments, BoxDynError> {
+            fn gen_location_arguments_mysql(&self) -> Result<sqlx::mysql::MySqlArguments, sqlx::error::BoxDynError> {
                 #location_arguments_mysql
             }
 
-            fn gen_location_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
+            fn gen_location_arguments_postgres(&self) -> Result<sqlx::postgres::PgArguments, sqlx::error::BoxDynError> {
                 #location_arguments_postgres
             }
         }

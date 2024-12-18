@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 use sqlx::error::BoxDynError;
-use sqlx::sqlite::SqliteArguments;
-use sqlx::Arguments;
-use sqlx::{Database, Row, Sqlite};
+use sqlx::sqlite::{SqliteArguments, SqliteRow};
+use sqlx::{Arguments, Row};
+use sqlx::{Database, Sqlite};
 use std::borrow::Cow;
 use std::error::Error;
 use taitan_orm::database::sqlite::SqliteDatabase;

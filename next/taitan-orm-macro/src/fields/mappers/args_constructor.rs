@@ -8,7 +8,7 @@ pub trait ArgsConstructorSqlite: FieldsContainer + ArgsAddConstructor {
     fn of_maybe_option_args_sqlite(&self) -> TokenStream {
         let args_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_maybe_option);
         quote! {
-            let mut args = SqliteArguments::default();
+            let mut args = sqlx::sqlite::SqliteArguments::default();
             #(#args_add_clause)*
             Ok(args)
         }
@@ -17,7 +17,7 @@ pub trait ArgsConstructorSqlite: FieldsContainer + ArgsAddConstructor {
     fn of_not_option_args_sqlite(&self) -> TokenStream {
         let args_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_not_option);
         quote! {
-            let mut args = SqliteArguments::default();
+            let mut args = sqlx::sqlite::SqliteArguments::default();
             #(#args_add_clause)*
             Ok(args)
         }
@@ -26,7 +26,7 @@ pub trait ArgsConstructorSqlite: FieldsContainer + ArgsAddConstructor {
     fn of_option_args_sqlite(&self) -> TokenStream {
         let args_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_option);
         quote! {
-            let mut args = SqliteArguments::default();
+            let mut args = sqlx::sqlite::SqliteArguments::default();
             #(#args_add_clause)*
             Ok(args)
         }
@@ -35,7 +35,7 @@ pub trait ArgsConstructorSqlite: FieldsContainer + ArgsAddConstructor {
     fn of_location_args_sqlite(&self) -> TokenStream {
         let args_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_location);
         quote! {
-            let mut args = SqliteArguments::default();
+            let mut args = sqlx::sqlite::SqliteArguments::default();
             #(#args_add_clause)*
             Ok(args)
         }
@@ -45,7 +45,7 @@ pub trait ArgsConstructorMySql: FieldsContainer + ArgsAddConstructor {
     fn of_maybe_option_args_mysql(&self) -> TokenStream {
         let args_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_maybe_option);
         quote! {
-            let mut args = MySqlArguments::default();
+            let mut args = sqlx::mysql::MySqlArguments::default();
             #(#args_add_clause)*
             Ok(args)
         }
@@ -54,7 +54,7 @@ pub trait ArgsConstructorMySql: FieldsContainer + ArgsAddConstructor {
     fn of_not_option_args_mysql(&self) -> TokenStream {
         let args_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_not_option);
         quote! {
-            let mut args = MySqlArguments::default();
+            let mut args = sqlx::mysql::MySqlArguments::default();
             #(#args_add_clause)*
             Ok(args)
         }
@@ -63,7 +63,7 @@ pub trait ArgsConstructorMySql: FieldsContainer + ArgsAddConstructor {
     fn of_option_args_mysql(&self) -> TokenStream {
         let args_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_option);
         quote! {
-            let mut args = MySqlArguments::default();
+            let mut args = sqlx::mysql::MySqlArguments::default();
             #(#args_add_clause)*
             Ok(args)
         }
@@ -72,7 +72,7 @@ pub trait ArgsConstructorMySql: FieldsContainer + ArgsAddConstructor {
     fn of_location_args_mysql(&self) -> TokenStream {
         let args_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_location);
         quote! {
-            let mut args = MySqlArguments::default();
+            let mut args = sqlx::mysql::MySqlArguments::default();
             #(#args_add_clause)*
             Ok(args)
         }
@@ -84,7 +84,7 @@ pub trait ArgsConstructorPostgres: FieldsContainer + ArgsAddConstructor {
     fn of_maybe_option_args_postgres(&self) -> TokenStream {
         let args_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_maybe_option);
         quote! {
-            let mut args = PgArguments::default();
+            let mut args = sqlx::postgres::PgArguments::default();
             #(#args_add_clause)*
             Ok(args)
         }
@@ -93,7 +93,7 @@ pub trait ArgsConstructorPostgres: FieldsContainer + ArgsAddConstructor {
     fn of_not_option_args_postgres(&self) -> TokenStream {
         let args_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_not_option);
         quote! {
-            let mut args = PgArguments::default();
+            let mut args = sqlx::postgres::PgArguments::default();
             #(#args_add_clause)*
             Ok(args)
         }
@@ -102,7 +102,7 @@ pub trait ArgsConstructorPostgres: FieldsContainer + ArgsAddConstructor {
     fn of_option_args_postgres(&self) -> TokenStream {
         let args_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_option);
         quote! {
-            let mut args = PgArguments::default();
+            let mut args = sqlx::postgres::PgArguments::default();
             #(#args_add_clause)*
             Ok(args)
         }
@@ -111,7 +111,7 @@ pub trait ArgsConstructorPostgres: FieldsContainer + ArgsAddConstructor {
     fn of_location_args_postgres(&self) -> TokenStream {
         let args_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_location);
         quote! {
-            let mut args = PgArguments::default();
+            let mut args = sqlx::postgres::PgArguments::default();
             #(#args_add_clause)*
             Ok(args)
         }
@@ -123,7 +123,7 @@ pub trait ArgsConstructorPostgres: FieldsContainer + ArgsAddConstructor {
             <Self as ArgsAddConstructor>::of_not_option_with("primary", field)
         });
         quote! {
-            let mut args = SqliteArguments::default();
+            let mut args = sqlx::sqlite::SqliteArguments::default();
             #(#mutation_add_clause)*
             #(#primary_add_clause)*
             Ok(args)
@@ -136,7 +136,7 @@ pub trait ArgsConstructorPostgres: FieldsContainer + ArgsAddConstructor {
             <Self as ArgsAddConstructor>::of_not_option_with("primary", field)
         });
         quote! {
-            let mut args = MySqlArguments::default();
+            let mut args = sqlx::mysql::MySqlArguments::default();
             #(#mutation_add_clause)*
             #(#primary_add_clause)*
             Ok(args)
@@ -148,7 +148,7 @@ pub trait ArgsConstructorPostgres: FieldsContainer + ArgsAddConstructor {
             <Self as ArgsAddConstructor>::of_not_option_with("primary", field)
         });
         quote! {
-            let mut args = PgArguments::default();
+            let mut args = sqlx::postgres::PgArguments::default();
             #(#mutation_add_clause)*
             #(#primary_add_clause)*
             Ok(args)
@@ -161,7 +161,7 @@ pub trait ArgsConstructorPostgres: FieldsContainer + ArgsAddConstructor {
             <Self as ArgsAddConstructor>::of_location_with("location", field)
         });
         quote! {
-            let mut args = SqliteArguments::default();
+            let mut args = sqlx::sqlite::SqliteArguments::default();
             #(#mutation_add_clause)*
             #(#location_add_clause)*
             Ok(args)
@@ -174,7 +174,7 @@ pub trait ArgsConstructorPostgres: FieldsContainer + ArgsAddConstructor {
             <Self as ArgsAddConstructor>::of_location_with("location", field)
         });
         quote! {
-            let mut args = MySqlArguments::default();
+            let mut args = sqlx::mysql::MySqlArguments::default();
             #(#mutation_add_clause)*
             #(#location_add_clause)*
             Ok(args)
@@ -186,7 +186,7 @@ pub trait ArgsConstructorPostgres: FieldsContainer + ArgsAddConstructor {
             <Self as ArgsAddConstructor>::of_location_with("location", field)
         });
         quote! {
-            let mut args = PgArguments::default();
+            let mut args = sqlx::postgres::PgArguments::default();
             #(#mutation_add_clause)*
             #(#location_add_clause)*
             Ok(args)
