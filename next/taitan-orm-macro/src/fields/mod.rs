@@ -9,6 +9,7 @@ mod mutation_parser;
 mod location_parser;
 mod mappers;
 mod selection_parser;
+mod selected_parser;
 
 pub use entity_parser::EntityParser;
 pub use fields_filter::FieldsFilter;
@@ -21,6 +22,9 @@ pub use field_mapper::FieldMapType;
 pub use field_mapper::FieldMapper;
 pub use parser::FieldsContainer;
 pub use parser::FieldsParser;
+
+pub use mappers::RowConstructor;
+pub use mappers::RowGetConstructor;
 
 pub use mappers::NamesConstructor;
 pub use mappers::NamesAddConstructor;

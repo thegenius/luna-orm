@@ -1,0 +1,26 @@
+use proc_macro2::TokenStream;
+use quote::quote_spanned;
+use syn::spanned::Spanned;
+use syn::{Field, LitStr};
+
+pub trait RowGetConstructor {
+    fn of_selected_row(field: Field) -> TokenStream {
+        let field_name = field.ident.unwrap();
+        let span = field_name.span();
+        let field_name_lit = LitStr::new(&field_name.to_string(), span);
+        quote_spanned! { span =>
+            if selection.#field_name {
+                selected.#field_name = row.try_get(#field_name_lit).ok();
+            }
+        }
+    }
+
+    fn of_row(field: Field) -> TokenStream {
+        let field_name = field.ident.unwrap();
+        let span = field_name.span();
+        let field_name_lit = LitStr::new(&field_name.to_string(), span);
+        quote_spanned! { span =>
+            selected.#field_name = row.try_get(#field_name_lit).ok();
+        }
+    }
+}

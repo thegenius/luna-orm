@@ -8,7 +8,7 @@ use quote::{quote, quote_spanned};
 use syn::Field;
 use syn::FieldsNamed;
 use taitan_orm_trait::NotImplementError;
-use crate::fields::mappers::{ArgsAddConstructor, ArgsConstructorMySql, ArgsConstructorPostgres, ArgsConstructorSqlite, NamesAddConstructor, NamesConstructor, StructConstructor, StructFieldConstructor};
+use crate::fields::mappers::{ArgsAddConstructor, ArgsConstructorMySql, ArgsConstructorPostgres, ArgsConstructorSqlite, NamesAddConstructor, NamesConstructor, RowConstructor, RowGetConstructor, StructConstructor, StructFieldConstructor};
 
 pub struct FieldsParser {
     fields: Vec<Field>,
@@ -61,6 +61,11 @@ impl NamesConstructor for FieldsParser {}
 impl UniqueParser for FieldsParser {}
 
 impl LocationParser for FieldsParser {}
+
+impl RowGetConstructor for FieldsParser {}
+
+impl RowConstructor for FieldsParser {}
+
 
 impl FieldsParser {
     pub fn map_with<F>(self, map_fn: &F) -> Vec<TokenStream>

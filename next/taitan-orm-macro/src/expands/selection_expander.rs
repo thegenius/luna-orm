@@ -22,25 +22,25 @@ pub fn generate_selection_struct_and_impl(
 
     let output = quote! {
 
-            #struct_stream
+        #struct_stream
 
-            impl Selection for #struct_ident {
+        impl Selection for #struct_ident {
 
-                fn get_table_name(&self) -> &'static str {
-                    #table_name
-                }
-
-                fn get_selected_fields(&self) -> Vec<String> {
-                    #bool_names_vec
-                }
-
-                fn full_fields() -> Self
-                    where Self: Sized,
-                {
-                    #full_fields_stream
-                }
+            fn get_table_name(&self) -> &'static str {
+                #table_name
             }
-        };
+
+            fn get_selected_fields(&self) -> Vec<String> {
+                #bool_names_vec
+            }
+
+            fn full_fields() -> Self
+                where Self: Sized,
+            {
+                #full_fields_stream
+            }
+        }
+    };
 
     output
 }

@@ -6,8 +6,10 @@ use sqlx::sqlx_macros;
 use sqlx::Arguments;
 use taitan_orm_macro::Schema;
 use taitan_orm_trait::NotImplementError;
-use taitan_orm_trait::{Entity, Unique, Location, Schema, LocationExpr, Mutation, Selection};
-
+use taitan_orm_trait::{Entity, Unique, Location, Schema, LocationExpr, Mutation, Selection, SelectedEntity};
+use sqlx::{Sqlite, MySql, Postgres};
+use sqlx::Database;
+use sqlx::Row;
 
 #[derive(Schema, Clone, Debug)]
 #[TableName = "user"]
