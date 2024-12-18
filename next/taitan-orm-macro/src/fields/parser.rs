@@ -1,6 +1,6 @@
 use crate::attrs::{AttrParser, DefaultAttrParser};
 use crate::fields::fields_filter::FieldsFilter;
-use crate::fields::{DefaultFieldMapper, FieldMapType, FieldMapper};
+use crate::fields::{DefaultFieldMapper, FieldMapType, FieldMapper, LocationParser, UniqueParser};
 use crate::types::{DefaultTypeChecker, TypeChecker};
 use crate::types::{DefaultTypeExtractor, TypeExtractor};
 use proc_macro2::TokenStream;
@@ -8,7 +8,7 @@ use quote::{quote, quote_spanned};
 use syn::Field;
 use syn::FieldsNamed;
 use taitan_orm_trait::NotImplementError;
-use crate::fields::mappers::{ArgsAddConstructor, ArgsConstructorMySql, ArgsConstructorPostgres, ArgsConstructorSqlite, StructConstructor, StructFieldConstructor};
+use crate::fields::mappers::{ArgsAddConstructor, ArgsConstructorMySql, ArgsConstructorPostgres, ArgsConstructorSqlite, NamesAddConstructor, NamesConstructor, StructConstructor, StructFieldConstructor};
 
 pub struct FieldsParser {
     fields: Vec<Field>,
@@ -55,10 +55,12 @@ impl ArgsConstructorPostgres for FieldsParser {}
 impl StructFieldConstructor for FieldsParser {}
 impl StructConstructor for FieldsParser {}
 
+impl NamesAddConstructor for FieldsParser {}
+impl NamesConstructor for FieldsParser {}
 
+impl UniqueParser for FieldsParser {}
 
-
-
+impl LocationParser for FieldsParser {}
 
 impl FieldsParser {
     pub fn map_with<F>(self, map_fn: &F) -> Vec<TokenStream>

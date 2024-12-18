@@ -8,6 +8,7 @@ mod fields_mapper;
 mod mutation_parser;
 mod location_parser;
 mod mappers;
+mod selection_parser;
 
 pub use entity_parser::EntityParser;
 pub use fields_filter::FieldsFilter;
@@ -21,5 +22,10 @@ pub use field_mapper::FieldMapper;
 pub use parser::FieldsContainer;
 pub use parser::FieldsParser;
 
+pub use mappers::NamesConstructor;
+pub use mappers::NamesAddConstructor;
 pub use mappers::StructConstructor;
+pub use mappers::ArgsConstructorPostgres;
+pub use mappers::ArgsConstructorMySql;
+pub use mappers::ArgsConstructorSqlite;
 pub use location_parser::LocationParser;

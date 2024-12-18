@@ -4,7 +4,8 @@ use crate::fields::FieldsContainer;
 use crate::fields::mappers::{StructFieldConstructor};
 
 pub trait StructConstructor: FieldsContainer + StructFieldConstructor {
-    fn of_not_option(&self, struct_ident: &str) -> TokenStream {
+    fn of_not_option(&self, struct_name: &str) -> TokenStream {
+        let struct_ident = Ident::new(&struct_name, Span::call_site());
         let fields_tokens = self.map_field_vec(&<Self as StructFieldConstructor>::get_not_option_field);
         quote! {
             #[derive(Default, Debug, Clone)]
@@ -14,7 +15,8 @@ pub trait StructConstructor: FieldsContainer + StructFieldConstructor {
         }
     }
 
-    fn of_option(&self, struct_ident: &str) -> TokenStream {
+    fn of_option(&self, struct_name: &str) -> TokenStream {
+        let struct_ident = Ident::new(&struct_name, Span::call_site());
         let fields_tokens = self.map_field_vec(&<Self as StructFieldConstructor>::get_option_field);
         quote! {
             #[derive(Default, Debug, Clone)]
@@ -37,11 +39,21 @@ pub trait StructConstructor: FieldsContainer + StructFieldConstructor {
     }
 
     // field_name: bool
-    fn of_bool(&self, struct_ident: &str) -> TokenStream {
+    fn of_bool(&self, struct_name: &str) -> TokenStream {
+        let struct_ident = Ident::new(&struct_name, Span::call_site());
         let fields_tokens = self.map_field_vec(&<Self as StructFieldConstructor>::get_bool_field);
         quote! {
             #[derive(Default, Debug, Clone)]
             pub struct #struct_ident {
+                #(#fields_tokens,)*
+            }
+        }
+    }
+
+    fn of_bool_true(&self) -> TokenStream {
+        let fields_tokens = self.map_field_vec(&<Self as StructFieldConstructor>::get_bool_true_field);
+        quote! {
+            Self {
                 #(#fields_tokens,)*
             }
         }

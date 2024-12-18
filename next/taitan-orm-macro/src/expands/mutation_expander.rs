@@ -3,51 +3,90 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{Attribute, FieldsNamed};
 use crate::attrs::{AttrParser, DefaultAttrParser};
-use crate::fields::{FieldsFilter, FieldsParser, UniqueParser};
+use crate::fields::{FieldsContainer, FieldsFilter, FieldsParser, NamesConstructor, StructConstructor, UniqueParser};
+use crate::fields::{ArgsConstructorPostgres, ArgsConstructorMySql, ArgsConstructorSqlite};
 
-pub fn generate_mutation_structs_and_impls(
+
+pub fn generate_mutation_struct_and_impl(
     ident: &Ident,
     attrs: &Vec<Attribute>,
     fields: &FieldsNamed,
 ) -> TokenStream {
     let table_name = DefaultAttrParser::extract_table_name(ident, attrs);
     let fields_vec = FieldsParser::from_named(fields).filter_not_annotated_fields("PrimaryKey");
+
+
+    let primary_fields_vec = FieldsParser::from_named(fields).filter_annotated_fields("PrimaryKey");
+    let parser = FieldsParser::from_named(fields);
+    let location_fields_vec = parser.get_fields();
+
+    let fields_name_vec = FieldsParser::from_vec(&fields_vec).of_option_names_vec();
+    let update_args_sqlite = FieldsParser::from_vec(&fields_vec).of_update_args_sqlite(&primary_fields_vec);
+    let update_args_mysql = FieldsParser::from_vec(&fields_vec).of_update_args_mysql(&primary_fields_vec);
+    let update_args_postgres = FieldsParser::from_vec(&fields_vec).of_update_args_postgres(&primary_fields_vec);
+
+    let change_args_sqlite = FieldsParser::from_vec(&fields_vec).of_change_args_sqlite(location_fields_vec);
+    let change_args_mysql = FieldsParser::from_vec(&fields_vec).of_change_args_mysql(location_fields_vec);
+    let change_args_postgres = FieldsParser::from_vec(&fields_vec).of_change_args_postgres(location_fields_vec);
+
     let mutation_struct_name =  format!("{}Mutation", table_name.to_camel());
-
-    let unique_field_names = FieldsParser::from_vec(&fields_vec).get_unique_field_names();
-    let unique_arguments_sqlite = FieldsParser::from_vec(&fields_vec).gen_unique_arguments_sqlite();
-    let unique_arguments_mysql = FieldsParser::from_vec(&fields_vec).gen_unique_arguments_mysql();
-    let unique_arguments_postgres = FieldsParser::from_vec(&fields_vec).gen_unique_arguments_postgres();
-
+    let primary_struct_name =  format!("{}Primary", table_name.to_camel());
+    let location_struct_name =  format!("{}Location", table_name.to_camel());
     let struct_ident = Ident::new(&mutation_struct_name, Span::call_site());
-    let fields_tokens = FieldsParser::from_vec(&fields_vec).get_not_option_fields();
+    let primary_struct_ident = Ident::new(&primary_struct_name, Span::call_site());
+    let location_struct_ident = Ident::new(&location_struct_name, Span::call_site());
+    let struct_stream = FieldsParser::from_vec(&fields_vec).of_option(&mutation_struct_name);
 
     let output = quote! {
 
-        #[derive(Default, Debug, Clone)]
-        pub struct #struct_ident {
-            #fields_tokens
-        }
+        #struct_stream
 
-        impl Unique for #struct_ident {
-            fn get_table_name(&self) -> &'static str {
-                #table_name
+        impl Mutation for #struct_ident {
+
+            type Primary = #primary_struct_ident;
+
+            type Location = #location_struct_ident;
+
+            fn get_mutation_fields_name(&self) -> Vec<String> {
+                #fields_name_vec
             }
 
-            fn get_unique_field_names(&self) -> &'static [&'static str] {
-                #unique_field_names
+            fn gen_update_arguments_sqlite<'a>(
+                &'a self,
+                primary: &'a Self::Primary,
+            ) -> Result<SqliteArguments<'a>, BoxDynError> {
+                #update_args_sqlite
+            }
+            fn gen_update_arguments_mysql<'a>(
+                &'a self,
+                primary: &'a Self::Primary,
+            ) -> Result<MySqlArguments, BoxDynError> {
+                #update_args_mysql
+            }
+            fn gen_update_arguments_postgres<'a>(
+                &'a self,
+                primary: &'a Self::Primary,
+            ) -> Result<PgArguments, BoxDynError> {
+                #update_args_postgres
             }
 
-            fn gen_unique_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
-                #unique_arguments_sqlite
+            fn gen_change_arguments_sqlite<'a>(
+                &'a self,
+                location: &'a Self::Location,
+            ) -> Result<SqliteArguments<'a>, BoxDynError> {
+                #change_args_sqlite
             }
-
-            fn gen_unique_arguments_mysql(&self) -> Result<MySqlArguments, BoxDynError> {
-                #unique_arguments_mysql
+            fn gen_change_arguments_mysql<'a>(
+                &'a self,
+                location: &'a Self::Location,
+            ) -> Result<MySqlArguments, BoxDynError> {
+                #change_args_mysql
             }
-
-            fn gen_unique_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
-                #unique_arguments_postgres
+            fn gen_change_arguments_postgres<'a>(
+                &'a self,
+                location: &'a Self::Location,
+            ) -> Result<PgArguments, BoxDynError> {
+                #change_args_postgres
             }
         }
     };

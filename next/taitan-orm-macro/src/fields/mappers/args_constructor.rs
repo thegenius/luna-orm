@@ -1,7 +1,8 @@
 use crate::fields::mappers::ArgsAddConstructor;
-use crate::fields::FieldsContainer;
+use crate::fields::{FieldsContainer, FieldsParser};
 use proc_macro2::TokenStream;
 use quote::{quote};
+use syn::Field;
 
 pub trait ArgsConstructorSqlite: FieldsContainer + ArgsAddConstructor {
     fn of_maybe_option_args_sqlite(&self) -> TokenStream {
@@ -115,4 +116,81 @@ pub trait ArgsConstructorPostgres: FieldsContainer + ArgsAddConstructor {
             Ok(args)
         }
     }
+
+    fn of_update_args_sqlite(&self, primary_fields: &Vec<Field>) -> TokenStream {
+        let mutation_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_option);
+        let primary_add_clause = FieldsParser::from_vec(primary_fields).map_field_vec(&|field: Field| {
+            <Self as ArgsAddConstructor>::of_not_option_with("primary", field)
+        });
+        quote! {
+            let mut args = SqliteArguments::default();
+            #(#mutation_add_clause)*
+            #(#primary_add_clause)*
+            Ok(args)
+        }
+    }
+
+    fn of_update_args_mysql(&self, primary_fields: &Vec<Field>) -> TokenStream {
+        let mutation_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_option);
+        let primary_add_clause = FieldsParser::from_vec(primary_fields).map_field_vec(&|field: Field| {
+            <Self as ArgsAddConstructor>::of_not_option_with("primary", field)
+        });
+        quote! {
+            let mut args = MySqlArguments::default();
+            #(#mutation_add_clause)*
+            #(#primary_add_clause)*
+            Ok(args)
+        }
+    }
+    fn of_update_args_postgres(&self, primary_fields: &Vec<Field>) -> TokenStream {
+        let mutation_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_option);
+        let primary_add_clause = FieldsParser::from_vec(primary_fields).map_field_vec(&|field: Field| {
+            <Self as ArgsAddConstructor>::of_not_option_with("primary", field)
+        });
+        quote! {
+            let mut args = PgArguments::default();
+            #(#mutation_add_clause)*
+            #(#primary_add_clause)*
+            Ok(args)
+        }
+    }
+
+    fn of_change_args_sqlite(&self, location_fields: &Vec<Field>) -> TokenStream {
+        let mutation_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_option);
+        let location_add_clause = FieldsParser::from_vec(location_fields).map_field_vec(&|field: Field| {
+            <Self as ArgsAddConstructor>::of_location_with("location", field)
+        });
+        quote! {
+            let mut args = SqliteArguments::default();
+            #(#mutation_add_clause)*
+            #(#location_add_clause)*
+            Ok(args)
+        }
+    }
+
+    fn of_change_args_mysql(&self, location_fields: &Vec<Field>) -> TokenStream {
+        let mutation_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_option);
+        let location_add_clause = FieldsParser::from_vec(location_fields).map_field_vec(&|field: Field| {
+            <Self as ArgsAddConstructor>::of_location_with("location", field)
+        });
+        quote! {
+            let mut args = MySqlArguments::default();
+            #(#mutation_add_clause)*
+            #(#location_add_clause)*
+            Ok(args)
+        }
+    }
+    fn of_change_args_postgres(&self, location_fields: &Vec<Field>) -> TokenStream {
+        let mutation_add_clause = self.map_field_vec(&<Self as ArgsAddConstructor>::of_option);
+        let location_add_clause = FieldsParser::from_vec(location_fields).map_field_vec(&|field: Field| {
+            <Self as ArgsAddConstructor>::of_location_with("location", field)
+        });
+        quote! {
+            let mut args = PgArguments::default();
+            #(#mutation_add_clause)*
+            #(#location_add_clause)*
+            Ok(args)
+        }
+    }
+
 }

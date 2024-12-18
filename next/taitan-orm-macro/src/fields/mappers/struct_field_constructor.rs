@@ -59,4 +59,11 @@ pub trait StructFieldConstructor {
             #field_ident: bool
         }
     }
+
+    fn get_bool_true_field(field: Field) -> TokenStream {
+        let field_ident = field.ident;
+        quote!{
+            #field_ident: true
+        }
+    }
 }

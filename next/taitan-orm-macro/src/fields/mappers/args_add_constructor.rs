@@ -1,6 +1,6 @@
 use crate::fields::FieldsParser;
 use crate::types::{DefaultTypeChecker, TypeChecker};
-use proc_macro2::TokenStream;
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote_spanned;
 use syn::{Field};
 
@@ -42,6 +42,15 @@ pub trait ArgsAddConstructor {
         }
     }
 
+    fn of_not_option_with(param_name: &str, field: Field) -> TokenStream {
+        let field_name = field.ident.unwrap();
+        let span = field_name.span();
+        let param_ident = Ident::new(&param_name, Span::call_site());
+        quote_spanned! { span =>
+            args.add(&#param_ident.#field_name)?;
+        }
+    }
+
     // treat field as option, no matter weather field is actually option or not
     fn of_option(field: Field) -> TokenStream {
         let field_name = field.ident.unwrap();
@@ -59,6 +68,17 @@ pub trait ArgsAddConstructor {
         let span = field_name.span();
         quote_spanned! { span =>
             if let Some(#field_name) = &self.#field_name {
+                args.add(&#field_name.val)?;
+            }
+        }
+    }
+
+    fn of_location_with(location_name: &str, field: Field) -> TokenStream {
+        let field_name = field.ident.unwrap();
+        let span = field_name.span();
+        let location_ident = Ident::new(&location_name, Span::call_site());
+        quote_spanned! { span =>
+            if let Some(#field_name) = &#location_ident.#field_name {
                 args.add(&#field_name.val)?;
             }
         }

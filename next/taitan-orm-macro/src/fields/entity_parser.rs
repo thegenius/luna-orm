@@ -5,7 +5,7 @@ use crate::fields::{DefaultFieldMapper, FieldMapType, FieldMapper, FieldsContain
 use proc_macro2::{TokenStream};
 use quote::quote;
 use crate::fields::fields_mapper::FieldsMapper;
-use crate::fields::mappers::{ArgsConstructorMySql, ArgsConstructorPostgres, ArgsConstructorSqlite};
+use crate::fields::mappers::{ArgsConstructorMySql, ArgsConstructorPostgres, ArgsConstructorSqlite, NamesConstructor};
 
 /**
 和trait Entity 一一对应
@@ -26,19 +26,12 @@ pub trait EntityParser: FieldsContainer + TableNameParser {
 impl EntityParser for FieldsParser {
     fn get_insert_fields(&self) -> TokenStream {
         let insert_fields = self.get_insert_fields_vec();
-        let insert_fields_name = FieldsParser::from_vec(&insert_fields).get_maybe_option_name_vec();
-        quote! {
-            #insert_fields_name
-        }
+        FieldsParser::from_vec(&insert_fields).of_maybe_option_names_vec()
     }
 
     fn get_upsert_set_fields(&self) -> TokenStream {
         let upsert_set_fields = self.get_upsert_set_fields_vec();
-        let upsert_set_fields_name =
-            FieldsParser::from_vec(&upsert_set_fields).get_maybe_option_name_vec();
-        quote! {
-            #upsert_set_fields_name
-        }
+        FieldsParser::from_vec(&upsert_set_fields).of_maybe_option_names_vec()
     }
 
     fn get_auto_increment_field(&self) -> TokenStream {
