@@ -20,6 +20,7 @@ pub use sql_api::SqlApi;
 pub use sql_executor::SqlExecutor;
 pub use sql_generator::SqlGenerator;
 
+pub use taitan_orm_macro::Schema;
 pub mod traits {
     pub use taitan_orm_trait::{Entity, Unique, Location, Schema, LocationExpr, Mutation, Selection, SelectedEntity};
 }

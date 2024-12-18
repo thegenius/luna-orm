@@ -2,7 +2,7 @@
 use sqlx::sqlx_macros;
 use time::PrimitiveDateTime;
 use uuid::Uuid;
-use taitan_orm_macro::Schema;
+use taitan_orm::Schema;
 
 #[derive(Schema, Clone, Debug)]
 #[TableName = "user"]
@@ -14,7 +14,7 @@ pub struct UserEntity {
     pub request_id: Uuid,
 
     age: Option<i32>,
-    
+
     name: String,
 
     pub birthday: Option<PrimitiveDateTime>,
