@@ -1,4 +1,3 @@
-use crate::fields::FieldsParser;
 use crate::types::{DefaultTypeChecker, TypeChecker};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote_spanned;
@@ -23,12 +22,12 @@ pub trait ArgsAddConstructor {
         if DefaultTypeChecker::type_is_option(&field_type) {
             quote_spanned! { span =>
                 if let Some(#field_name) = &self.#field_name {
-                    args.add(#field_name)?;
+                    sqlx::Arguments::add(&mut args, #field_name)?;
                 }
             }
         } else {
             quote_spanned! { span =>
-                args.add(&self.#field_name)?;
+                sqlx::Arguments::add(&mut args, &self.#field_name)?;
             }
         }
     }
@@ -38,7 +37,7 @@ pub trait ArgsAddConstructor {
         let field_name = field.ident.unwrap();
         let span = field_name.span();
         quote_spanned! { span =>
-            args.add(&self.#field_name)?;
+            sqlx::Arguments::add(&mut args, &self.#field_name)?;
         }
     }
 
@@ -47,7 +46,7 @@ pub trait ArgsAddConstructor {
         let span = field_name.span();
         let param_ident = Ident::new(&param_name, Span::call_site());
         quote_spanned! { span =>
-            args.add(&#param_ident.#field_name)?;
+            sqlx::Arguments::add(&mut args, &#param_ident.#field_name)?;
         }
     }
 
@@ -57,7 +56,7 @@ pub trait ArgsAddConstructor {
         let span = field_name.span();
         quote_spanned! { span =>
             if let Some(#field_name) = &self.#field_name {
-                args.add(#field_name)?;
+                sqlx::Arguments::add(&mut args, #field_name)?;
             }
         }
     }
@@ -68,7 +67,7 @@ pub trait ArgsAddConstructor {
         let span = field_name.span();
         quote_spanned! { span =>
             if let Some(#field_name) = &self.#field_name {
-                args.add(&#field_name.val)?;
+                sqlx::Arguments::add(&mut args, &#field_name.val)?;
             }
         }
     }
@@ -79,7 +78,7 @@ pub trait ArgsAddConstructor {
         let location_ident = Ident::new(&location_name, Span::call_site());
         quote_spanned! { span =>
             if let Some(#field_name) = &#location_ident.#field_name {
-                args.add(&#field_name.val)?;
+                sqlx::Arguments::add(&mut args, &#field_name.val)?;
             }
         }
     }

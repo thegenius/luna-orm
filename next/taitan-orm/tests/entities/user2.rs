@@ -2,8 +2,8 @@ use sqlx::error::BoxDynError;
 use sqlx::mysql::MySqlArguments;
 use sqlx::postgres::PgArguments;
 use sqlx::sqlite::SqliteArguments;
-use sqlx::{sqlx_macros, Row};
-use sqlx::Arguments;
+use sqlx::{sqlx_macros};
+
 use taitan_orm_macro::Schema;
 use taitan_orm_trait::NotImplementError;
 use taitan_orm_trait::{Entity, Unique, Location, Schema, LocationExpr, Mutation, Selection, SelectedEntity};
@@ -39,37 +39,37 @@ set_auto_increment_field(& mut self, value : Option < i64 >) -> bool
 < SqliteArguments < '_ > , BoxDynError >
 {
     let mut args = SqliteArguments :: default(); if let Some(age) = &
-    self.age { args.add(age) ? ; } args.add(& self.name) ? ; Ok(args)
+    self.age { sqlx::Arguments::add(&mut args, age) ? ; } sqlx::Arguments::add(&mut args,& self.name) ? ; Ok(args)
 } fn gen_upsert_arguments_sqlite(& self) -> Result < SqliteArguments < '_
 > , BoxDynError >
 {
     let mut args = SqliteArguments :: default(); if let Some(age) = &
-    self.age { args.add(age) ? ; } args.add(& self.name) ? ; if let
-    Some(age) = & self.age { args.add(age) ? ; } args.add(& self.name) ? ;
+    self.age { sqlx::Arguments::add(&mut args,age) ? ; } sqlx::Arguments::add(&mut args,& self.name) ? ; if let
+    Some(age) = & self.age { sqlx::Arguments::add(&mut args,age) ? ; } sqlx::Arguments::add(&mut args,& self.name) ? ;
     Ok(args)
 } fn gen_insert_arguments_mysql(& self) -> Result < MySqlArguments,
     BoxDynError >
 {
     let mut args = MySqlArguments :: default(); if let Some(age) = &
-    self.age { args.add(age) ? ; } args.add(& self.name) ? ; Ok(args)
+    self.age { sqlx::Arguments::add(&mut args,age) ? ; } sqlx::Arguments::add(&mut args,& self.name) ? ; Ok(args)
 } fn gen_upsert_arguments_mysql(& self) -> Result < MySqlArguments,
     BoxDynError >
 {
     let mut args = MySqlArguments :: default(); if let Some(age) = &
-    self.age { args.add(age) ? ; } args.add(& self.name) ? ; if let
-    Some(age) = & self.age { args.add(age) ? ; } args.add(& self.name) ? ;
+    self.age { sqlx::Arguments::add(&mut args,age) ? ; } sqlx::Arguments::add(&mut args,& self.name) ? ; if let
+    Some(age) = & self.age { sqlx::Arguments::add(&mut args,age) ? ; } sqlx::Arguments::add(&mut args,& self.name) ? ;
     Ok(args)
 } fn gen_insert_arguments_postgres(& self) -> Result < PgArguments,
     BoxDynError >
 {
     let mut args = PgArguments :: default(); if let Some(age) = & self.age
-{ args.add(age) ? ; } args.add(& self.name) ? ; Ok(args)
+{ sqlx::Arguments::add(&mut args,age) ? ; } sqlx::Arguments::add(&mut args,& self.name) ? ; Ok(args)
 } fn gen_upsert_arguments_postgres(& self) -> Result < PgArguments,
     BoxDynError >
 {
     let mut args = PgArguments :: default(); if let Some(age) = & self.age
-{ args.add(age) ? ; } args.add(& self.name) ? ; if let Some(age) = &
-    self.age { args.add(age) ? ; } args.add(& self.name) ? ; Ok(args)
+{ sqlx::Arguments::add(&mut args,age) ? ; } sqlx::Arguments::add(&mut args,& self.name) ? ; if let Some(age) = &
+    self.age { sqlx::Arguments::add(&mut args,age) ? ; } sqlx::Arguments::add(&mut args,& self.name) ? ; Ok(args)
 }
 } #[derive(Default, Debug, Clone)] pub struct UserPrimary { id : i64, } impl
 Unique for UserPrimary
@@ -79,17 +79,17 @@ get_unique_field_names(& self) -> & 'static [& 'static str] { & ["id",] }
     fn gen_unique_arguments_sqlite(& self) -> Result < SqliteArguments < '_ >
         , BoxDynError >
     {
-        let mut args = SqliteArguments :: default(); args.add(& self.id) ? ;
+        let mut args = SqliteArguments :: default(); sqlx::Arguments::add(&mut args,& self.id) ? ;
         Ok(args)
     } fn gen_unique_arguments_mysql(& self) -> Result < MySqlArguments,
     BoxDynError >
 {
-    let mut args = MySqlArguments :: default(); args.add(& self.id) ? ;
+    let mut args = MySqlArguments :: default(); sqlx::Arguments::add(&mut args,& self.id) ? ;
     Ok(args)
 } fn gen_unique_arguments_postgres(& self) -> Result < PgArguments,
     BoxDynError >
 {
-    let mut args = PgArguments :: default(); args.add(& self.id) ? ;
+    let mut args = PgArguments :: default(); sqlx::Arguments::add(&mut args,& self.id) ? ;
     Ok(args)
 }
 } #[derive(Default, Debug, Clone)] pub struct UserLocation
@@ -125,23 +125,23 @@ String
     '_ > , BoxDynError >
 {
     let mut args = SqliteArguments :: default(); if let Some(age) = &
-    self.age { args.add(& age.val) ? ; } if let Some(id) = & self.id
-{ args.add(& id.val) ? ; } if let Some(name) = & self.name
-{ args.add(& name.val) ? ; } Ok(args)
+    self.age { sqlx::Arguments::add(&mut args,& age.val) ? ; } if let Some(id) = & self.id
+{ sqlx::Arguments::add(&mut args,& id.val) ? ; } if let Some(name) = & self.name
+{ sqlx::Arguments::add(&mut args,& name.val) ? ; } Ok(args)
 } fn gen_location_arguments_mysql(& self) -> Result < MySqlArguments,
     BoxDynError >
 {
     let mut args = MySqlArguments :: default(); if let Some(age) = &
-    self.age { args.add(& age.val) ? ; } if let Some(id) = & self.id
-{ args.add(& id.val) ? ; } if let Some(name) = & self.name
-{ args.add(& name.val) ? ; } Ok(args)
+    self.age { sqlx::Arguments::add(&mut args,& age.val) ? ; } if let Some(id) = & self.id
+{ sqlx::Arguments::add(&mut args,& id.val) ? ; } if let Some(name) = & self.name
+{ sqlx::Arguments::add(&mut args,& name.val) ? ; } Ok(args)
 } fn gen_location_arguments_postgres(& self) -> Result < PgArguments,
     BoxDynError >
 {
     let mut args = PgArguments :: default(); if let Some(age) = & self.age
-{ args.add(& age.val) ? ; } if let Some(id) = & self.id
-{ args.add(& id.val) ? ; } if let Some(name) = & self.name
-{ args.add(& name.val) ? ; } Ok(args)
+{ sqlx::Arguments::add(&mut args,& age.val) ? ; } if let Some(id) = & self.id
+{ sqlx::Arguments::add(&mut args,& id.val) ? ; } if let Some(name) = & self.name
+{ sqlx::Arguments::add(&mut args,& name.val) ? ; } Ok(args)
 }
 } #[derive(Default, Debug, Clone)] pub struct UserMutation
 { age : Option < i32 > , name : Option < String > , } impl Mutation for
@@ -158,52 +158,52 @@ get_mutation_fields_name(& self) -> Vec < String >
         'a > , BoxDynError >
 {
     let mut args = SqliteArguments :: default(); if let Some(age) = &
-    self.age { args.add(age) ? ; } if let Some(name) = & self.name
-{ args.add(name) ? ; } args.add(& primary.id) ? ; Ok(args)
+    self.age { sqlx::Arguments::add(&mut args,age) ? ; } if let Some(name) = & self.name
+{ sqlx::Arguments::add(&mut args,name) ? ; } sqlx::Arguments::add(&mut args,& primary.id) ? ; Ok(args)
 } fn gen_update_arguments_mysql < 'a >
 (& 'a self, primary : & 'a Self :: Primary,) -> Result < MySqlArguments,
         BoxDynError >
 {
     let mut args = MySqlArguments :: default(); if let Some(age) = &
-    self.age { args.add(age) ? ; } if let Some(name) = & self.name
-{ args.add(name) ? ; } args.add(& primary.id) ? ; Ok(args)
+    self.age { sqlx::Arguments::add(&mut args,age) ? ; } if let Some(name) = & self.name
+{ sqlx::Arguments::add(&mut args,name) ? ; } sqlx::Arguments::add(&mut args,& primary.id) ? ; Ok(args)
 } fn gen_update_arguments_postgres < 'a >
 (& 'a self, primary : & 'a Self :: Primary,) -> Result < PgArguments,
         BoxDynError >
 {
     let mut args = PgArguments :: default(); if let Some(age) = & self.age
-{ args.add(age) ? ; } if let Some(name) = & self.name
-{ args.add(name) ? ; } args.add(& primary.id) ? ; Ok(args)
+{ sqlx::Arguments::add(&mut args,age) ? ; } if let Some(name) = & self.name
+{ sqlx::Arguments::add(&mut args,name) ? ; } sqlx::Arguments::add(&mut args,& primary.id) ? ; Ok(args)
 } fn gen_change_arguments_sqlite < 'a >
 (& 'a self, location : & 'a Self :: Location,) -> Result < SqliteArguments
     < 'a > , BoxDynError >
 {
     let mut args = SqliteArguments :: default(); if let Some(age) = &
-    self.age { args.add(age) ? ; } if let Some(name) = & self.name
-{ args.add(name) ? ; } if let Some(age) = & location.age
-{ args.add(& age.val) ? ; } if let Some(id) = & location.id
-{ args.add(& id.val) ? ; } if let Some(name) = & location.name
-{ args.add(& name.val) ? ; } Ok(args)
+    self.age { sqlx::Arguments::add(&mut args,age) ? ; } if let Some(name) = & self.name
+{ sqlx::Arguments::add(&mut args,name) ? ; } if let Some(age) = & location.age
+{ sqlx::Arguments::add(&mut args,& age.val) ? ; } if let Some(id) = & location.id
+{ sqlx::Arguments::add(&mut args,& id.val) ? ; } if let Some(name) = & location.name
+{ sqlx::Arguments::add(&mut args,& name.val) ? ; } Ok(args)
 } fn gen_change_arguments_mysql < 'a >
 (& 'a self, location : & 'a Self :: Location,) -> Result < MySqlArguments,
         BoxDynError >
 {
     let mut args = MySqlArguments :: default(); if let Some(age) = &
-    self.age { args.add(age) ? ; } if let Some(name) = & self.name
-{ args.add(name) ? ; } if let Some(age) = & location.age
-{ args.add(& age.val) ? ; } if let Some(id) = & location.id
-{ args.add(& id.val) ? ; } if let Some(name) = & location.name
-{ args.add(& name.val) ? ; } Ok(args)
+    self.age { sqlx::Arguments::add(&mut args,age) ? ; } if let Some(name) = & self.name
+{ sqlx::Arguments::add(&mut args,name) ? ; } if let Some(age) = & location.age
+{ sqlx::Arguments::add(&mut args,& age.val) ? ; } if let Some(id) = & location.id
+{ sqlx::Arguments::add(&mut args,& id.val) ? ; } if let Some(name) = & location.name
+{ sqlx::Arguments::add(&mut args,& name.val) ? ; } Ok(args)
 } fn gen_change_arguments_postgres < 'a >
 (& 'a self, location : & 'a Self :: Location,) -> Result < PgArguments,
         BoxDynError >
 {
     let mut args = PgArguments :: default(); if let Some(age) = & self.age
-{ args.add(age) ? ; } if let Some(name) = & self.name
-{ args.add(name) ? ; } if let Some(age) = & location.age
-{ args.add(& age.val) ? ; } if let Some(id) = & location.id
-{ args.add(& id.val) ? ; } if let Some(name) = & location.name
-{ args.add(& name.val) ? ; } Ok(args)
+{ sqlx::Arguments::add(&mut args,age) ? ; } if let Some(name) = & self.name
+{ sqlx::Arguments::add(&mut args,name) ? ; } if let Some(age) = & location.age
+{ sqlx::Arguments::add(&mut args,& age.val) ? ; } if let Some(id) = & location.id
+{ sqlx::Arguments::add(&mut args,& id.val) ? ; } if let Some(name) = & location.name
+{ sqlx::Arguments::add(&mut args,& name.val) ? ; } Ok(args)
 }
 } #[derive(Default, Debug, Clone)] pub struct UserSelection
 { age : bool, id : bool, name : bool, } impl Selection for UserSelection
@@ -226,14 +226,14 @@ from_row(selection : & Self :: Selection, row : < Sqlite as Database > ::
 Row) -> Result < Self, sqlx :: Error > where Self : Sized
     {
     let mut selected = Self :: default(); if selection.age
-    { selected.age = row.try_get("age").ok(); }; if selection.id
-    { selected.id = row.try_get("id").ok(); }; if selection.name
-    { selected.name = row.try_get("name").ok(); }; Ok(selected)
+    { selected.age = sqlx::Row::try_get(&row, "age").ok(); }; if selection.id
+    { selected.id = sqlx::Row::try_get(&row,"id").ok(); }; if selection.name
+    { selected.name = sqlx::Row::try_get(&row,"name").ok(); }; Ok(selected)
     } fn from_row_full(row : < Sqlite as Database > :: Row) -> Result < Self,
     sqlx :: Error > where Self : Sized,
 {
     let mut selected = Self :: default(); selected.age =
-    row.try_get("age").ok(); ; selected.id = row.try_get("id").ok(); ;
-    selected.name = row.try_get("name").ok(); ; Ok(selected)
+    sqlx::Row::try_get(&row,"age").ok(); ; selected.id = sqlx::Row::try_get(&row,"id").ok(); ;
+    selected.name = sqlx::Row::try_get(&row,"name").ok(); ; Ok(selected)
 }
 }

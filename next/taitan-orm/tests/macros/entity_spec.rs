@@ -2,9 +2,6 @@
 use sqlx::sqlx_macros;
 use taitan_orm_macro::Schema;
 
-use sqlx::Arguments; // 大量使用args.add，没法去掉
-use sqlx::Row; // 因为使用了try_get
-
 #[derive(Schema, Clone, Debug)]
 #[TableName = "user"]
 pub struct UserEntity {
