@@ -6,6 +6,8 @@ use taitan_orm::Schema;
 
 #[derive(Schema, Clone, Debug)]
 #[TableName = "user"]
+#[UniqueKey = "age"]
+#[UniqueKey = "name, birthday"]
 pub struct UserEntity {
     #[PrimaryKey]
     #[AutoIncrement]

@@ -36,6 +36,15 @@ pub trait NamesConstructor : FieldsContainer + NamesAddConstructor {
         )
     }
 
+    fn of_not_option_names_vec(&self) -> TokenStream {
+        let tokens =self.map_field_vec(&<Self as NamesAddConstructor>::of_not_option);
+        quote!(
+            let mut fields = Vec::new();
+            #(#tokens;)*
+            return fields;
+        )
+    }
+
     fn of_bool_names_vec(&self) -> TokenStream {
         let tokens =self.map_field_vec(&<Self as NamesAddConstructor>::of_bool);
         quote!(

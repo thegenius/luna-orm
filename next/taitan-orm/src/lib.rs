@@ -22,5 +22,6 @@ pub use sql_generator::SqlGenerator;
 
 pub use taitan_orm_macro::Schema;
 pub mod traits {
-    pub use taitan_orm_trait::{Entity, Unique, Location, Schema, LocationExpr, Mutation, Selection, SelectedEntity};
+    pub use taitan_orm_trait::{Entity, Unique, Location, Schema, LocationExpr, Mutation, Selection, SelectedEntity, OrderBy};
+    pub use taitan_orm_trait::validate_order_by;
 }

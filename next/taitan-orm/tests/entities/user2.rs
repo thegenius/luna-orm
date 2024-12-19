@@ -1,3 +1,4 @@
+
 use sqlx::error::BoxDynError;
 use sqlx::mysql::MySqlArguments;
 use sqlx::postgres::PgArguments;
@@ -236,4 +237,26 @@ Row) -> Result < Self, sqlx :: Error > where Self : Sized
     sqlx::Row::try_get(&row,"age").ok(); ; selected.id = sqlx::Row::try_get(&row,"id").ok(); ;
     selected.name = sqlx::Row::try_get(&row,"name").ok(); ; Ok(selected)
 }
+}
+
+#[derive(Debug, Default)] pub struct UserOrdering < 'a >
+{ fields : Vec < std::borrow::Cow < 'a, str >> , } impl < 'a > taitan_orm :: traits ::
+OrderBy for UserOrdering < 'a >
+{
+    fn unique_fields(& self) -> & [& [& str]] { & [& ["id"]] } fn
+get_fields(& self) -> & [std::borrow::Cow < 'a, str >] { & self.fields }
+} impl < 'a > UserOrdering < 'a >
+{
+    pub fn build<I, S>(fields: I) -> Result<Self, Box<dyn std::
+    error::Error + 'static>>
+    where
+        I: IntoIterator<Item=S> + Clone,
+        S
+        : AsRef<str> + Into<std::borrow::Cow<'a, str>>,
+    {
+        let order_by = Self::default();
+        taitan_orm::traits::
+        validate_order_by(fields.clone(), taitan_orm::traits::OrderBy::unique_fields(&order_by))?;
+        Ok(Self { fields: fields.into_iter().map(Into::into).collect(), })
+    }
 }

@@ -8,7 +8,7 @@ pub trait AttrParser {
 
     fn extract_val_from_attrs(attrs: &Vec<Attribute>, name: &str) -> Option<String>;
 
-    fn extract_val_vev_from_attrs(attrs: &Vec<Attribute>, name: &str) -> Vec<String>;
+    fn extract_val_vec_from_attrs(attrs: &Vec<Attribute>, name: &str) -> Vec<String>;
 
     fn check_has_attr(attrs: &Vec<Attribute>, name: &str) -> bool;
 
@@ -17,7 +17,7 @@ pub trait AttrParser {
     fn extract_template_sql(attrs: &Vec<Attribute>) -> Option<String>;
     fn extract_template_count_sql(attrs: &Vec<Attribute>) -> Option<String>;
 
-    fn extract_unique_index(attrs: &Vec<Attribute>) -> Vec<Vec<String>>;
+    fn extract_unique_key(attrs: &Vec<Attribute>) -> Vec<Vec<String>>;
 }
 
 pub struct DefaultAttrParser {}
@@ -64,7 +64,7 @@ impl AttrParser for DefaultAttrParser {
         return None;
     }
 
-    fn extract_val_vev_from_attrs(attrs: &Vec<Attribute>, name: &str) -> Vec<String> {
+    fn extract_val_vec_from_attrs(attrs: &Vec<Attribute>, name: &str) -> Vec<String> {
         let mut result: Vec<String> = Vec::new();
         for attr in attrs {
             let val_opt = <DefaultAttrParser as AttrParser>::extract_val_from_attr(attr, name);
@@ -99,9 +99,9 @@ impl AttrParser for DefaultAttrParser {
         <DefaultAttrParser as AttrParser>::extract_val_from_attrs(attrs, "TemplateCountSql")
     }
 
-    fn extract_unique_index(attrs: &Vec<Attribute>) -> Vec<Vec<String>> {
+    fn extract_unique_key(attrs: &Vec<Attribute>) -> Vec<Vec<String>> {
         let indexes =
-            <DefaultAttrParser as AttrParser>::extract_val_vev_from_attrs(attrs, "UniqueIndex");
+            <DefaultAttrParser as AttrParser>::extract_val_vec_from_attrs(attrs, "UniqueKey");
         let result: Vec<Vec<String>> = indexes
             .iter()
             .map(|s| s.split(',').map(|e| e.trim().to_string()).collect())

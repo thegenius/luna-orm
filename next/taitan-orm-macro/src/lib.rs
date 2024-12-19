@@ -10,8 +10,9 @@ mod util;
 
 #[proc_macro_derive(
     Schema,
-    attributes(TableName, PrimaryKey, UniqueIndex, AutoIncrement, Generated)
+    attributes(TableName, PrimaryKey, UniqueKey, AutoIncrement, Generated)
 )]
 pub fn expand_schema_macro(input: TokenStream) -> TokenStream {
     impl_schema_macro(input)
 }
+
