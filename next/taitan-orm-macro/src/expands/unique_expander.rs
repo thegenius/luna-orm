@@ -1,4 +1,4 @@
-use crate::fields::{FieldsFilter, FieldsParser};
+use crate::fields::{FieldsContainer, FieldsFilter, FieldsParser};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{Attribute, Field, FieldsNamed};
@@ -17,7 +17,7 @@ fn generate_struct_and_impl(table_name: &str, struct_name: &str, fields: &Vec<Fi
     let fields_tokens = FieldsParser::from_vec(fields).get_not_option_fields();
 
     let output = quote! {
-        #[derive(Default, Debug, Clone)]
+        #[derive(Debug, Clone)]
         pub struct #struct_ident {
             #fields_tokens
         }
@@ -56,6 +56,20 @@ pub fn generate_unique_structs_and_impls(
     let table_name = DefaultAttrParser::extract_table_name(ident, attrs);
     let fields_vec = FieldsParser::from_named(fields).filter_annotated_fields("PrimaryKey");
     let primary_struct_name =  format!("{}Primary", table_name.to_camel());
-    let primary_stream = generate_struct_and_impl(&table_name, &primary_struct_name, &fields_vec);
-    primary_stream
+    let mut all_unique_stream = generate_struct_and_impl(&table_name, &primary_struct_name, &fields_vec);
+
+    let parser = FieldsParser::from_named(fields);
+    let order_fields_vec = DefaultAttrParser::extract_unique_key(attrs);
+    order_fields_vec.iter().for_each(|fields| {
+        let unique_fields = parser.filter_named_fields(fields);
+        let mut unique_struct_name =  format!("{}", table_name.to_camel());
+        fields.iter().for_each(|field| {
+            unique_struct_name.push_str(field.to_camel().as_ref());
+        });
+        unique_struct_name.push_str("Unique");
+        let unique_stream = generate_struct_and_impl(&table_name, &unique_struct_name, &unique_fields);
+        all_unique_stream.extend(unique_stream);
+    });
+
+    all_unique_stream
 }

@@ -6,6 +6,7 @@ pub trait FieldsFilter: FieldsContainer {
     fn filter_annotated_fields(&self, annotation_str: &str) -> Vec<Field>;
     fn filter_not_annotated_fields(&self, annotation_str: &str) -> Vec<Field>;
     fn filter_not_auto_generated(&self) -> Vec<Field>;
+    fn filter_named_fields(&self, annotation_str: &Vec<String>) -> Vec<Field>;
     fn get_sorted_fields_vec(&self) -> Vec<Field>;
     fn get_insert_fields_vec(&self) -> Vec<Field>;
     fn get_upsert_fields_vec(&self) -> Vec<Field>;
@@ -46,6 +47,18 @@ impl FieldsFilter for FieldsParser {
             let is_auto =
                 <DefaultAttrParser as AttrParser>::check_has_attr(&field.attrs, "AutoIncrement");
             if (!is_generated) && (!is_auto) {
+                result.push(field.clone());
+            }
+        }
+        result
+    }
+
+
+    fn filter_named_fields(&self, names: &Vec<String>) -> Vec<Field> {
+        let mut result: Vec<Field> = Vec::new();
+        for field in self.get_fields().iter() {
+            let has_name = names.contains(&field.ident.as_ref().unwrap().to_string());
+            if has_name {
                 result.push(field.clone());
             }
         }
