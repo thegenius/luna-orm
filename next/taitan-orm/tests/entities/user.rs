@@ -514,6 +514,9 @@ impl<'a> OrderBy for UserOrderBy<'a> {
         &[&["id"]]
     }
 
+    fn all_fields(&self) -> &[&str] {
+        &["id", "name", "age", "birthday"]
+    }
     fn get_fields(&self) -> &[Cow<'a, str>] {
         &self.fields
     }
@@ -526,7 +529,7 @@ impl<'a> UserOrderBy<'a> {
         S: AsRef<str> + Into<Cow<'a, str>>, // 确保每个元素可以转换为 Cow<'a, str>
     {
         let order_by = Self::default();
-        validate_order_by(fields.clone(), order_by.unique_fields())?;
+        validate_order_by(fields.clone(), order_by.all_fields(), order_by.unique_fields())?;
 
         Ok(Self {
             fields: fields.into_iter().map(Into::into).collect(),

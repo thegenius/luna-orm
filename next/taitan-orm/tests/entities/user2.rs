@@ -6,7 +6,7 @@ use sqlx::sqlite::SqliteArguments;
 use sqlx::{sqlx_macros};
 
 use taitan_orm_macro::Schema;
-use taitan_orm_trait::NotImplementError;
+use taitan_orm_trait::{NotImplementError, OrderBy};
 use taitan_orm_trait::{Entity, Unique, Location, Schema, LocationExpr, Mutation, Selection, SelectedEntity};
 use sqlx::{Sqlite, MySql, Postgres};
 use sqlx::Database;
@@ -245,6 +245,9 @@ OrderBy for UserOrdering < 'a >
 {
     fn unique_fields(& self) -> & [& [& str]] { & [& ["id"]] } fn
 get_fields(& self) -> & [std::borrow::Cow < 'a, str >] { & self.fields }
+    fn all_fields(&self) -> &[&str] {
+        &["age", "id", "name"]
+    }
 } impl < 'a > UserOrdering < 'a >
 {
     pub fn build<I, S>(fields: I) -> Result<Self, Box<dyn std::
@@ -256,7 +259,7 @@ get_fields(& self) -> & [std::borrow::Cow < 'a, str >] { & self.fields }
     {
         let order_by = Self::default();
         taitan_orm::traits::
-        validate_order_by(fields.clone(), taitan_orm::traits::OrderBy::unique_fields(&order_by))?;
+        validate_order_by(fields.clone(), taitan_orm::traits::OrderBy::all_fields(&order_by), taitan_orm::traits::OrderBy::unique_fields(&order_by))?;
         Ok(Self { fields: fields.into_iter().map(Into::into).collect(), })
     }
 }

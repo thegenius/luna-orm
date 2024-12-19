@@ -5,12 +5,18 @@ use std::fmt::Debug;
 
 pub fn validate_order_by<'a, I, S>(
     fields: I,
+    all_fields: &[&str],
     unique_fields_vec: &[&[&str]],
 ) -> Result<(), Box<dyn Error + 'static>>
 where
     I: IntoIterator<Item = S> + Clone,
     S: AsRef<str>, // 确保每个元素可以转换为 &str
 {
+    let field_valid = fields.clone().into_iter().all(|field| {all_fields.contains(&field.as_ref())});
+    if !field_valid {
+        return Err(Box::new(NotValidOrderByError("contains invalid field".to_owned())));
+    }
+
     let valid = unique_fields_vec.iter().any(|unique_fields| {
         unique_fields.iter().all(|unique_field| {
             fields
@@ -31,6 +37,8 @@ where
 pub trait OrderBy: Sync + Debug {
     fn unique_fields(&self) -> &[&[&str]];
 
+    fn all_fields(&self) -> &[&str];
+
     fn get_fields(&self) -> &[Cow<'_, str>];
 }
 
@@ -38,6 +46,8 @@ impl<T: OrderBy + Debug> OrderBy for &T {
     fn unique_fields(&self) -> &[&[&str]] {
         (*self).unique_fields()
     }
+
+    fn all_fields(&self) -> &[&str] {(*self).all_fields()}
 
     fn get_fields(&self) -> &[Cow<'_, str>] {
         (*self).get_fields()
@@ -58,6 +68,9 @@ mod test {
             &[&["id"], &["first_name", "second_name"], &["x", "y", "z"]]
         }
 
+        fn all_fields(&self) -> &[&str] {
+            &["id", "first_name", "second_name", "x", "y", "z"]
+        }
         fn get_fields(&self) -> &[Cow<'a, str>] {
             &self.fields
         }
@@ -70,7 +83,7 @@ mod test {
             S: AsRef<str> + Into<Cow<'a, str>>, // 确保每个元素可以转换为 Cow<'a, str>
         {
             let order_by = Self::default();
-            validate_order_by(fields.clone(), order_by.unique_fields())?;
+            validate_order_by(fields.clone(), order_by.all_fields(), order_by.unique_fields())?;
 
             Ok(Self {
                 fields: fields.into_iter().map(Into::into).collect(),
