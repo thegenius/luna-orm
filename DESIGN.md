@@ -52,11 +52,12 @@ async fn count(location) -> u64
 async fn count_all(name) -> u64
 
 async fn select<SE>(selection, unique) -> Option<SE>
-async fn search<SE>(selection, location, order_by, page) -> PagedList<SE>
-async fn devour<SE>(selection, order_by, page) -> PagedList<SE>
 
-async fn search_not_paged<SE>(selection, location, order_by_option) -> Vec<SE>
-async fn devour_not_paged<SE>(selection, order_by_option) -> Vec<SE>
+async fn search<SE>(selection, location, order_by_option, page_option) -> Vec<SE>
+async fn devour<SE>(selection,           order_by_option, page_option) -> Vec<SE>
+
+async fn search_paged<SE>(selection, location, order_by, page) -> PagedList<SE>
+async fn devour_paged<SE>(selection,           order_by, page) -> PagedList<SE>
 ```
 
 ## 所有模板操作
@@ -66,11 +67,10 @@ async fn devour_not_paged<SE>(selection, order_by_option) -> Vec<SE>
 ```
 async fn change_by_template(template) -> u64
 async fn purify_by_template(template) -> u64
-async fn count_by_template(template) -> u64
 
+async fn count_by_template(template) -> u64
 async fn select_by_template<SE>(template) -> Option<SE>
-async fn search_by_template<SE>(template, page) -> PagedList<SE>
-async fn search_not_paged_by_template<SE>(template) -> Vec<SE>
+async fn search_by_template<SE>(template, page_option) -> Vec<SE>
 
 async fn procedure_by_template<SE>(template) -> SE
 ```

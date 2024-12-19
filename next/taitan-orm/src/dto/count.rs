@@ -33,6 +33,7 @@ impl SelectedEntity<Sqlite> for CountResult {
     where
         Self: Sized,
     {
+        // TODO: 有可能使用try_get(0)更好
         let count: i64 = row.try_get("count")?;
         Ok(Self {
             count: count as u64,
