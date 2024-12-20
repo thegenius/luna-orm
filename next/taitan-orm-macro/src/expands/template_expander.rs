@@ -10,6 +10,7 @@ pub fn generate_template_struct_and_impl(
     fields: &FieldsNamed,
 ) -> TokenStream {
 
+    // panic!("{:?}", attrs);
     let template_sql = DefaultAttrParser::extract_template_sql(&attrs);
     if template_sql.is_none() {
         panic!("TemplateRecord must have TemplateSql attribute.");

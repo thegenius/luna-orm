@@ -24,6 +24,6 @@ pub fn impl_schema_macro(input: TokenStream) -> TokenStream {
     output.extend(selection_struct_stream);
     output.extend(selected_struct_stream);
     output.extend(ordering_struct_stream);
-    panic!("{}", output);
+    // panic!("{}", output);
     output.into()
 }
