@@ -13,6 +13,7 @@ mod template_record;
 mod unique;
 mod update_command;
 mod write_command;
+mod template;
 
 pub use schema::Schema;
 
@@ -42,7 +43,10 @@ pub use join::JoinedConditions;
 pub use page::page_info;
 pub use page::paged_list;
 pub use page::pagination;
+pub use page::count_sql::CountSql;
 
 pub use template_record::TemplateRecord;
+pub use template::ParsedTemplateSql;
+pub use template::TemplateValue;
 
 pub use write_command::WriteCommand;

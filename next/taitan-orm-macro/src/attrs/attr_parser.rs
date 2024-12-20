@@ -1,5 +1,6 @@
 use proc_macro2::Ident;
-use syn::{Attribute, Path};
+use syn::{parenthesized, Attribute, Lit, LitStr, Meta, Path, Token};
+use syn::parse::ParseStream;
 
 pub trait AttrParser {
     fn extract_val_from_attr(attr: &Attribute, name: &str) -> Option<String>;
@@ -24,31 +25,54 @@ pub struct DefaultAttrParser {}
 
 impl AttrParser for DefaultAttrParser {
     fn extract_val_from_attr(attr: &Attribute, name: &str) -> Option<String> {
-        let path: &Path = &attr.path;
-        let path_ident = path.get_ident().unwrap();
-        let attr_path_name = path_ident.to_string();
-        if attr_path_name != name {
+        let path: &Path = attr.path();
+        if !path.is_ident(name) {
             return None;
         }
 
-        let meta_info_result = attr.parse_meta();
-        if meta_info_result.is_err() {
-            return None;
-        }
 
-        let meta_info = meta_info_result.unwrap();
-        let value = match meta_info {
-            syn::Meta::NameValue(syn::MetaNameValue {
-                lit: syn::Lit::Str(s),
-                ..
-            }) => s.value(),
-            _ => panic!("malformed attribute syntax"),
-        };
-        return Some(value);
+        let name: syn::Result<String>= attr.parse_args_with(|stream: ParseStream| {
+            let lit_str = stream.parse::<LitStr>()?;
+            Ok(lit_str.value())
+            // stream.parse::<LitStr>().ok().and_then(|lit_str| {
+            //     Some(lit_str.value())
+            // })
+        });
+        name.ok()
+
+
+
+
+
+        // let path_ident = path.get_ident().unwrap();
+        // let attr_path_name = path_ident.to_string();
+        // if attr_path_name != name {
+        //     return None;
+        // }
+
+        //
+        // meta_info_result.ok()
+
+        // match attr.parse_meta() {
+        //     Ok(Meta::NameValue(meta_name_value)) => {
+        //         Some(meta_name_value.value())
+        //     },
+        //     _ => None,
+        // }
+
+        // let meta_info = meta_info_result.unwrap();
+        // let value = match meta_info {
+        //     syn::Meta::NameValue(syn::MetaNameValue {
+        //         lit: syn::Lit::Str(s),
+        //         ..
+        //     }) => s.value(),
+        //     _ => panic!("malformed attribute syntax"),
+        // };
+        // return Some(value);
     }
 
     fn check_is_attr(attr: &Attribute, name: &str) -> bool {
-        let path: &Path = &attr.path;
+        let path: &Path = attr.path();
         let path_ident = path.get_ident().unwrap();
         let attr_path_name = path_ident.to_string();
         return attr_path_name == name;

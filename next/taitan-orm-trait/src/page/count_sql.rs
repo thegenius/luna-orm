@@ -1,5 +1,5 @@
 pub enum CountSql {
     Empty,
     PlainSql(String),
-    VariabledSql(String),
+    VariableSql(String),
 }

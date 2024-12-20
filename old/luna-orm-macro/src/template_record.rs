@@ -46,7 +46,7 @@ pub fn impl_template_record_by_macro(input: TokenStream) -> TokenStream {
         if parsed_count_sql.variables.is_empty() {
             count_sql_token = quote!(CountSql::PlainSql(String::from(#sql)));
         } else {
-            count_sql_token = quote!(CountSql::VariabledSql(String::from(#sql)));
+            count_sql_token = quote!(CountSql::VariableSql(String::from(#sql)));
         }
     }
 

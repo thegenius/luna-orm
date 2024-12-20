@@ -309,7 +309,7 @@ pub trait CommandExecutor: SqlExecutor + Debug {
                 debug!(target: "luna_orm", command = "search_paged_by_template", count_sql = sql);
                 record_count = self.fetch_optional_plain(&sql).await?;
             }
-            CountSql::VariabledSql(sql) => {
+            CountSql::VariableSql(sql) => {
                 let sql = self.get_generator().post_process(sql);
                 debug!(target: "luna_orm", command = "search_paged_by_template", count_sql = sql);
                 record_count = self.fetch_optional(&sql, args).await?;

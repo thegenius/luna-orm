@@ -2,6 +2,7 @@ use luna_orm::prelude::*;
 mod common;
 use common::mutex::get_test_mutex;
 use luna_orm::LunaOrmResult;
+// use luna_orm_trait::CountSql;
 use sqlx::sqlx_macros;
 
 #[derive(Selection, Debug, Default, Clone)]

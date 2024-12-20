@@ -1,4 +1,4 @@
-use crate::page::count_sql::CountSql;
+use crate::CountSql;
 use crate::pagination::Pagination;
 use crate::NotImplementError;
 use sqlx::any::AnyArguments;

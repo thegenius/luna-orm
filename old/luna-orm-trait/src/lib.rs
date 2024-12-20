@@ -199,7 +199,7 @@ pub fn convert_to_json(row: AnyRow) -> Value {
 pub enum CountSql {
     Empty,
     PlainSql(String),
-    VariabledSql(String),
+    VariableSql(String),
 }
 
 pub trait TemplateRecord: Sync + Debug {

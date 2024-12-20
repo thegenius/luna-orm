@@ -22,6 +22,12 @@ pub use sql_generator::SqlGenerator;
 
 pub use taitan_orm_macro::Schema;
 pub mod traits {
-    pub use taitan_orm_trait::{Entity, Unique, Location, Schema, LocationExpr, Mutation, Selection, SelectedEntity, OrderBy};
+    pub use taitan_orm_trait::{Entity, Unique, Location, Schema, LocationExpr, Mutation, Selection, SelectedEntity, OrderBy, CountSql};
     pub use taitan_orm_trait::validate_order_by;
+    pub use taitan_orm_trait::pagination::Pagination;
+    pub use taitan_orm_trait::page_info::PageInfo;
+    pub use taitan_orm_trait::paged_list::PagedList;
+    pub use taitan_orm_trait::ParsedTemplateSql;
+    pub use taitan_orm_trait::TemplateValue;
+    pub use taitan_orm_trait::TemplateRecord;
 }
