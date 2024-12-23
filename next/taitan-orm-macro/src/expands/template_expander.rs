@@ -1,13 +1,16 @@
+use std::process::id;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
-use syn::{Attribute, FieldsNamed};
+use syn::{Attribute, FieldsNamed, Lifetime};
 use taitan_orm_trait::ParsedTemplateSql;
 use crate::attrs::{AttrParser, DefaultAttrParser};
+use crate::util::{extract_generic_lifetimes, check_type_lifetime, build_struct_ident};
 
 pub fn generate_template_struct_and_impl(
     ident: &Ident,
     attrs: &Vec<Attribute>,
     fields: &FieldsNamed,
+    lifetimes: &Vec<Lifetime>,
 ) -> TokenStream {
 
     // panic!("{:?}", attrs);
@@ -54,9 +57,21 @@ pub fn generate_template_struct_and_impl(
         })
         .collect::<Vec<TokenStream>>();
 
+    let struct_ident = build_struct_ident(ident, lifetimes);
+
+    let impl_ident = if !lifetimes.is_empty() {
+        quote! {
+            impl <#(#lifetimes),*> taitan_orm::traits::TemplateRecord for #struct_ident
+        }
+    } else {
+        quote! {
+            impl  taitan_orm::traits::TemplateRecord for #struct_ident
+        }
+    };
+
     let output = quote! {
 
-        impl taitan_orm::traits::TemplateRecord for #ident {
+        #impl_ident {
 
             fn get_sql(&self, page: Option<&taitan_orm::traits::Pagination>) -> String {
                 if let Some(page) = page {

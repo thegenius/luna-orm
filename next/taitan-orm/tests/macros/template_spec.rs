@@ -7,12 +7,18 @@ use taitan_orm_macro::TemplateRecord;
 
 #[derive(TemplateRecord, Clone, Debug)]
 #[TemplateSql = "select * from #{name}"]
-pub struct TestTemplate {
-   name: String
+pub struct TestTemplate1<'a> {
+   name: Cow<'a, str>,
+}
+
+#[derive(TemplateRecord, Clone, Debug)]
+#[TemplateSql = "select * from #{name}"]
+pub struct TestTemplate2 {
+    name: String,
 }
 
 #[sqlx_macros::test]
-pub async fn entity_macro_spec() -> taitan_orm::Result<()> {
+pub async fn template_macro_spec() -> taitan_orm::Result<()> {
 
 
 

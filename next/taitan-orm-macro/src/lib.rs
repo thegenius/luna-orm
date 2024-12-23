@@ -1,6 +1,6 @@
 use crate::schema::impl_schema_macro;
 use proc_macro::TokenStream;
-use crate::template::impl_record_macro;
+use crate::template::impl_template_macro;
 
 mod attrs;
 mod expands;
@@ -20,5 +20,5 @@ pub fn expand_schema_macro(input: TokenStream) -> TokenStream {
 
 #[proc_macro_derive(TemplateRecord, attributes(TemplateSql, TemplateCountSql))]
 pub fn expand_template_record(input: TokenStream) -> TokenStream {
-    impl_record_macro(input)
+    impl_template_macro(input)
 }
