@@ -1,9 +1,10 @@
 
-use proc_macro2::{Ident, TokenStream};
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{parse_macro_input, DeriveInput, Data, Fields, Field, Type, GenericParam, Generics, Lifetime};
 
 use syn::visit::Visit;
+use crate::util::create_path_from_str;
 
 // 自定义访问器用于查找生命周期
 struct LifetimeFinder {
@@ -13,6 +14,26 @@ struct LifetimeFinder {
 impl<'ast> Visit<'ast> for LifetimeFinder {
     fn visit_lifetime(&mut self, _: &'ast syn::Lifetime) {
         self.has_lifetime = true;
+    }
+}
+
+pub fn build_impl_trait_token(struct_ident: &Ident, generics: &Generics, trait_name: &str) -> TokenStream {
+    let mut lifetimes: Vec<Lifetime> = Vec::new();
+    for param in generics.params.iter() {
+        if let GenericParam::Lifetime(lifetime_def) = param {
+            lifetimes.push(lifetime_def.lifetime.clone());
+        }
+    }
+
+    let trait_name = create_path_from_str(trait_name);
+    if !lifetimes.is_empty() {
+        quote! {
+            impl <#(#lifetimes),*> #trait_name for #struct_ident<#(#lifetimes),*>
+        }
+    } else {
+        quote! {
+            impl #trait_name for #struct_ident
+        }
     }
 }
 
@@ -28,7 +49,7 @@ pub fn build_struct_ident(ident: &Ident, lifetimes: &Vec<Lifetime>) -> TokenStre
     }
 }
 
-pub fn extract_generic_lifetimes(generics: Generics) -> Vec<Lifetime> {
+pub fn extract_generic_lifetimes(generics: &Generics) -> Vec<Lifetime> {
     let mut lifetimes: Vec<Lifetime> = Vec::new();
     for param in generics.params.iter() {
         if let GenericParam::Lifetime(lifetime_def) = param {
@@ -50,34 +71,3 @@ pub fn check_field_lifetime(field: &Field) -> bool {
     finder.has_lifetime
 }
 
-
-// #[proc_macro_derive(CheckStruct)]
-// pub fn check_struct(input: TokenStream) -> TokenStream {
-//     let input = parse_macro_input!(input as DeriveInput);
-//     let struct_name = &input.ident;
-//
-//     // 初始化生命周期查找器
-//     let mut lifetime_finder = LifetimeFinder { has_lifetime: false };
-//
-//     // 检查结构体字段是否包含生命周期
-//     if let Data::Struct(data_struct) = input.data {
-//         match data_struct.fields {
-//             Fields::Named(ref fields) | Fields::Unnamed(ref fields) => {
-//                 for field in fields.named.iter() {
-//                     lifetime_finder.visit_type(&field.ty);
-//                 }
-//             },
-//             Fields::Unit => {} // 单位结构体没有字段
-//         }
-//     }
-//
-//     // 生成输出代码
-//     let has_lifetime = lifetime_finder.has_lifetime;
-//     let expanded = quote! {
-//         impl #struct_name {
-//             const HAS_LIFETIME: bool = #has_lifetime;
-//         }
-//     };
-//
-//     TokenStream::from(expanded)
-// }

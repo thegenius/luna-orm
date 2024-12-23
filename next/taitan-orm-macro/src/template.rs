@@ -9,11 +9,11 @@ pub fn impl_template_macro(input: TokenStream) -> TokenStream {
         attrs, ident, data, generics, ..
     } = parse_macro_input!(input);
 
-    let lifetimes = extract_generic_lifetimes(generics);
+    // let lifetimes = extract_generic_lifetimes(generics);
     // panic!("{:?}", lifetimes);
 
     let fields = extract_fields(&data).unwrap();
-    let output = generate_template_struct_and_impl(&ident, &attrs, &fields, &lifetimes);
+    let output = generate_template_struct_and_impl(&ident, &attrs, &fields, &generics);
     // panic!("{}", output);
     output.into()
 }

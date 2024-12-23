@@ -4,11 +4,12 @@ use quote::quote;
 use crate::attrs::{AttrParser, DefaultAttrParser};
 use crate::fields::{DefaultFieldMapper, FieldMapType, FieldMapper};
 use crate::types::{DefaultTypeChecker, TypeChecker};
-use syn::{
-    token::{self, Comma},
-    Attribute, Data, DataEnum, DataStruct, DataUnion, Error, Field, Fields, FieldsNamed, LitStr,
-    Path, Result, Variant,
-};
+use syn::{parse_str, token::{self, Comma}, Attribute, Data, DataEnum, DataStruct, DataUnion, Error, Field, Fields, FieldsNamed, LitStr, Path, Result, Variant};
+
+
+pub fn create_path_from_str(path_str: &str) -> Path {
+    parse_str(path_str).expect("Path should be valid")
+}
 
 pub fn build_fields_name(fields: &Vec<Field>) -> Vec<proc_macro2::TokenStream> {
     DefaultFieldMapper::map_field_vec(fields, &|field: Field| {

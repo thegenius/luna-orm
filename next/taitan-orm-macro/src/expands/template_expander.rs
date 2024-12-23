@@ -1,16 +1,16 @@
 use std::process::id;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
-use syn::{Attribute, FieldsNamed, Lifetime};
+use syn::{Attribute, FieldsNamed, Generics, Lifetime};
 use taitan_orm_trait::ParsedTemplateSql;
 use crate::attrs::{AttrParser, DefaultAttrParser};
-use crate::util::{extract_generic_lifetimes, check_type_lifetime, build_struct_ident};
+use crate::util::{extract_generic_lifetimes, check_type_lifetime, build_struct_ident, build_impl_trait_token, create_path_from_str};
 
 pub fn generate_template_struct_and_impl(
     ident: &Ident,
     attrs: &Vec<Attribute>,
     fields: &FieldsNamed,
-    lifetimes: &Vec<Lifetime>,
+    generics: &Generics,
 ) -> TokenStream {
 
     // panic!("{:?}", attrs);
@@ -57,17 +57,7 @@ pub fn generate_template_struct_and_impl(
         })
         .collect::<Vec<TokenStream>>();
 
-    let struct_ident = build_struct_ident(ident, lifetimes);
-
-    let impl_ident = if !lifetimes.is_empty() {
-        quote! {
-            impl <#(#lifetimes),*> taitan_orm::traits::TemplateRecord for #struct_ident
-        }
-    } else {
-        quote! {
-            impl  taitan_orm::traits::TemplateRecord for #struct_ident
-        }
-    };
+    let impl_ident = build_impl_trait_token(ident, generics, "taitan_orm::traits::TemplateRecord");
 
     let output = quote! {
 
