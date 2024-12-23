@@ -14,8 +14,10 @@ uuid = {workspace = true}
 tracing = {workspace = true}
 thiserror = {workspace = true}
 path-absolutize = {workspace = true}
+rinja = "0.3.5"
 
 [dev-dependencies]
+
 
 
 

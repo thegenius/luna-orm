@@ -9,6 +9,7 @@ use sqlx::sqlite::SqliteArguments;
 use std::fmt::Debug;
 
 pub trait TemplateRecord: Sync + Debug {
+
     fn get_sql(&self, page: Option<&Pagination>) -> String;
 
     fn get_count_sql(&self) -> CountSql;
