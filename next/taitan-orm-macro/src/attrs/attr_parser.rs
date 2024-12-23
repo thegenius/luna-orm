@@ -1,7 +1,8 @@
 use proc_macro2::Ident;
-use syn::{parenthesized, Attribute, Lit, LitStr, Meta, MetaNameValue, Path, Token};
+use syn::{parenthesized, Attribute, Expr, Lit, LitStr, Meta, MetaNameValue, Path, Token};
 use syn::meta::ParseNestedMeta;
 use syn::parse::ParseStream;
+use darling::ast::NestedMeta;
 
 pub trait AttrParser {
     fn extract_val_from_attr(attr: &Attribute, name: &str) -> Option<String>;
@@ -31,32 +32,49 @@ impl AttrParser for DefaultAttrParser {
             return None;
         }
 
-        attr.parse_nested_meta( |meta| {
-            let result = match meta {
-                Meta::NameValue(name_value) => {
-                    match name_value.value {
-                        syn::Expr::Lit(s) => {
-                            match s.lit {
-                                Lit::Str(s) => Some(s.value()),
-                                _ => None,
-                            }
-                        },
-                        _ => None,
-                    }
-                },
-                _ => None
-            };
-            Ok(())
-        });
+        match &attr.meta {
+            Meta::NameValue(name_value) => {
+                match &name_value.value {
+                     Expr::Lit(s) => {
+                        match &s.lit {
+                            Lit::Str(s) => Some(s.value()),
+                            _ => None,
+                        }
+                    },
+                    _ => None,
+                }
+            }
+            _ => None,
+        }
 
-        let name: syn::Result<String>= attr.parse_args_with(|stream: ParseStream| {
-            let lit_str = stream.parse::<LitStr>()?;
-            Ok(lit_str.value())
-            // stream.parse::<LitStr>().ok().and_then(|lit_str| {
-            //     Some(lit_str.value())
-            // })
-        });
-        name.ok()
+
+
+        // attr.parse_nested_meta( |meta| {
+        //     let result = match meta {
+        //         Meta::NameValue(name_value) => {
+        //             match name_value.value {
+        //                 syn::Expr::Lit(s) => {
+        //                     match s.lit {
+        //                         Lit::Str(s) => Some(s.value()),
+        //                         _ => None,
+        //                     }
+        //                 },
+        //                 _ => None,
+        //             }
+        //         },
+        //         _ => None
+        //     };
+        //     Ok(())
+        // });
+
+        // let name: syn::Result<String>= attr.parse_args_with(|stream: ParseStream| {
+        //     let lit_str = stream.parse::<LitStr>()?;
+        //     Ok(lit_str.value())
+        //     // stream.parse::<LitStr>().ok().and_then(|lit_str| {
+        //     //     Some(lit_str.value())
+        //     // })
+        // });
+        // name.ok()
 
 
 

@@ -60,6 +60,7 @@ pub fn generate_unique_structs_and_impls(
 
     let parser = FieldsParser::from_named(fields);
     let order_fields_vec = DefaultAttrParser::extract_unique_key(attrs);
+    // panic!("{:?}", order_fields_vec);
     order_fields_vec.iter().for_each(|fields| {
         let unique_fields = parser.filter_named_fields(fields);
         let mut unique_struct_name =  format!("{}", table_name.to_camel());
