@@ -38,8 +38,6 @@ pub fn generate_mutation_struct_and_impl(
 
         impl taitan_orm::traits::Mutation for #struct_ident {
 
-            type Primary = #primary_struct_ident;
-
             type Location = #location_struct_ident;
 
             fn get_mutation_fields_name(&self) -> Vec<String> {

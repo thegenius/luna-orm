@@ -70,7 +70,7 @@ pub trait SqliteCommander: SqlExecutor<DB = Sqlite> {
         unique: &dyn Unique<Mutation = M>,
     ) -> Result<bool> {
         debug!(target: "taitan_orm", command = "update", mutation = ?mutation, primary = ?unique);
-        let sql = self.get_generator().get_unique_update_sql(mutation, unique);
+        let sql = self.get_generator().get_update_sql(mutation, unique);
         debug!(target: "taitan_orm", command = "update", sql = sql);
         let args = unique.gen_update_arguments_sqlite(mutation)?;
         let result = self.execute::<SqliteArguments>(&sql, args).await?;
@@ -78,7 +78,11 @@ pub trait SqliteCommander: SqlExecutor<DB = Sqlite> {
         Ok(result > 0)
     }
 
-    async fn change<M: Mutation>(&mut self, mutation: &M, location: &M::Location) -> Result<u64> {
+    async fn change<L: Location>(
+        &mut self,
+        mutation: &dyn Mutation<Location = L>,
+        location: &L,
+    ) -> Result<u64> {
         debug!(target: "taitan_orm", command = "change", mutation = ?mutation, location = ?location);
         let sql = self.get_generator().get_change_sql(mutation, location);
         debug!(target: "taitan_orm", command = "change", sql = sql);

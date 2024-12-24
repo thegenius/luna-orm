@@ -402,7 +402,6 @@ pub struct UserMutation {
     birthday: Option<PrimitiveDateTime>,
 }
 impl taitan_orm::traits::Mutation for UserMutation {
-    type Primary = UserPrimary;
     type Location = UserLocation;
     fn get_mutation_fields_name(&self) -> Vec<String> {
         let mut fields = Vec::new();

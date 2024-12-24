@@ -6,7 +6,6 @@ use sqlx::sqlite::SqliteArguments;
 use std::fmt::Debug;
 
 pub trait Mutation: Sync + Debug {
-    type Primary: Unique;
 
     type Location: Location;
 

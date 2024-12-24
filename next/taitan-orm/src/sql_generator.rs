@@ -407,7 +407,7 @@ pub trait SqlGenerator {
         self.post_process(upsert_sql)
     }
 
-    fn get_unique_update_sql<M: Mutation>(&self, mutation: &M, unique: &dyn Unique<Mutation = M>) -> String {
+    fn get_update_sql<M: Mutation>(&self, mutation: &M, unique: &dyn Unique<Mutation = M>) -> String {
         let table_name = unique.get_table_name();
         let body_field_names = mutation.get_mutation_fields_name();
         let body_fields = wrap_locate_fields(
@@ -432,33 +432,33 @@ pub trait SqlGenerator {
             .to_string();
         self.post_process(update_sql)
     }
-    fn get_update_sql<M: Mutation>(&self, mutation: &M, primary: &M::Primary) -> String {
-        let table_name = primary.get_table_name();
-        let body_field_names = mutation.get_mutation_fields_name();
-        let body_fields = wrap_locate_fields(
-            &body_field_names,
-            self.get_wrap_char(),
-            self.get_place_holder(),
-        );
-        let primary_field_names = primary.get_unique_field_names();
-        let primary_fields = wrap_locate_str_fields(
-            &primary_field_names,
-            self.get_wrap_char(),
-            self.get_place_holder(),
-        );
-        let update_sql = format!(
-            "UPDATE {}{}{} SET {} WHERE {}",
-            self.get_wrap_char(),
-            table_name,
-            self.get_wrap_char(),
-            body_fields,
-            primary_fields
-        )
-        .to_string();
-        self.post_process(update_sql)
-    }
+    // fn get_update_sql<M: Mutation>(&self, mutation: &M, primary: &M::Primary) -> String {
+    //     let table_name = primary.get_table_name();
+    //     let body_field_names = mutation.get_mutation_fields_name();
+    //     let body_fields = wrap_locate_fields(
+    //         &body_field_names,
+    //         self.get_wrap_char(),
+    //         self.get_place_holder(),
+    //     );
+    //     let primary_field_names = primary.get_unique_field_names();
+    //     let primary_fields = wrap_locate_str_fields(
+    //         &primary_field_names,
+    //         self.get_wrap_char(),
+    //         self.get_place_holder(),
+    //     );
+    //     let update_sql = format!(
+    //         "UPDATE {}{}{} SET {} WHERE {}",
+    //         self.get_wrap_char(),
+    //         table_name,
+    //         self.get_wrap_char(),
+    //         body_fields,
+    //         primary_fields
+    //     )
+    //     .to_string();
+    //     self.post_process(update_sql)
+    // }
 
-    fn get_change_sql<M: Mutation>(&self, mutation: &M, location: &M::Location) -> String {
+    fn get_change_sql<L: Location>(&self, mutation: &dyn Mutation<Location=L>, location: &L) -> String {
         let table_name = location.get_table_name();
         let mutation_fields = mutation.get_mutation_fields_name();
         let update_clause = wrap_locate_fields(
