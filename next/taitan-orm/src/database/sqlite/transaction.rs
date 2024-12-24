@@ -1,11 +1,13 @@
-use crate::database::sqlite::SqliteCommander;
+use crate::database::sqlite::commanders::read_commander::SqliteReadCommander;
+use crate::database::sqlite::{SqliteDatabase, SqliteWriteCommander};
 use crate::result::Result;
 use crate::sql_generator::DefaultSqlGenerator;
+use crate::sql_generator_container::SqlGeneratorContainer;
 use crate::{SqlExecutor, TaitanOrmError};
 use sqlx::query::Query;
 use sqlx::sqlite::{SqliteArguments, SqliteQueryResult};
 use sqlx::{query_with, Database, Sqlite};
-use taitan_orm_trait::SelectedEntity;
+use taitan_orm_trait::{Mutation, SelectedEntity, Unique};
 use tracing::debug;
 
 #[derive(Debug)]
@@ -74,6 +76,17 @@ impl<'s> SqlExecutor for SqliteTransaction<'s> {
             Ok(Some(SE::from_row(selection, result)?))
         } else {
             Ok(None)
+        }
+    }
+
+    async fn fetch_exists<'a>(&'a mut self, stmt: &'a str, args: <Self::DB as Database>::Arguments<'a>) -> Result<bool> {
+        let query: Query<'a, Self::DB, SqliteArguments<'a>> = query_with(stmt, args);
+        let result_opt: Option<<Self::DB as Database>::Row> =
+            query.fetch_optional(&mut *self.transaction).await?;
+        if let Some(_) = result_opt {
+            Ok(true)
+        } else {
+            Ok(false)
         }
     }
 
@@ -170,10 +183,14 @@ impl<'s> SqlExecutor for SqliteTransaction<'s> {
     }
 }
 
-impl<'a> SqliteCommander for SqliteTransaction<'a> {
+impl<'a> SqlGeneratorContainer for SqliteTransaction<'a> {
     type G = DefaultSqlGenerator;
 
     fn get_generator(&mut self) -> &Self::G {
         &self.sql_generator
     }
 }
+
+impl<'a> SqliteWriteCommander for SqliteTransaction<'a> {}
+
+impl<'a> SqliteReadCommander for SqliteTransaction<'a> {}

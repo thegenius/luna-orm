@@ -105,4 +105,9 @@ impl SqlExecutor for SqliteDatabase {
         let mut ex = self.get_pool()?.acquire().await?;
         self.generic_execute(&mut *ex, stmt, args).await
     }
+
+    async fn fetch_exists<'a>(&'a mut self, stmt: &'a str, args: <Self::DB as Database>::Arguments<'a>) -> Result<bool> {
+        let mut ex = self.get_pool()?.acquire().await?;
+        self.generic_exists(&mut *ex, stmt, args).await
+    }
 }

@@ -1,5 +1,7 @@
-use crate::database::sqlite::{SqliteCommander, SqliteLocalConfig, SqliteTransaction};
+use crate::database::sqlite::commanders::read_commander::SqliteReadCommander;
+use crate::database::sqlite::{SqliteLocalConfig, SqliteTransaction, SqliteWriteCommander};
 use crate::sql_generator::DefaultSqlGenerator;
+use crate::sql_generator_container::SqlGeneratorContainer;
 use crate::{SqlExecutor, TaitanOrmError};
 use path_absolutize::Absolutize;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous};
@@ -53,10 +55,14 @@ impl SqliteDatabase {
     }
 }
 
-impl SqliteCommander for SqliteDatabase {
+impl SqlGeneratorContainer for SqliteDatabase {
     type G = DefaultSqlGenerator;
 
     fn get_generator(&mut self) -> &Self::G {
         &self.sql_generator
     }
 }
+
+impl SqliteWriteCommander for SqliteDatabase {}
+
+impl SqliteReadCommander for SqliteDatabase {}

@@ -39,6 +39,12 @@ pub trait SqlExecutor {
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin;
 
+    async fn fetch_exists<'a>(
+        &'a mut self,
+        stmt: &'a str,
+        args: <Self::DB as Database>::Arguments<'a>,
+    ) -> Result<bool>;
+
     async fn fetch_all_plain<'a, SE>(
         &'a mut self,
         stmt: &'a str,
@@ -134,6 +140,25 @@ pub trait SqlExecutor {
             Ok(SE::from_row_full(result)?)
         } else {
             Err(sqlx::error::Error::RowNotFound.into())
+        }
+    }
+
+    async fn generic_exists<'a, EX, A>(
+        &mut self,
+        ex: EX,
+        stmt: &'a str,
+        args: A,
+    ) -> Result<bool>
+    where
+        EX: Executor<'a, Database = Self::DB>,
+        A: IntoArguments<'a, Self::DB> + 'a,
+    {
+        let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, args);
+        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(ex).await?;
+        if let Some(_) = result_opt {
+            Ok(true)
+        } else {
+            Ok(false)
         }
     }
 

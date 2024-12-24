@@ -1,7 +1,7 @@
 // use crate::entities::user::{UserPrimary, UserSelection};
 use crate::entities::user::*;
 use sqlx::sqlx_macros;
-use taitan_orm::database::sqlite::{SqliteCommander, SqliteDatabase, SqliteLocalConfig};
+use taitan_orm::database::sqlite::{SqliteWriteCommander, SqliteReadCommander,  SqliteDatabase, SqliteLocalConfig};
 use taitan_orm::SqlExecutor;
 use time::macros::datetime;
 use uuid::Uuid;
@@ -149,7 +149,7 @@ async fn test_delete_user(
 async fn test_select_all(db: &mut SqliteDatabase, expect_cnt: usize) -> taitan_orm::Result<()> {
     let selection = UserSelection::full_fields();
     let order_by = UserOrderBy::build(["id", "name", "age", "birthday"])?;
-    let entity_vec: Vec<UserSelected> = db.devour(&selection, &order_by).await?;
+    let entity_vec: Vec<UserSelected> = db.devour(&selection, &Some(&order_by), &None).await?;
 
     assert_eq!(entity_vec.len(), expect_cnt);
     Ok(())
@@ -162,7 +162,7 @@ async fn test_select_location(
 ) -> taitan_orm::Result<()> {
     let order_by = UserOrderBy::build(["id", "name", "age", "birthday"])?;
     let entities: Vec<UserSelected> = db
-        .search(&UserSelection::full_fields(), user_location, &order_by)
+        .search(&UserSelection::full_fields(), user_location, &Some(&order_by), &None)
         .await?;
     assert_eq!(entities.len(), expect_cnt);
     Ok(())

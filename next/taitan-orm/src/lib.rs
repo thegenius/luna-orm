@@ -11,6 +11,7 @@ mod db;
 mod dto;
 mod sql_executor;
 mod sql_generator;
+pub mod sql_generator_container;
 
 // pub use db::DB;
 pub use dto::CountResult;
@@ -22,7 +23,7 @@ pub use sql_generator::SqlGenerator;
 
 pub use taitan_orm_macro::Schema;
 pub mod traits {
-    pub use taitan_orm_trait::{Entity, Unique, Location, Schema, LocationExpr, Mutation, Selection, SelectedEntity, OrderBy, CountSql};
+    pub use taitan_orm_trait::{CountSql, Entity, Location, LocationExpr, Mutation, OrderBy, Schema, SelectedEntity, Selection, Unique};
     pub use taitan_orm_trait::validate_order_by;
     pub use taitan_orm_trait::pagination::Pagination;
     pub use taitan_orm_trait::page_info::PageInfo;

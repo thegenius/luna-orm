@@ -113,7 +113,31 @@ pub trait SqlGenerator {
         "SELECT last_insert_rowid() as `last_row_id`"
     }
 
-    fn get_select_sql<M: Mutation>(&self, selection: &dyn Selection, primary: &dyn Unique<Mutation = M>) -> String {
+    fn get_exists_sql<M: Mutation>(&self, primary: &dyn Unique<Mutation = M>) -> String {
+        let table_name = primary.get_table_name();
+
+        let located_fields = primary.get_unique_field_names();
+        let where_clause = wrap_locate_str_fields(
+            located_fields,
+            self.get_wrap_char(),
+            self.get_place_holder(),
+        );
+        let select_sql = format!(
+            "SELECT 1 FROM {}{}{} WHERE {}",
+            self.get_wrap_char(),
+            table_name,
+            self.get_wrap_char(),
+            where_clause
+        )
+        .to_string();
+        self.post_process(select_sql)
+    }
+
+    fn get_select_sql<M: Mutation>(
+        &self,
+        selection: &dyn Selection,
+        primary: &dyn Unique<Mutation = M>,
+    ) -> String {
         let table_name = primary.get_table_name();
         let selected_fields: Vec<String> = selection.get_selected_fields();
         let select_clause = wrap_fields(&selected_fields, self.get_wrap_char());
@@ -164,138 +188,73 @@ pub trait SqlGenerator {
         self.post_process(select_sql)
     }
 
-    fn get_devour_sql(&self, selection: &dyn Selection, order_by: &dyn OrderBy) -> String {
-        let table_name = selection.get_table_name();
-        let selected_field_names = selection.get_selected_fields();
-        let order_by_field_names = order_by.get_fields();
-        let order_by_fields = wrap_cow_str_fields(&order_by_field_names, self.get_wrap_char());
-        let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());
-        let select_sql = format!(
-            "SELECT {} FROM {}{}{} ORDER BY {}",
-            selected_fields,
-            self.get_wrap_char(),
-            table_name,
-            self.get_wrap_char(),
-            order_by_fields
-        )
-        .to_string();
-        self.post_process(select_sql)
-    }
 
-    fn get_devour_paged_sql(
-        &self,
-        selection: &dyn Selection,
-        order_by: &dyn OrderBy,
-        page: &Pagination,
-    ) -> String {
-        let table_name = selection.get_table_name();
-        let selected_field_names = selection.get_selected_fields();
-        let order_by_field_names = order_by.get_fields();
-        let order_by_fields = wrap_cow_str_fields(&order_by_field_names, self.get_wrap_char());
-        let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());
-        let offset = page.page_size * page.page_num;
-        let count = page.page_size;
-        let select_sql = format!(
-            "SELECT {} FROM {}{}{} ORDER BY {} LIMIT {}, {}",
-            selected_fields,
-            self.get_wrap_char(),
-            table_name,
-            self.get_wrap_char(),
-            order_by_fields,
-            offset,
-            count
-        )
-        .to_string();
-        self.post_process(select_sql)
-    }
+    // fn get_limit_sql(&self, page: &Pagination) -> String {
+    //     let offset = page.page_size * page.page_num;
+    //     let count = page.page_size;
+    //     format!("{}, {}", offset, count)
+    // }
 
-    fn get_search_sql(
-        &self,
-        selection: &dyn Selection,
-        location: &dyn Location,
-        order_by: Option<&dyn OrderBy>,
-    ) -> String {
-        let selected_field_names = selection.get_selected_fields();
-        let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());
-        let table_name = location.get_table_name();
-        let where_clause = location.get_where_clause(self.get_wrap_char(), self.get_place_holder());
-        if order_by.is_none() {
-            let select_sql = format!(
-                "SELECT {} FROM {}{}{} WHERE {}",
-                selected_fields,
-                self.get_wrap_char(),
-                table_name,
-                self.get_wrap_char(),
-                where_clause
-            )
-            .to_string();
-            self.post_process(select_sql)
-        } else {
-            let order_by_field_names = order_by.unwrap().get_fields();
-            let order_by_fields = wrap_cow_str_fields(&order_by_field_names, self.get_wrap_char());
-            let select_sql = format!(
-                "SELECT {} FROM {}{}{} WHERE {} ORDER BY {}",
-                selected_fields,
-                self.get_wrap_char(),
-                table_name,
-                self.get_wrap_char(),
-                where_clause,
-                order_by_fields
-            )
-            .to_string();
-            self.post_process(select_sql)
+    fn get_page_sql(&self, page: &Option<&Pagination>) -> String {
+        match page {
+            None => String::new(),
+            Some(page) => {
+                let offset = page.page_size * page.page_num;
+                let count = page.page_size;
+                format!("LIMIT {},{}", offset, count)
+            }
         }
     }
 
-    fn get_limit_sql(&self, page: &Pagination) -> String {
-        let offset = page.page_size * page.page_num;
-        let count = page.page_size;
-        return format!("{}, {}", offset, count);
+    fn get_order_by_sql(&self, order_by: &Option<&dyn OrderBy>) -> String {
+        match order_by {
+            None => String::new(),
+            Some(order_by) => {
+                let order_by_field_names = order_by.get_fields();
+                let order_by_fields =
+                    wrap_cow_str_fields(order_by_field_names, self.get_wrap_char());
+                format!("ORDER BY {}", order_by_fields)
+            }
+        }
+    }
+
+    fn get_where_sql(&self, location: &Option<&dyn Location>) -> String {
+        match location {
+            None => String::new(),
+            Some(location) => {
+                let where_fields = location.get_where_clause(self.get_wrap_char(), self.get_place_holder());
+                format!("WHERE {}", where_fields)
+            }
+        }
     }
 
     fn get_search_paged_sql(
         &self,
         selection: &dyn Selection,
-        location: &dyn Location,
+        location: &Option<&dyn Location>,
         order_by: &Option<&dyn OrderBy>,
-        page: &Pagination,
+        page: &Option<&Pagination>,
     ) -> String {
+        let order_by_clause = self.get_order_by_sql(order_by);
+        let limit_clause = self.get_page_sql(page);
+        let where_clause = self.get_where_sql(location);
+
         let selected_field_names = selection.get_selected_fields();
         let selected_fields = wrap_fields(&selected_field_names, self.get_wrap_char());
-        let table_name = location.get_table_name();
-        let where_clause = location.get_where_clause(self.get_wrap_char(), self.get_place_holder());
-        let offset = page.page_size * page.page_num;
-        let count = page.page_size;
-        if order_by.is_none() {
-            let select_sql = format!(
-                "SELECT {} FROM {}{}{} WHERE {} LIMIT {},{}",
-                selected_fields,
-                self.get_wrap_char(),
-                table_name,
-                self.get_wrap_char(),
-                where_clause,
-                offset,
-                count
-            )
-            .to_string();
-            self.post_process(select_sql)
-        } else {
-            let order_by_field_names = order_by.as_ref().unwrap().get_fields();
-            let order_by_fields = wrap_cow_str_fields(order_by_field_names, self.get_wrap_char());
-            let select_sql = format!(
-                "SELECT {} FROM {}{}{} WHERE {} ORDER BY {} LIMIT {},{}",
-                selected_fields,
-                self.get_wrap_char(),
-                table_name,
-                self.get_wrap_char(),
-                where_clause,
-                order_by_fields,
-                offset,
-                count
-            )
-            .to_string();
-            self.post_process(select_sql)
-        }
+        let table_name = selection.get_table_name();
+
+        let select_sql = format!(
+            "SELECT {} FROM {}{}{} {} {} {}",
+            selected_fields,
+            self.get_wrap_char(),
+            table_name,
+            self.get_wrap_char(),
+            where_clause,
+            order_by_clause,
+            limit_clause
+        )
+        .to_string();
+        self.post_process(select_sql)
     }
 
     fn get_page_joined_search_sql(
@@ -407,7 +366,11 @@ pub trait SqlGenerator {
         self.post_process(upsert_sql)
     }
 
-    fn get_update_sql<M: Mutation>(&self, mutation: &M, unique: &dyn Unique<Mutation = M>) -> String {
+    fn get_update_sql<M: Mutation>(
+        &self,
+        mutation: &M,
+        unique: &dyn Unique<Mutation = M>,
+    ) -> String {
         let table_name = unique.get_table_name();
         let body_field_names = mutation.get_mutation_fields_name();
         let body_fields = wrap_locate_fields(
@@ -429,7 +392,7 @@ pub trait SqlGenerator {
             body_fields,
             primary_fields
         )
-            .to_string();
+        .to_string();
         self.post_process(update_sql)
     }
     // fn get_update_sql<M: Mutation>(&self, mutation: &M, primary: &M::Primary) -> String {
@@ -458,7 +421,11 @@ pub trait SqlGenerator {
     //     self.post_process(update_sql)
     // }
 
-    fn get_change_sql<L: Location>(&self, mutation: &dyn Mutation<Location=L>, location: &L) -> String {
+    fn get_change_sql<L: Location>(
+        &self,
+        mutation: &dyn Mutation<Location = L>,
+        location: &L,
+    ) -> String {
         let table_name = location.get_table_name();
         let mutation_fields = mutation.get_mutation_fields_name();
         let update_clause = wrap_locate_fields(
