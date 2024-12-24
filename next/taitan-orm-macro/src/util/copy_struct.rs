@@ -4,9 +4,10 @@ use quote::{format_ident, quote};
 use syn::{parse_macro_input, Data, DeriveInput, Fields, GenericParam, Generics, Lifetime};
 use crate::util::extract_generic_lifetimes;
 
-pub fn copy_to_template_struct(ident: &Ident, data: &Data, generics: &Generics, sql: &str) -> TokenStream {
+pub fn copy_to_template_struct(struct_ident: &Ident, data: &Data, generics: &Generics, sql: &str, struct_suffix: &str) -> TokenStream {
     let mut lifetimes: Vec<Lifetime> = extract_generic_lifetimes(generics);
-    let struct_name = ident;
+    let struct_name = struct_ident;
+    let template_struct_ident = format_ident!("{}{}", struct_name, struct_suffix);
 
     // 获取字段信息
     let fields = match data {
@@ -18,7 +19,7 @@ pub fn copy_to_template_struct(ident: &Ident, data: &Data, generics: &Generics, 
     };
 
     // 生成新的结构体名称
-    let template_struct_name = format_ident!("{}Template", struct_name);
+
 
     // 生成字段定义
     let field_defs: Vec<_> = fields
@@ -43,11 +44,11 @@ pub fn copy_to_template_struct(ident: &Ident, data: &Data, generics: &Generics, 
         quote! {
             #[derive(Clone, rinja::Template)]
             #[template(source = #sql, ext="txt")]
-            pub struct #template_struct_name {
+            pub struct #template_struct_ident {
                 #(#field_defs),*
             }
 
-            impl From<&#struct_name> for #template_struct_name {
+            impl From<&#struct_name> for #template_struct_ident {
                 fn from(orig: &#struct_name) -> Self {
                     Self {
                         #(#field_inits),*
@@ -59,12 +60,12 @@ pub fn copy_to_template_struct(ident: &Ident, data: &Data, generics: &Generics, 
         quote! {
             #[derive(Clone, rinja::Template)]
             #[template(source = #sql, ext="txt")]
-            pub struct #template_struct_name <#(#lifetimes),*> {
+            pub struct #template_struct_ident <#(#lifetimes),*> {
                 #(#field_defs),*
             }
 
-            impl <#(#lifetimes),*> From<&#struct_name<#(#lifetimes),*>> for #template_struct_name<#(#lifetimes),*> {
-                fn from(orig: &#struct_name<#(#lifetimes),*>) -> #template_struct_name<#(#lifetimes),*> {
+            impl <#(#lifetimes),*> From<&#struct_name<#(#lifetimes),*>> for #template_struct_ident<#(#lifetimes),*> {
+                fn from(orig: &#struct_name<#(#lifetimes),*>) -> #template_struct_ident<#(#lifetimes),*> {
                     Self {
                         #(#field_inits),*
                     }

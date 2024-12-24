@@ -1,11 +1,8 @@
 use crate::attrs::{AttrParser, DefaultAttrParser};
-use crate::util::{
-    build_impl_trait_token,  copy_to_template_struct,
-
-};
+use crate::util::{build_impl_trait_token, copy_to_template_struct};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{format_ident, quote};
-use syn::{Attribute, Data, FieldsNamed, Generics, };
+use syn::{Attribute, Data, FieldsNamed, Generics};
 use taitan_orm_trait::ParsedTemplateSql;
 
 pub fn generate_template_struct_and_impl(
@@ -15,46 +12,24 @@ pub fn generate_template_struct_and_impl(
     fields: &FieldsNamed,
     generics: &Generics,
 ) -> TokenStream {
-    // panic!("{:?}", attrs);
-    let template_sql = DefaultAttrParser::extract_template_sql(&attrs);
-    if template_sql.is_none() {
-        panic!("TemplateRecord must have TemplateSql attribute.");
-    }
+    let template_sql = DefaultAttrParser::extract_template_sql(&attrs)
+        .expect("TemplateRecord must have sql attribute, for example: #[sql = \" select name from user where id = #{id}\"]");
 
-    let template_sql_str = template_sql.unwrap();
-    // panic!("template sql: {}", &template_sql_str);
-    // assert_eq!(template_sql_str, "select * from #{name}");
-    let template_sql_result = ParsedTemplateSql::build(template_sql_str.as_str());
-    if template_sql_result.is_err() {
-        panic!(
-            "ParsedTemplateSql parse failed: {} with error {}",
-            template_sql_str,
-            template_sql_result.err().unwrap()
-        );
-    }
-    let template_sql = template_sql_result.unwrap();
-    let (get_sql_stream, template_struct_opt) = gen_fn_get_sql(ident, &template_sql);
-    let marked_sql = template_sql.sql;
-    let variables = template_sql.variables;
+    let template_sql = ParsedTemplateSql::build(template_sql.as_str())
+        .expect(format!("Failed to parse template sql: {}", template_sql).as_str());
 
-    let count_sql_token;
+    let get_sql_render_fn_stream = gen_fn_get_sql(ident, data, generics, &template_sql);
+
     let count_sql = DefaultAttrParser::extract_template_count_sql(&attrs).unwrap_or_default();
-    if count_sql.is_empty() {
-        count_sql_token = quote!(taitan_orm::traits::CountSql::Empty);
+    let get_count_sql_render_fn_stream = if count_sql.is_empty() {
+        gen_fn_get_count_sql(ident, data, generics, None)
     } else {
-        let parsed_count_sql = ParsedTemplateSql::build(&count_sql).unwrap();
-        if parsed_count_sql.variables.len() != variables.len() {
-            panic!("template sql variables not equal to count sql");
-        }
-        let sql = parsed_count_sql.sql;
-        if parsed_count_sql.variables.is_empty() {
-            count_sql_token = quote!(taitan_orm::traits::CountSql::PlainSql(String::from(#sql)));
-        } else {
-            count_sql_token =
-                quote!(taitan_orm::traits::CountSql::VariabledSql(String::from(#sql)));
-        }
-    }
+        let parsed_count_sql = ParsedTemplateSql::build(count_sql.as_str())
+            .expect(format!("Failed to parse template sql: {}", count_sql).as_str());
+        gen_fn_get_count_sql(ident, data, generics, Some(&parsed_count_sql))
+    };
 
+    let variables = template_sql.variables;
     let args_add = variables
         .iter()
         .map(|variable| {
@@ -65,28 +40,27 @@ pub fn generate_template_struct_and_impl(
         })
         .collect::<Vec<TokenStream>>();
 
-    let template_struct  = if template_sql.dollar_signs.is_empty() {
-        quote! {}
-    } else {
-        copy_to_template_struct(ident, data, generics, &marked_sql)
-    };
-    // panic!("{}", template_struct);
-
     let impl_ident = build_impl_trait_token(ident, generics, "taitan_orm::traits::TemplateRecord");
 
+    let template_struct_stream = get_sql_render_fn_stream.struct_stream.unwrap_or_default();
+    let get_sql_fn_stream = get_sql_render_fn_stream.fn_stream;
 
+    let count_template_struct_stream = get_count_sql_render_fn_stream
+        .struct_stream
+        .unwrap_or_default();
+    let get_count_sql_fn_stream = get_count_sql_render_fn_stream.fn_stream;
 
     let output = quote! {
 
-        #template_struct
+        #template_struct_stream
+
+        #count_template_struct_stream
 
         #impl_ident {
 
-           #get_sql_stream
+            #get_sql_fn_stream
 
-            fn get_count_sql(&self) -> taitan_orm::traits::CountSql {
-                #count_sql_token
-            }
+            #get_count_sql_fn_stream
 
             fn get_variables(&self) -> Vec<String> {
                 vec![
@@ -117,7 +91,63 @@ pub fn generate_template_struct_and_impl(
     output
 }
 
-fn gen_fn_get_sql(ident: &Ident, parsed_template_sql: &ParsedTemplateSql) -> (TokenStream, Option<TokenStream>) {
+struct SqlRenderFnStream {
+    fn_stream: TokenStream,
+    struct_stream: Option<TokenStream>,
+}
+
+fn gen_fn_get_count_sql(
+    ident: &Ident,
+    data: &Data,
+    generics: &Generics,
+    parsed_template_sql_opt: Option<&ParsedTemplateSql>,
+) -> SqlRenderFnStream {
+    if parsed_template_sql_opt.is_none() {
+        let fn_stream = quote! {
+            fn get_count_sql(&self) -> Option<String> { None }
+        };
+        return SqlRenderFnStream {
+            fn_stream,
+            struct_stream: None,
+        };
+    }
+
+    let parsed_template_sql = parsed_template_sql_opt.unwrap();
+    let marked_sql = &parsed_template_sql.sql;
+
+    if parsed_template_sql.need_render() {
+        let template_struct_stream =
+            copy_to_template_struct(ident, data, generics, &marked_sql, "CountTemplate");
+        let template_struct_name = format_ident!("{}CountTemplate", ident);
+        let fn_stream = quote! {
+            fn get_count_sql(&self) -> Option<String> {
+                let template = #template_struct_name::from(self);
+                rinja::Template::render(&template).ok()
+            }
+        };
+        SqlRenderFnStream {
+            fn_stream,
+            struct_stream: Some(template_struct_stream),
+        }
+    } else {
+        let fn_stream = quote! {
+            fn get_count_sql(&self) -> Option<String> {
+                Some(String::from(#marked_sql))
+            }
+        };
+        SqlRenderFnStream {
+            fn_stream,
+            struct_stream: None,
+        }
+    }
+}
+
+fn gen_fn_get_sql(
+    ident: &Ident,
+    data: &Data,
+    generics: &Generics,
+    parsed_template_sql: &ParsedTemplateSql,
+) -> SqlRenderFnStream {
     let marked_sql = &parsed_template_sql.sql;
     let template_struct_name = format_ident!("{}Template", ident);
     if parsed_template_sql.dollar_signs.is_empty() {
@@ -132,12 +162,21 @@ fn gen_fn_get_sql(ident: &Ident, parsed_template_sql: &ParsedTemplateSql) -> (To
                     }
                 }
         };
-        (fn_stream, None)
+        SqlRenderFnStream {
+            fn_stream,
+            struct_stream: None,
+        }
     } else {
+        let template_struct_stream =
+            copy_to_template_struct(ident, data, generics, &marked_sql, "Template");
         let fn_stream = quote! {
             fn get_sql(&self, page: Option<&taitan_orm::traits::Pagination>) -> String {
                     let template = #template_struct_name::from(self);
-                    let marked_sql = rinja::Template::render(&template).unwrap();
+                    let marked_sql_result = rinja::Template::render(&template);
+                    if marked_sql_result.is_err() {
+                        return String::default();
+                    }
+                    let marked_sql = marked_sql_result.unwrap();
                     if let Some(page) = page {
                         let offset = page.page_size * page.page_num;
                         let count = page.page_size;
@@ -147,6 +186,9 @@ fn gen_fn_get_sql(ident: &Ident, parsed_template_sql: &ParsedTemplateSql) -> (To
                     }
                 }
         };
-        (fn_stream, None)
+        SqlRenderFnStream {
+            fn_stream,
+            struct_stream: Some(template_struct_stream),
+        }
     }
 }

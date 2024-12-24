@@ -12,7 +12,7 @@ pub trait TemplateRecord: Sync + Debug {
 
     fn get_sql(&self, page: Option<&Pagination>) -> String;
 
-    fn get_count_sql(&self) -> CountSql;
+    fn get_count_sql(&self) -> Option<String>;
 
     fn get_variables(&self) -> Vec<String>;
 

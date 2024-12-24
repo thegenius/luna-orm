@@ -1,3 +1,4 @@
+use nom::error::ErrorKind::NonEmpty;
 use crate::template::parser::parse_template_sql;
 use crate::template::template_value::{InnerString, TemplateValue};
 
@@ -11,9 +12,16 @@ pub struct ParsedTemplateSql {
 impl ParsedTemplateSql {
     pub fn build(template_sql: &str) -> Result<Self, nom::Err<nom::error::Error<&str>>> {
         let trimmed_template_sql = template_sql.trim();
+        if trimmed_template_sql.is_empty() {
+            return Err(nom::Err::Error(nom::error::Error::new(template_sql, NonEmpty)));
+        }
         let (_, parsed) = parse_template_sql(trimmed_template_sql)?;
         let parsed_template = ParsedTemplateSql::new(parsed);
         Ok(parsed_template)
+    }
+
+    pub fn need_render(&self) -> bool {
+        !self.dollar_signs.is_empty()
     }
 
     pub fn new(values: Vec<TemplateValue>) -> Self {

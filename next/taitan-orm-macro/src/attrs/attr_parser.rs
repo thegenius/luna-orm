@@ -153,10 +153,10 @@ impl AttrParser for DefaultAttrParser {
     }
 
     fn extract_template_sql(attrs: &Vec<Attribute>) -> Option<String> {
-        <DefaultAttrParser as AttrParser>::extract_val_from_attrs(attrs, "TemplateSql")
+        <DefaultAttrParser as AttrParser>::extract_val_from_attrs(attrs, "sql")
     }
     fn extract_template_count_sql(attrs: &Vec<Attribute>) -> Option<String> {
-        <DefaultAttrParser as AttrParser>::extract_val_from_attrs(attrs, "TemplateCountSql")
+        <DefaultAttrParser as AttrParser>::extract_val_from_attrs(attrs, "count_sql")
     }
 
     fn extract_unique_key(attrs: &Vec<Attribute>) -> Vec<Vec<String>> {
