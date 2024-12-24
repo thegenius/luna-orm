@@ -147,7 +147,7 @@ impl AttrParser for DefaultAttrParser {
 
     fn extract_table_name(ident: &Ident, attrs: &Vec<Attribute>) -> String {
         let mut name = ident.to_string();
-        name = <DefaultAttrParser as AttrParser>::extract_val_from_attrs(attrs, "TableName")
+        name = <DefaultAttrParser as AttrParser>::extract_val_from_attrs(attrs, "table_name")
             .unwrap_or(name);
         return name;
     }
@@ -161,7 +161,7 @@ impl AttrParser for DefaultAttrParser {
 
     fn extract_unique_key(attrs: &Vec<Attribute>) -> Vec<Vec<String>> {
         let indexes =
-            <DefaultAttrParser as AttrParser>::extract_val_vec_from_attrs(attrs, "UniqueKey");
+            <DefaultAttrParser as AttrParser>::extract_val_vec_from_attrs(attrs, "unique_key");
         let result: Vec<Vec<String>> = indexes
             .iter()
             .map(|s| s.split(',').map(|e| e.trim().to_string()).collect())

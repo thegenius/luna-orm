@@ -82,7 +82,7 @@ pub fn generate_ordering_struct_and_impl(
     let all_fields = parser.get_fields();
     let all_fields_names = all_fields.iter().map(|field| field.ident.as_ref().unwrap().to_string()).collect::<Vec<_>>();
 
-    let primary_fields = parser.filter_annotated_fields("PrimaryKey");
+    let primary_fields = parser.filter_annotated_fields("primary_key");
     let primary_names = primary_fields.iter().map(|f| f.ident.as_ref().unwrap().to_string()).collect::<Vec<_>>();
 
     let mut order_fields_vec = DefaultAttrParser::extract_unique_key(attrs);

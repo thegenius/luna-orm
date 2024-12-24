@@ -5,12 +5,12 @@ use uuid::Uuid;
 use taitan_orm::Schema;
 
 #[derive(Schema, Clone, Debug)]
-#[TableName = "user"]
-#[UniqueKey = "age"]
-#[UniqueKey = "name, birthday"]
+#[table_name = "user"]
+#[unique_key = "age"]
+#[unique_key = "name, birthday"]
 pub struct UserEntity {
-    #[PrimaryKey]
-    #[AutoIncrement]
+    #[primary_key]
+    #[auto_increment]
     id: Option<i64>,
 
     pub request_id: Uuid,

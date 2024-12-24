@@ -13,10 +13,10 @@ pub fn generate_mutation_struct_and_impl(
     fields: &FieldsNamed,
 ) -> TokenStream {
     let table_name = DefaultAttrParser::extract_table_name(ident, attrs);
-    let fields_vec = FieldsParser::from_named(fields).filter_not_annotated_fields("PrimaryKey");
+    let fields_vec = FieldsParser::from_named(fields).filter_not_annotated_fields("primary_key");
 
 
-    let primary_fields_vec = FieldsParser::from_named(fields).filter_annotated_fields("PrimaryKey");
+    let primary_fields_vec = FieldsParser::from_named(fields).filter_annotated_fields("primary_key");
     let parser = FieldsParser::from_named(fields);
     let location_fields_vec = parser.get_fields();
 

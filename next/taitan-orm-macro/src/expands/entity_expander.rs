@@ -10,33 +10,33 @@ use quote::quote;
 use syn::{Attribute, FieldsNamed};
 
 fn validate_primary_fields(fields: &FieldsNamed) {
-    let primary_fields = FieldsParser::from_named(fields).filter_annotated_fields("PrimaryKey");
+    let primary_fields = FieldsParser::from_named(fields).filter_annotated_fields("primary_key");
     if primary_fields.is_empty() {
-        panic!("Entity must has at least one PrimaryKey!")
+        panic!("Entity must has at least one primary_key!")
     }
 
     for field in primary_fields {
         let is_generated = DefaultAttrParser::check_has_attr(&field.attrs, "Generated");
-        let is_auto = DefaultAttrParser::check_has_attr(&field.attrs, "AutoIncrement");
+        let is_auto = DefaultAttrParser::check_has_attr(&field.attrs, "auto_increment");
         if DefaultTypeChecker::type_is_option(&field.ty) {
             if (!is_generated) && (!is_auto) {
                 panic!(
-                    "Primary Key with Option type must annotated with Generated or AutoIncrement"
+                    "Primary Key with Option type must annotated with Generated or auto_increment"
                 )
             }
         } else if (is_generated) || (is_auto) {
-            panic!("Primary Key annotated with Generated or AutoIncrement must be Option")
+            panic!("Primary Key annotated with Generated or auto_increment must be Option")
         }
     }
 
-    let auto_fields = FieldsParser::from_named(fields).filter_annotated_fields("AutoIncrement");
+    let auto_fields = FieldsParser::from_named(fields).filter_annotated_fields("auto_increment");
     if auto_fields.len() > 1 {
-        panic!("There is more than one AutoIncrement field");
+        panic!("There is more than one auto_increment field");
     }
     if auto_fields.len() == 1 {
         let auto_field = auto_fields.first().unwrap();
         if !<DefaultTypeChecker as TypeChecker>::type_is_option(&auto_field.ty) {
-            panic!("AutoIncrement Field should be Option<i64>");
+            panic!("auto_increment Field should be Option<i64>");
         }
         let auto_field_inner_type =
             <DefaultTypeExtractor as TypeExtractor>::get_option_inner_type(&auto_field.ty);
@@ -45,7 +45,7 @@ fn validate_primary_fields(fields: &FieldsNamed) {
             auto_field_inner_type,
             &["i64"],
         ) {
-            panic!("AutoIncrement Field should be Option<i64>");
+            panic!("auto_increment Field should be Option<i64>");
         }
     }
 }

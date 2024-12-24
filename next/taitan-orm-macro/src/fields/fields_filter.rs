@@ -19,7 +19,7 @@ impl FieldsFilter for FieldsParser {
         let mut result: Vec<Field> = Vec::new();
         for field in self.get_fields().iter() {
             let has_attr =
-                <DefaultAttrParser as AttrParser>::check_has_attr(&field.attrs, annotation_str);
+                DefaultAttrParser::check_has_attr(&field.attrs, annotation_str);
             if has_attr {
                 result.push(field.clone());
             }
@@ -31,7 +31,7 @@ impl FieldsFilter for FieldsParser {
         let mut result: Vec<Field> = Vec::new();
         for field in self.get_fields().iter() {
             let has_attr =
-                <DefaultAttrParser as AttrParser>::check_has_attr(&field.attrs, annotation_str);
+                DefaultAttrParser::check_has_attr(&field.attrs, annotation_str);
             if !has_attr {
                 result.push(field.clone());
             }
@@ -43,9 +43,9 @@ impl FieldsFilter for FieldsParser {
         let mut result: Vec<Field> = Vec::new();
         for field in self.get_fields().iter() {
             let is_generated =
-                <DefaultAttrParser as AttrParser>::check_has_attr(&field.attrs, "Generated");
+                DefaultAttrParser::check_has_attr(&field.attrs, "generated");
             let is_auto =
-                <DefaultAttrParser as AttrParser>::check_has_attr(&field.attrs, "AutoIncrement");
+                DefaultAttrParser::check_has_attr(&field.attrs, "auto_increment");
             if (!is_generated) && (!is_auto) {
                 result.push(field.clone());
             }
@@ -67,9 +67,9 @@ impl FieldsFilter for FieldsParser {
 
     fn get_sorted_fields_vec(&self) -> Vec<Field> {
         let primary_fields =
-            FieldsParser::from_vec(self.get_fields()).filter_annotated_fields("PrimaryKey");
+            FieldsParser::from_vec(self.get_fields()).filter_annotated_fields("primary_key");
         let body_fields =
-            FieldsParser::from_vec(self.get_fields()).filter_not_annotated_fields("PrimaryKey");
+            FieldsParser::from_vec(self.get_fields()).filter_not_annotated_fields("primary_key");
         let mut all_fields: Vec<Field> = Vec::new();
         all_fields.extend(primary_fields);
         all_fields.extend(body_fields);
@@ -84,9 +84,9 @@ impl FieldsFilter for FieldsParser {
 
     fn get_upsert_fields_vec(&self) -> Vec<Field> {
         let primary_fields =
-            FieldsParser::from_vec(self.get_fields()).filter_annotated_fields("PrimaryKey");
+            FieldsParser::from_vec(self.get_fields()).filter_annotated_fields("primary_key");
         let body_fields =
-            FieldsParser::from_vec(self.get_fields()).filter_not_annotated_fields("PrimaryKey");
+            FieldsParser::from_vec(self.get_fields()).filter_not_annotated_fields("primary_key");
         let mut all_fields: Vec<Field> = Vec::new();
         all_fields.extend(primary_fields);
         all_fields.extend(body_fields.clone());
@@ -97,14 +97,14 @@ impl FieldsFilter for FieldsParser {
 
     fn get_upsert_set_fields_vec(&self) -> Vec<Field> {
         let mut body_fields =
-            FieldsParser::from_vec(self.get_fields()).filter_not_annotated_fields("PrimaryKey");
+            FieldsParser::from_vec(self.get_fields()).filter_not_annotated_fields("primary_key");
         body_fields = FieldsParser::from_vec(&body_fields).filter_not_auto_generated();
         body_fields
     }
 
     fn get_auto_increment_field_opt(&self) -> Option<Field> {
         let auto_increment_fields =
-            FieldsParser::from_vec(self.get_fields()).filter_annotated_fields("AutoIncrement");
+            FieldsParser::from_vec(self.get_fields()).filter_annotated_fields("auto_increment");
         let first_one = auto_increment_fields.first();
         if first_one.is_none() {
             return None;
