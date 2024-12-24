@@ -79,7 +79,11 @@ impl<'s> SqlExecutor for SqliteTransaction<'s> {
         }
     }
 
-    async fn fetch_exists<'a>(&'a mut self, stmt: &'a str, args: <Self::DB as Database>::Arguments<'a>) -> Result<bool> {
+    async fn fetch_exists<'a>(
+        &'a mut self,
+        stmt: &'a str,
+        args: <Self::DB as Database>::Arguments<'a>,
+    ) -> Result<bool> {
         let query: Query<'a, Self::DB, SqliteArguments<'a>> = query_with(stmt, args);
         let result_opt: Option<<Self::DB as Database>::Row> =
             query.fetch_optional(&mut *self.transaction).await?;
@@ -179,6 +183,24 @@ impl<'s> SqlExecutor for SqliteTransaction<'s> {
             Ok(SE::from_row_full(result)?)
         } else {
             Err(sqlx::error::Error::RowNotFound.into())
+        }
+    }
+
+    async fn fetch_execute_option<'a, SE>(
+        &'a mut self,
+        stmt: &'a str,
+        args: <Self::DB as Database>::Arguments<'a>,
+    ) -> Result<Option<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+    {
+        let query: Query<'a, Self::DB, SqliteArguments<'a>> = query_with(stmt, args);
+        let result_opt: Option<<Self::DB as Database>::Row> =
+            query.fetch_optional(&mut *self.transaction).await?;
+        if let Some(result) = result_opt {
+            Ok(Some(SE::from_row_full(result)?))
+        } else {
+            Ok(None)
         }
     }
 }

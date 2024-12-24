@@ -82,6 +82,22 @@ pub trait SqlExecutor {
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin;
 
+    async fn fetch_execute_option<'a, SE>(
+        &'a mut self,
+        stmt: &'a str,
+        args: <Self::DB as Database>::Arguments<'a>,
+    ) -> Result<Option<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin;
+
+    // async fn fetch_execute_all<'a, SE>(
+    //     &'a mut self,
+    //     stmt: &'a str,
+    //     args: <Self::DB as Database>::Arguments<'a>,
+    // ) -> Result<Vec<SE>>
+    // where
+    //     SE: SelectedEntity<Self::DB> + Send + Unpin;
+
     async fn generic_fetch_optional_plain<'a, EX, SE, A>(
         &mut self,
         ex: EX,
@@ -142,6 +158,27 @@ pub trait SqlExecutor {
             Err(sqlx::error::Error::RowNotFound.into())
         }
     }
+    async fn generic_fetch_execute_option<'a, EX, SE, A>(
+        &mut self,
+        ex: EX,
+        stmt: &'a str,
+        args: A,
+    ) -> Result<Option<SE>>
+    where
+        EX: Executor<'a, Database = Self::DB>,
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+        A: IntoArguments<'a, Self::DB> + 'a,
+    {
+        let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, args);
+        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(ex).await?;
+        if let Some(result) = result_opt {
+            Ok(Some(SE::from_row_full(result)?))
+        } else {
+            Ok(None)
+        }
+    }
+
+
 
     async fn generic_exists<'a, EX, A>(
         &mut self,

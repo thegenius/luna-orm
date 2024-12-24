@@ -5,6 +5,7 @@ use crate::{SqlApi, SqlExecutor, SqlGenerator, TaitanOrmError};
 use path_absolutize::Absolutize;
 use std::fmt::Debug;
 // use sqlx::error::BoxDynError;
+use crate::sql_generator_container::SqlGeneratorContainer;
 use sqlx::sqlite::{SqliteArguments, SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous};
 use sqlx::{Database, Sqlite, SqlitePool};
 use std::fs;
@@ -17,13 +18,10 @@ use taitan_orm_trait::{
     Entity, Location, Mutation, OrderBy, SelectedEntity, Selection, TemplateRecord, Unique,
 };
 use tracing::debug;
-use crate::sql_generator_container::SqlGeneratorContainer;
 
 /**
-async fn change_by_template(template) -> Result<u64>
-async fn purify_by_template(template) -> Result<u64>
+async fn execute_by_template(template) -> Result<u64>
 
-async fn count_by_template(template)      -> Result<u64>
 async fn select_by_template<SE>(template) -> Result<Option<SE>>
 async fn search_by_template<SE>(template, page_option) -> Result<Vec<SE>>
 async fn search_paged_by_template<SE>(template, page) -> Result<PagedList<SE>>
@@ -31,7 +29,6 @@ async fn search_paged_by_template<SE>(template, page) -> Result<PagedList<SE>>
 async fn procedure_by_template<SE>(template) -> SE
 */
 pub trait SqliteTemplateCommander: SqlExecutor<DB = Sqlite> + SqlGeneratorContainer {
-
     async fn execute_by_template(&mut self, template: &dyn TemplateRecord) -> Result<usize> {
         debug!(target: "taitan_orm", command = "execute_by_template", template = ?template);
         let sql = template.get_sql(None);
@@ -43,29 +40,29 @@ pub trait SqliteTemplateCommander: SqlExecutor<DB = Sqlite> + SqlGeneratorContai
         Ok(result as usize)
     }
 
-    // async fn select_by_template<SE>(
-    //     &mut self,
-    //     template: &dyn TemplateRecord,
-    // ) -> Result<Option<SE>>
-    // where
-    //     SE: SelectedEntity<Self::DB> + Send + Unpin
-    // {
-    //     debug!(target: "taitan_orm", command = "select_by_template", template = ?template);
-    //     let sql = template.get_sql(None);
-    //     let sql = self.get_generator().post_process(sql);
-    //     debug!(target: "taitan_orm", command = "select_by_template", sql = sql);
-    //     let args = template.gen_template_arguments_sqlite()?;
-    //     let result: Option<SE> = self.fetch_optional::<SqliteArguments>(&sql,   args).await?;
-    //     debug!(target: "taitan_orm", command = "select_by_template", result = ?result);
-    //     return Ok(result);
-    // }
+    async fn select_by_template<SE>(&mut self, template: &dyn TemplateRecord) -> Result<Option<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+    {
+        debug!(target: "taitan_orm", command = "select_by_template", template = ?template);
+        let sql = template.get_sql(None);
+        let sql = self.get_generator().post_process(sql);
+        debug!(target: "taitan_orm", command = "select_by_template", sql = sql);
+        let args = template.gen_template_arguments_sqlite()?;
+        let result: Option<SE> = self
+            .fetch_execute_option(&sql, args)
+            .await?;
+        debug!(target: "taitan_orm", command = "select_by_template", result = ?result);
+        Ok(result)
+    }
 
+    // async fn search_by_template<SE>(template, page_option) -> Result<Vec<SE>>
     // async fn search_by_template<SE>(
     //     &mut self,
     //     template: &dyn TemplateRecord,
     // ) -> Result<Vec<SE>>
     // where
-    //     SE: SelectedEntity + Send + Unpin,
+    //     SE: SelectedEntity<Self::DB> + Send + Unpin,
     // {
     //     debug!(target: "taitan_orm", command = "search_by_template", template = ?template);
     //     let sql = template.get_sql(None);
@@ -76,6 +73,7 @@ pub trait SqliteTemplateCommander: SqlExecutor<DB = Sqlite> + SqlGeneratorContai
     //     debug!(target: "taitan_orm", command = "search_by_template", result = ?result);
     //     return Ok(result);
     // }
+
     //
     // async fn search_paged_by_template<SE>(
     //     &mut self,

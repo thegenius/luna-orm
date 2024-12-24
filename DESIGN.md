@@ -13,22 +13,20 @@
 
 
 ## 所有写入/更新/删除的操作
-1. insert/create/upsert的返回值还可能修改
-目前在返回bool还是返回primary之间做权衡，返回primary可能更加通用，但实现略微复杂
-2. mutate方法可能需要和update方法合并
-但是现在因为update方法的默认实现可以更加高效，所以暂定保留
-3. 其余方法可以认为已经是精心设计和思考过的
+1. create方法是返回数据库生成的generated 或者 default 字段
+如果不包含任何generated字段，返回的就是原始&entity
+如果包含generated字段或者default字段，且不是主键，那么就是走一次主键查询
+如果主键是auto_increment字段，则要求必须有另外的唯一键，走一次唯一键查询
 ```
-async fn insert(entity) -> bool     # if not exists -> insert, if exists -> fails   
-async fn upsert(entity) -> bool     # if not exists -> insert, if exists -> update  
-async fn create(entity) -> primary  # if not exists -> insert, if exists -> fails  
+async fn insert(entity) -> Result<bool>                # if not exists -> insert, if exists -> fails   
+async fn upsert(entity) -> Result<bool>                # if not exists -> insert, if exists -> update  
+async fn create<'a>(&'a entity) -> Result<&'a entity>  # if not exists -> insert, if exists -> fails  
 
-async fn update(mutation, primary)  -> bool 
-async fn mutate(muation,  unique)   -> bool
-async fn change(mutation, location) -> u64
+async fn update(mutation, unique)   -> Result<bool> 
+async fn change(mutation, location) -> Result<u64>
     
-async fn delete(primary)  -> bool
-async fn purify(location) -> u64
+async fn delete(unique)   -> Result<bool>
+async fn purify(location) -> Result<u64>
 ```
 
 ## 所有查询操作
@@ -47,17 +45,16 @@ devour: 遍历所有记录，返回PagedList<SE>
 search_not_paged  
 devour_not_paged
 ```
-async fn exists(unique) -> bool
-async fn count(location) -> u64
-async fn count_all(name) -> u64
+async fn exists(unique)  -> Result<bool>
+async fn count(location) -> Result<u64>
+async fn count_all(name) -> Result<u64>
 
-async fn select<SE>(selection, unique) -> Option<SE>
+async fn select<SE>(selection, unique)                                 -> Result<Option<SE>>
+async fn search<SE>(selection, location, order_by_option, page_option) -> Result<Vec<SE>>
+async fn devour<SE>(selection,           order_by_option, page_option) -> Result<Vec<SE>>
 
-async fn search<SE>(selection, location, order_by_option, page_option) -> Vec<SE>
-async fn devour<SE>(selection,           order_by_option, page_option) -> Vec<SE>
-
-async fn search_paged<SE>(selection, location, order_by, page) -> PagedList<SE>
-async fn devour_paged<SE>(selection,           order_by, page) -> PagedList<SE>
+async fn search_paged<SE>(selection, location, order_by, page) -> Result<PagedList<SE>>
+async fn devour_paged<SE>(selection,           order_by, page) -> Result<PagedList<SE>>
 ```
 
 ## 所有模板操作
@@ -65,12 +62,13 @@ async fn devour_paged<SE>(selection,           order_by, page) -> PagedList<SE>
 2. count可能还存在一些复杂的count需要使用模板
 3. devour不需要再通过模板实现了
 ```
-async fn change_by_template(template) -> u64
-async fn purify_by_template(template) -> u64
+async fn change_by_template(template) -> Result<u64>
+async fn purify_by_template(template) -> Result<u64>
 
-async fn count_by_template(template) -> u64
-async fn select_by_template<SE>(template) -> Option<SE>
-async fn search_by_template<SE>(template, page_option) -> Vec<SE>
+async fn count_by_template(template)      -> Result<u64>
+async fn select_by_template<SE>(template) -> Result<Option<SE>>
+async fn search_by_template<SE>(template, page_option) -> Result<Vec<SE>>
+async fn search_paged_by_template<SE>(template, page) -> Result<PagedList<SE>>
 
 async fn procedure_by_template<SE>(template) -> SE
 ```
