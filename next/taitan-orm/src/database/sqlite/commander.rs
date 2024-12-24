@@ -64,11 +64,15 @@ pub trait SqliteCommander: SqlExecutor<DB = Sqlite> {
         Ok(result > 0)
     }
 
-    async fn update<M: Mutation>(&mut self, mutation: &M, primary: &M::Primary) -> Result<bool> {
-        debug!(target: "taitan_orm", command = "update", mutation = ?mutation, primary = ?primary);
-        let sql = self.get_generator().get_update_sql(mutation, primary);
+    async fn update<M: Mutation>(
+        &mut self,
+        mutation: &M,
+        unique: &dyn Unique<Mutation = M>,
+    ) -> Result<bool> {
+        debug!(target: "taitan_orm", command = "update", mutation = ?mutation, primary = ?unique);
+        let sql = self.get_generator().get_unique_update_sql(mutation, unique);
         debug!(target: "taitan_orm", command = "update", sql = sql);
-        let args = mutation.gen_update_arguments_sqlite(primary)?;
+        let args = unique.gen_update_arguments_sqlite(mutation)?;
         let result = self.execute::<SqliteArguments>(&sql, args).await?;
         debug!(target: "taitan_orm", command = "update", result = ?result);
         Ok(result > 0)
@@ -84,7 +88,7 @@ pub trait SqliteCommander: SqlExecutor<DB = Sqlite> {
         Ok(result)
     }
 
-    async fn delete(&mut self, unique: &dyn Unique) -> Result<bool> {
+    async fn delete<M: Mutation>(&mut self, unique: &dyn Unique<Mutation = M>) -> Result<bool> {
         debug!(target: "taitan_orm", command = "delete", primary = ?unique);
         let sql = self.get_generator().get_delete_sql(unique);
         debug!(target: "taitan_orm", command = "delete", sql = sql);
@@ -104,12 +108,13 @@ pub trait SqliteCommander: SqlExecutor<DB = Sqlite> {
         Ok(result)
     }
 
-    async fn select<SE>(
+    async fn select<SE, M>(
         &mut self,
         selection: &SE::Selection,
-        unique: &dyn Unique,
+        unique: &dyn Unique<Mutation = M>,
     ) -> Result<Option<SE>>
     where
+        M: Mutation,
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
         debug!(target: "taitan_orm", command = "select", primary = ?unique, selection = ?selection);

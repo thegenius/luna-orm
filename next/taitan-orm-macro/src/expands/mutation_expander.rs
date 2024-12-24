@@ -15,15 +15,10 @@ pub fn generate_mutation_struct_and_impl(
     let table_name = DefaultAttrParser::extract_table_name(ident, attrs);
     let fields_vec = FieldsParser::from_named(fields).filter_not_annotated_fields("primary_key");
 
-
-    let primary_fields_vec = FieldsParser::from_named(fields).filter_annotated_fields("primary_key");
     let parser = FieldsParser::from_named(fields);
     let location_fields_vec = parser.get_fields();
 
     let fields_name_vec = FieldsParser::from_vec(&fields_vec).of_option_names_vec();
-    let update_args_sqlite = FieldsParser::from_vec(&fields_vec).of_update_args_sqlite(&primary_fields_vec);
-    let update_args_mysql = FieldsParser::from_vec(&fields_vec).of_update_args_mysql(&primary_fields_vec);
-    let update_args_postgres = FieldsParser::from_vec(&fields_vec).of_update_args_postgres(&primary_fields_vec);
 
     let change_args_sqlite = FieldsParser::from_vec(&fields_vec).of_change_args_sqlite(location_fields_vec);
     let change_args_mysql = FieldsParser::from_vec(&fields_vec).of_change_args_mysql(location_fields_vec);
@@ -49,25 +44,6 @@ pub fn generate_mutation_struct_and_impl(
 
             fn get_mutation_fields_name(&self) -> Vec<String> {
                 #fields_name_vec
-            }
-
-            fn gen_update_arguments_sqlite<'a>(
-                &'a self,
-                primary: &'a Self::Primary,
-            ) -> Result<sqlx::sqlite::SqliteArguments<'a>, sqlx::error::BoxDynError> {
-                #update_args_sqlite
-            }
-            fn gen_update_arguments_mysql<'a>(
-                &'a self,
-                primary: &'a Self::Primary,
-            ) -> Result<sqlx::mysql::MySqlArguments, sqlx::error::BoxDynError> {
-                #update_args_mysql
-            }
-            fn gen_update_arguments_postgres<'a>(
-                &'a self,
-                primary: &'a Self::Primary,
-            ) -> Result<sqlx::postgres::PgArguments, sqlx::error::BoxDynError> {
-                #update_args_postgres
             }
 
             fn gen_change_arguments_sqlite<'a>(

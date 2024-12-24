@@ -123,6 +123,7 @@ pub struct UserPrimary {
 }
 
 impl Unique for UserPrimary {
+    type Mutation = UserMutation;
     fn get_table_name(&self) -> &'static str {
         "user"
     }
@@ -130,6 +131,25 @@ impl Unique for UserPrimary {
     fn get_unique_field_names(&self) -> &'static [&'static str] {
         &["id"]
     }
+
+    fn gen_update_arguments_sqlite<'a>(&'a self, mutation: &'a Self::Mutation) -> Result<SqliteArguments<'a>, BoxDynError> {
+        let mut args = SqliteArguments::default();
+        if let Some(request_id) = &mutation.request_id {
+            args.add(request_id)?;
+        }
+        if let Some(name) = &mutation.name {
+            args.add(name)?;
+        }
+        if let Some(age) = &mutation.age {
+            args.add(age)?;
+        }
+        if let Some(birthday) = mutation.birthday {
+            args.add(birthday)?;
+        }
+        args.add(&self.id)?;
+        Ok(args)
+    }
+
 
     fn gen_unique_arguments_sqlite(&self) -> std::result::Result<SqliteArguments<'_>, BoxDynError> {
         let mut args = SqliteArguments::default();
@@ -269,27 +289,6 @@ impl Mutation for UserMutation {
         //     fields.push("ipv6addr".to_string());
         // }
         fields
-    }
-
-    fn gen_update_arguments_sqlite<'a>(
-        &'a self,
-        primary: &'a Self::Primary,
-    ) -> Result<SqliteArguments<'a>, BoxDynError> {
-        let mut args = SqliteArguments::default();
-        if let Some(request_id) = &self.request_id {
-            args.add(request_id)?;
-        }
-        if let Some(name) = &self.name {
-            args.add(name)?;
-        }
-        if let Some(age) = &self.age {
-            args.add(age)?;
-        }
-        if let Some(birthday) = &self.birthday {
-            args.add(birthday)?;
-        }
-        args.add(primary.id)?;
-        Ok(args)
     }
 }
 

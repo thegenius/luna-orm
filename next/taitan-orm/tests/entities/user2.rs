@@ -162,6 +162,7 @@ pub struct UserPrimary {
     id: i64,
 }
 impl taitan_orm::traits::Unique for UserPrimary {
+    type Mutation = UserMutation;
     fn get_table_name(&self) -> &'static str {
         "user"
     }
@@ -195,6 +196,8 @@ pub struct UserAgeUnique {
     age: i32,
 }
 impl taitan_orm::traits::Unique for UserAgeUnique {
+
+    type Mutation = UserMutation;
     fn get_table_name(&self) -> &'static str {
         "user"
     }
@@ -229,6 +232,7 @@ pub struct UserNameBirthdayUnique {
     birthday: PrimitiveDateTime,
 }
 impl taitan_orm::traits::Unique for UserNameBirthdayUnique {
+    type Mutation = UserMutation;
     fn get_table_name(&self) -> &'static str {
         "user"
     }
@@ -416,66 +420,7 @@ impl taitan_orm::traits::Mutation for UserMutation {
         };
         return fields;
     }
-    fn gen_update_arguments_sqlite<'a>(
-        &'a self,
-        primary: &'a Self::Primary,
-    ) -> Result<sqlx::sqlite::SqliteArguments<'a>, sqlx::error::BoxDynError> {
-        let mut args = sqlx::sqlite::SqliteArguments::default();
-        if let Some(request_id) = &self.request_id {
-            sqlx::Arguments::add(&mut args, request_id)?;
-        }
-        if let Some(age) = &self.age {
-            sqlx::Arguments::add(&mut args, age)?;
-        }
-        if let Some(name) = &self.name {
-            sqlx::Arguments::add(&mut args, name)?;
-        }
-        if let Some(birthday) = &self.birthday {
-            sqlx::Arguments::add(&mut args, birthday)?;
-        }
-        sqlx::Arguments::add(&mut args, &primary.id)?;
-        Ok(args)
-    }
-    fn gen_update_arguments_mysql<'a>(
-        &'a self,
-        primary: &'a Self::Primary,
-    ) -> Result<sqlx::mysql::MySqlArguments, sqlx::error::BoxDynError> {
-        let mut args = sqlx::mysql::MySqlArguments::default();
-        if let Some(request_id) = &self.request_id {
-            sqlx::Arguments::add(&mut args, request_id)?;
-        }
-        if let Some(age) = &self.age {
-            sqlx::Arguments::add(&mut args, age)?;
-        }
-        if let Some(name) = &self.name {
-            sqlx::Arguments::add(&mut args, name)?;
-        }
-        if let Some(birthday) = &self.birthday {
-            sqlx::Arguments::add(&mut args, birthday)?;
-        }
-        sqlx::Arguments::add(&mut args, &primary.id)?;
-        Ok(args)
-    }
-    fn gen_update_arguments_postgres<'a>(
-        &'a self,
-        primary: &'a Self::Primary,
-    ) -> Result<sqlx::postgres::PgArguments, sqlx::error::BoxDynError> {
-        let mut args = sqlx::postgres::PgArguments::default();
-        if let Some(request_id) = &self.request_id {
-            sqlx::Arguments::add(&mut args, request_id)?;
-        }
-        if let Some(age) = &self.age {
-            sqlx::Arguments::add(&mut args, age)?;
-        }
-        if let Some(name) = &self.name {
-            sqlx::Arguments::add(&mut args, name)?;
-        }
-        if let Some(birthday) = &self.birthday {
-            sqlx::Arguments::add(&mut args, birthday)?;
-        }
-        sqlx::Arguments::add(&mut args, &primary.id)?;
-        Ok(args)
-    }
+
     fn gen_change_arguments_sqlite<'a>(
         &'a self,
         location: &'a Self::Location,

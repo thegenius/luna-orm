@@ -42,15 +42,16 @@ pub trait SqlApi {
     async fn upsert(&mut self, entity: &dyn Entity) -> Result<bool>;
     async fn update<M: Mutation>(&mut self, mutation: &M, unique: &M::Primary) -> Result<bool>;
     async fn change<M: Mutation>(&mut self, mutation: &M, location: &M::Location) -> Result<u64>;
-    async fn delete(&mut self, unique: &dyn Unique) -> Result<bool>;
+    async fn delete<M: Mutation>(&mut self, unique: &dyn Unique<Mutation = M>) -> Result<bool>;
     async fn purify(&mut self, location: &dyn Location) -> Result<u64>;
 
-    async fn select<DB: Database, SE>(
+    async fn select<DB: Database, SE, M>(
         &mut self,
         selection: &SE::Selection,
-        unique: &dyn Unique,
+        unique: &dyn Unique<Mutation = M>,
     ) -> Result<Option<SE>>
     where
+        M: Mutation,
         SE: SelectedEntity<DB> + Send + Unpin;
 
     async fn search<DB: Database, SE>(

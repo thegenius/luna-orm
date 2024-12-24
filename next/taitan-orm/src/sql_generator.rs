@@ -113,7 +113,7 @@ pub trait SqlGenerator {
         "SELECT last_insert_rowid() as `last_row_id`"
     }
 
-    fn get_select_sql(&self, selection: &dyn Selection, primary: &dyn Unique) -> String {
+    fn get_select_sql<M: Mutation>(&self, selection: &dyn Selection, primary: &dyn Unique<Mutation = M>) -> String {
         let table_name = primary.get_table_name();
         let selected_fields: Vec<String> = selection.get_selected_fields();
         let select_clause = wrap_fields(&selected_fields, self.get_wrap_char());
@@ -407,6 +407,31 @@ pub trait SqlGenerator {
         self.post_process(upsert_sql)
     }
 
+    fn get_unique_update_sql<M: Mutation>(&self, mutation: &M, unique: &dyn Unique<Mutation = M>) -> String {
+        let table_name = unique.get_table_name();
+        let body_field_names = mutation.get_mutation_fields_name();
+        let body_fields = wrap_locate_fields(
+            &body_field_names,
+            self.get_wrap_char(),
+            self.get_place_holder(),
+        );
+        let primary_field_names = unique.get_unique_field_names();
+        let primary_fields = wrap_locate_str_fields(
+            &primary_field_names,
+            self.get_wrap_char(),
+            self.get_place_holder(),
+        );
+        let update_sql = format!(
+            "UPDATE {}{}{} SET {} WHERE {}",
+            self.get_wrap_char(),
+            table_name,
+            self.get_wrap_char(),
+            body_fields,
+            primary_fields
+        )
+            .to_string();
+        self.post_process(update_sql)
+    }
     fn get_update_sql<M: Mutation>(&self, mutation: &M, primary: &M::Primary) -> String {
         let table_name = primary.get_table_name();
         let body_field_names = mutation.get_mutation_fields_name();
@@ -455,7 +480,7 @@ pub trait SqlGenerator {
         self.post_process(update_sql)
     }
 
-    fn get_delete_sql(&self, primary: &dyn Unique) -> String {
+    fn get_delete_sql<M: Mutation>(&self, primary: &dyn Unique<Mutation = M>) -> String {
         let table_name = primary.get_table_name();
         let field_names = primary.get_unique_field_names();
         let where_clause =

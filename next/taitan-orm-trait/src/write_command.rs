@@ -12,7 +12,7 @@ pub enum WriteCommand {
     //     mutation: Box<dyn Mutation>,
     //     location: Box<dyn Location>,
     // },
-    Delete { primary: Box<dyn Unique> },
+    // Delete { primary: Box<dyn Unique> },
 
-    Purify { location: Box<dyn Location> },
+    // Purify { location: Box<dyn Location> },
 }

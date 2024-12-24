@@ -61,6 +61,17 @@ pub trait ArgsAddConstructor {
         }
     }
 
+    fn of_option_with(param_name: &str, field: Field) -> TokenStream {
+        let field_name = field.ident.unwrap();
+        let span = field_name.span();
+        let param_ident = Ident::new(&param_name, Span::call_site());
+        quote_spanned! { span =>
+            if let Some(#field_name) = &#param_ident.#field_name {
+                sqlx::Arguments::add(&mut args, #field_name)?;
+            }
+        }
+    }
+
     // treat field as option, no matter weather field is actually option or not, get value from #field_name.val
     fn of_location(field: Field) -> TokenStream {
         let field_name = field.ident.unwrap();
