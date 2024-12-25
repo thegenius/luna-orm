@@ -3,7 +3,7 @@ use crate::database::sqlite::{SqliteDatabase, SqliteWriteCommander};
 use crate::result::Result;
 use crate::sql_generator::DefaultSqlGenerator;
 use crate::sql_generator_container::SqlGeneratorContainer;
-use crate::{SqlExecutor, TaitanOrmError};
+use crate::{fetch_execute_option_fn, SqlExecutor, TaitanOrmError};
 use sqlx::query::Query;
 use sqlx::sqlite::{SqliteArguments, SqliteQueryResult};
 use sqlx::{query_with, Database, Sqlite};
@@ -194,15 +194,18 @@ impl<'s> SqlExecutor for SqliteTransaction<'s> {
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
+        let ex = &mut *self.transaction;
         let query: Query<'a, Self::DB, SqliteArguments<'a>> = query_with(stmt, args);
         let result_opt: Option<<Self::DB as Database>::Row> =
-            query.fetch_optional(&mut *self.transaction).await?;
+            query.fetch_optional(ex).await?;
         if let Some(result) = result_opt {
             Ok(Some(SE::from_row_full(result)?))
         } else {
             Ok(None)
         }
     }
+    // fetch_execute_option_fn!(&mut *self.transaction);
+
 
     async fn fetch_execute_all<'a, SE>(&'a mut self, stmt: &'a str, args: <Self::DB as Database>::Arguments<'a>) -> Result<Vec<SE>>
     where
