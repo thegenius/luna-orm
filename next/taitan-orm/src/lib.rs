@@ -13,6 +13,9 @@ mod sql_executor;
 mod sql_generator;
 pub mod sql_generator_container;
 
+#[macro_use]
+mod api_macro;
+
 // pub use db::DB;
 pub use dto::CountResult;
 pub use error::TaitanOrmError;
@@ -22,6 +25,8 @@ pub use sql_executor::SqlExecutor;
 pub use sql_generator::SqlGenerator;
 
 pub use taitan_orm_macro::Schema;
+
+
 pub mod traits {
     pub use taitan_orm_trait::{CountSql, Entity, Location, LocationExpr, Mutation, OrderBy, Schema, SelectedEntity, Selection, Unique};
     pub use taitan_orm_trait::validate_order_by;

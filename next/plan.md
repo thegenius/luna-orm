@@ -1,11 +1,14 @@
 
 # API设计，把API设计逐渐固定下来
-1. unique还没有和primary统一
-2. template相关接口还没有
-3. template中如何支持Option
-4. transaction支持能够更加优雅
+1. transaction支持能够更加优雅
 
 # 多数据库支持
+1. 参数生成的trait可能需要按照数据库拆分开来
+2. generator
+3. executor
+4. api
+分层的设计逻辑需要重新review
+
 sqlite: YES
 mysql: No
 postgres: No
