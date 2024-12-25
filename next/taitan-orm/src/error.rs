@@ -17,6 +17,9 @@ pub enum TaitanOrmError {
     #[error("execute template paged search must has count sql")]
     TemplatePagedNotHasCountSql,
 
+    #[error("execute template paged search must has page field")]
+    TemplatePageFieldNotFound,
+
     #[error("deserialize entity from row  error")]
     FromRowToEntityError,
 

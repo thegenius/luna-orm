@@ -14,7 +14,7 @@ pub trait TemplateRecord: Sync + Debug {
 
     fn get_count_sql(&self) -> Option<String>;
 
-    fn get_pagination(&self) -> Option<Pagination> {
+    fn get_pagination(&self) -> Option<&Pagination> {
         None
     }
 

@@ -71,7 +71,7 @@ pub fn generate_template_struct_and_impl(
         .struct_stream
         .unwrap_or_default();
     let get_count_sql_fn_stream = get_count_sql_render_fn_stream.fn_stream;
-
+    let get_pagination_fn_stream = gen_get_pagination_fn_stream(&limit_field);
 
     let output = quote! {
 
@@ -85,9 +85,7 @@ pub fn generate_template_struct_and_impl(
 
             #get_count_sql_fn_stream
 
-            fn get_pagination(&self) -> Option<taitan_orm::traits::Pagination> {
-                None
-            }
+            #get_pagination_fn_stream
 
             fn get_variables(&self) -> Vec<String> {
                 vec![
@@ -134,6 +132,25 @@ pub fn generate_template_struct_and_impl(
         }
     };
     output
+}
+
+
+fn gen_get_pagination_fn_stream(limit_field_name: &Option<&String>)-> TokenStream {
+    match limit_field_name {
+        None=> quote! {
+            fn get_pagination(&self) -> Option<&taitan_orm::traits::Pagination> {
+                None
+            }
+        },
+        Some(limit_field_name) => {
+            let limit_ident = format_ident!("{}", limit_field_name);
+            quote! {
+                fn get_pagination(&self) -> Option<&taitan_orm::traits::Pagination> {
+                    Some(&self.#limit_ident)
+                }
+            }
+        }
+    }
 }
 
 fn generate_dot_variables(idents: &Vec<Ident>) -> TokenStream {
