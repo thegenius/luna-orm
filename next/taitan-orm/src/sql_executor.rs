@@ -99,6 +99,8 @@ pub trait SqlExecutor {
         SE: SelectedEntity<Self::DB> + Send + Unpin;
 
 
+
+
     // 0. generic_exists           (ex, stmt, args) -> Result<bool>
     async fn generic_exists<'a, EX, A>(
         &mut self,
@@ -138,8 +140,6 @@ pub trait SqlExecutor {
             Ok(false)
         }
     }
-
-
 
     // 1. generic_execute           (ex, stmt, args) -> Result<u64>
     async fn generic_execute<'a, EX, A>(&mut self, ex: EX, query: &'a str, args: A) -> Result<u64>
