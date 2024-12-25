@@ -28,7 +28,7 @@ impl SqlExecutor for SqliteDatabase {
     {
         let mut ex = self.get_pool()?.acquire().await?;
         let args: PhantomData<SqliteArguments> = PhantomData::default();
-        self.generic_fetch_optional_plain(&mut *ex, stmt, selection, args)
+        self.generic_fetch_option_plain(&mut *ex, stmt, selection, args)
             .await
     }
 
@@ -41,7 +41,7 @@ impl SqlExecutor for SqliteDatabase {
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
         let mut ex = self.get_pool()?.acquire().await?;
-        self.generic_fetch_execute(&mut *ex, stmt, args).await
+        self.generic_fetch_one_full(&mut *ex, stmt, args).await
     }
 
     async fn fetch_execute_plain<'a, SE>(&'a mut self, stmt: &'a str) -> Result<SE>
@@ -50,7 +50,7 @@ impl SqlExecutor for SqliteDatabase {
     {
         let mut ex = self.get_pool()?.acquire().await?;
         let args: PhantomData<SqliteArguments> = PhantomData::default();
-        self.generic_fetch_execute_plain(&mut *ex, stmt, args).await
+        self.generic_fetch_one_full_plain(&mut *ex, stmt, args).await
     }
 
     async fn fetch_execute_option<'a, SE>(
@@ -62,7 +62,7 @@ impl SqlExecutor for SqliteDatabase {
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
         let mut ex = self.get_pool()?.acquire().await?;
-        self.generic_fetch_execute_option(&mut *ex, stmt, args).await
+        self.generic_fetch_option_full(&mut *ex, stmt, args).await
     }
 
     async fn fetch_execute_all<'a, SE>(&'a mut self, stmt: &'a str, args: <Self::DB as Database>::Arguments<'a>) -> Result<Vec<SE>>
@@ -70,7 +70,7 @@ impl SqlExecutor for SqliteDatabase {
         SE: SelectedEntity<Self::DB> + Send + Unpin
     {
         let mut ex = self.get_pool()?.acquire().await?;
-        self.generic_fetch_execute_all(&mut *ex, stmt, args).await
+        self.generic_fetch_all_full(&mut *ex, stmt, args).await
     }
 
     async fn fetch_optional<'a, SE>(
@@ -83,7 +83,7 @@ impl SqlExecutor for SqliteDatabase {
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
         let mut ex = self.get_pool()?.acquire().await?;
-        self.generic_fetch_optional(&mut *ex, stmt, selection, args)
+        self.generic_fetch_option(&mut *ex, stmt, selection, args)
             .await
     }
 

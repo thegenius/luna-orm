@@ -72,7 +72,7 @@ async fn test_insert_user(db: &mut SqliteDatabase, user: &User) -> taitan_orm::R
     let primary = UserPrimary { id: user.id };
     let primary_args = primary.gen_unique_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
-        .generic_fetch_optional(
+        .generic_fetch_option(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
@@ -116,7 +116,7 @@ async fn test_update_user(
 
     let primary_args = user_primary.gen_unique_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
-        .generic_fetch_optional(
+        .generic_fetch_option(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
@@ -151,7 +151,7 @@ ON CONFLICT (`id`) DO UPDATE SET
     let user_primary: UserPrimary = UserPrimary { id: user.id };
     let primary_args = user_primary.gen_unique_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
-        .generic_fetch_optional(
+        .generic_fetch_option(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
@@ -191,7 +191,7 @@ async fn test_delete_user(
     };
     let primary_args = user_primary.gen_unique_arguments_sqlite().unwrap();
     let entity_opt: Option<UserSelected> = db
-        .generic_fetch_optional(
+        .generic_fetch_option(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
