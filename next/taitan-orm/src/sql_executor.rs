@@ -99,6 +99,7 @@ pub trait SqlExecutor {
         SE: SelectedEntity<Self::DB> + Send + Unpin;
 
 
+    // 0. generic_exists           (ex, stmt, args) -> Result<bool>
     async fn generic_exists<'a, EX, A>(
         &mut self,
         ex: EX,
@@ -118,14 +119,29 @@ pub trait SqlExecutor {
         }
     }
 
+    // 0. generic_exists           (ex, stmt, args) -> Result<bool>
+    async fn generic_exists_plain<'a, EX, A>(
+        &mut self,
+        ex: EX,
+        stmt: &'a str,
+        _args: PhantomData<A>,
+    ) -> Result<bool>
+    where
+        EX: Executor<'a, Database = Self::DB>,
+        A: IntoArguments<'a, Self::DB> + 'a + Default,
+    {
+        let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, Default::default());
+        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(ex).await?;
+        if let Some(_) = result_opt {
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
+
+
     // 1. generic_execute           (ex, stmt, args) -> Result<u64>
-    // 2. generic_execute_plain     (ex, stmt, _   ) -> Result<u64>
-    // 3. generic_fetch_all         (ex, stmt, selection, args) -> Result<Vec<SE>>
-    // 4. generic_fetch_all_plain   (ex, stmt, selection, _   ) -> Result<Vec<SE>>
-    // 5. generic_fetch_one         (ex, stmt, selection, args) -> Result<SE>
-
-
-    // 1.
     async fn generic_execute<'a, EX, A>(&mut self, ex: EX, query: &'a str, args: A) -> Result<u64>
     where
         EX: Executor<'a, Database = Self::DB>,
@@ -136,7 +152,7 @@ pub trait SqlExecutor {
         self.get_affected_rows(&result)
     }
 
-    // 2.
+    // 2. generic_execute_plain     (ex, stmt, _   ) -> Result<u64>
     async fn generic_execute_plain<'a, EX, A>(
         &mut self,
         ex: EX,
@@ -179,6 +195,7 @@ pub trait SqlExecutor {
         }
         Ok(result)
     }
+
 
     // 4. generic_fetch_all_plain   (ex, stmt, selection, _   ) -> Result<Vec<SE>>
     async fn generic_fetch_all_plain<'a, EX, SE, A>(
