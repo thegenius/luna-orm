@@ -12,19 +12,6 @@ pub struct TestTemplate1<'a> {
     name: Cow<'a, str>,
 }
 
-// #[derive(TemplateRecord, Clone, Debug)]
-// #[TemplateSql = "select * from ${name}"]
-// pub struct TestTemplate1Template<'a> {
-//     name: Cow<'a, str>,
-// }
-// impl<'a> From<TestTemplate1<'a>> for TestTemplate1Template<'a> {
-//     fn from(orig: TestTemplate1<'a>) -> TestTemplate1Template<'a> {
-//         Self {
-//             name: orig.name.clone(),
-//         }
-//     }
-// }
-
 #[derive(TemplateRecord, Clone, Debug)]
 #[sql = "select * from #{name}"]
 pub struct TestTemplate2 {
@@ -46,11 +33,18 @@ pub struct TestTemplate4<'a> {
 }
 
 #[derive(TemplateRecord, Clone, Debug)]
-#[sql = "select * from ${name} #{age} \"hello ${name}\""]
+#[sql = "select * from ${name} #{age} \"hello ${name}\" #{age} LIMIT #{offset} #{count}"]
 #[count_sql = "select count(*) from ${name} #{age} \"hello ${name}\""]
 pub struct TestTemplate5<'a> {
     name: Cow<'a, str>,
+
     age: i32,
+
+    #[limit_field]
+    offset: i32,
+
+    #[limit_field]
+    count: i32
 }
 
 #[sqlx_macros::test]
@@ -84,9 +78,11 @@ pub async fn template_macro_spec() -> taitan_orm::Result<()> {
     let template = TestTemplate5 {
         name: Cow::Borrowed("wang"),
         age: 23,
+        offset: 100,
+        count: 1,
     };
     let sql = template.get_sql(None);
-    assert_eq!(sql, "select * from wang ? \"hello ${name}\"");
+    assert_eq!(sql, "select * from wang ? \"hello ${name}\" ? LIMIT ? ?");
 
     Ok(())
 }

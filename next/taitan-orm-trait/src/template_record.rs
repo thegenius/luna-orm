@@ -16,13 +16,23 @@ pub trait TemplateRecord: Sync + Debug {
 
     fn get_variables(&self) -> Vec<String>;
 
+    fn gen_template_count_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
+        Err(NotImplementError("gen_template_count_arguments_sqlite".to_string()).into())
+    }
+    fn gen_template_count_arguments_mysql(&self) -> Result<MySqlArguments, BoxDynError> {
+        Err(NotImplementError("gen_template_count_arguments_mysql".to_string()).into())
+    }
+    fn gen_template_count_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
+        Err(NotImplementError("gen_template_count_arguments_postgres".to_string()).into())
+    }
+
     fn gen_template_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
-        Err(NotImplementError("gen_primary_arguments_sqlite".to_string()).into())
+        Err(NotImplementError("gen_template_arguments_sqlite".to_string()).into())
     }
     fn gen_template_arguments_mysql(&self) -> Result<MySqlArguments, BoxDynError> {
-        Err(NotImplementError("gen_primary_arguments_mysql".to_string()).into())
+        Err(NotImplementError("gen_template_arguments_mysql".to_string()).into())
     }
     fn gen_template_arguments_postgres(&self) -> Result<PgArguments, BoxDynError> {
-        Err(NotImplementError("gen_primary_arguments_postgres".to_string()).into())
+        Err(NotImplementError("gen_template_arguments_postgres".to_string()).into())
     }
 }

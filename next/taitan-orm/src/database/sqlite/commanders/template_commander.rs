@@ -22,9 +22,10 @@ use tracing::debug;
 /**
 async fn execute_by_template(template) -> Result<u64>
 
+// selection location order_by pagination all should embed in template
 async fn select_by_template<SE>(template) -> Result<Option<SE>>
-async fn search_by_template<SE>(template, page_option) -> Result<Vec<SE>>
-async fn search_paged_by_template<SE>(template, page) -> Result<PagedList<SE>>
+async fn search_by_template<SE>(template) -> Result<Vec<SE>>
+async fn search_paged_by_template<SE>(template) -> Result<PagedList<SE>>
 
 async fn procedure_by_template<SE>(template) -> SE
 */
@@ -56,32 +57,32 @@ pub trait SqliteTemplateCommander: SqlExecutor<DB = Sqlite> + SqlGeneratorContai
         Ok(result)
     }
 
-    // async fn search_by_template<SE>(template, page_option) -> Result<Vec<SE>>
-    // async fn search_by_template<SE>(
-    //     &mut self,
-    //     template: &dyn TemplateRecord,
-    // ) -> Result<Vec<SE>>
-    // where
-    //     SE: SelectedEntity<Self::DB> + Send + Unpin,
-    // {
-    //     debug!(target: "taitan_orm", command = "search_by_template", template = ?template);
-    //     let sql = template.get_sql(None);
-    //     let sql = self.get_generator().post_process(sql);
-    //     debug!(target: "taitan_orm", command = "search_by_template", sql = sql);
-    //     let args = template.any_arguments();
-    //     let result: Vec<SE> = self.fetch_all(&sql, args).await?;
-    //     debug!(target: "taitan_orm", command = "search_by_template", result = ?result);
-    //     return Ok(result);
-    // }
+    // async fn search_by_template<SE>(template) -> Result<Vec<SE>>
+    async fn search_by_template<SE>(
+        &mut self,
+        template: &dyn TemplateRecord,
+    ) -> Result<Vec<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+    {
+        debug!(target: "taitan_orm", command = "search_by_template", template = ?template);
+        let sql = template.get_sql(None);
+        let sql = self.get_generator().post_process(sql);
+        debug!(target: "taitan_orm", command = "search_by_template", sql = sql);
+        let args = template.gen_template_arguments_sqlite()?;
+        let result: Vec<SE> = self.fetch_execute_all(&sql, args).await?;
+        debug!(target: "taitan_orm", command = "search_by_template", result = ?result);
+        Ok(result)
+    }
 
-    //
+
     // async fn search_paged_by_template<SE>(
     //     &mut self,
     //     template: &dyn TemplateRecord,
     //     page: &Pagination,
-    // ) -> Result<PagedList<SE>>
+    // ) -> Result<PagedList<Self::DB, SE>>
     // where
-    //     SE: SelectedEntity + Send + Unpin,
+    //     SE: SelectedEntity<Self::DB> + Send + Unpin,
     // {
     //     debug!(target: "taitan_orm", command = "search_paged_by_template", template = ?template, page = ?page);
     //     let count_sql = template.get_count_sql();

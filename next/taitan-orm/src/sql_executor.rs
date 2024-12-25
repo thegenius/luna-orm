@@ -90,6 +90,14 @@ pub trait SqlExecutor {
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin;
 
+    async fn fetch_execute_all<'a, SE>(
+        &'a mut self,
+        stmt: &'a str,
+        args: <Self::DB as Database>::Arguments<'a>,
+    ) -> Result<Vec<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin;
+
     // async fn fetch_execute_all<'a, SE>(
     //     &'a mut self,
     //     stmt: &'a str,
@@ -176,6 +184,26 @@ pub trait SqlExecutor {
         } else {
             Ok(None)
         }
+    }
+
+    async fn generic_fetch_execute_all<'a, EX, SE, A>(
+        &mut self,
+        ex: EX,
+        stmt: &'a str,
+        args: A,
+    ) -> Result<Vec<SE>>
+    where
+        EX: Executor<'a, Database = Self::DB>,
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+        A: IntoArguments<'a, Self::DB> + 'a,
+    {
+        let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, args);
+        let result_vec: Vec<<Self::DB as Database>::Row> = query.fetch_all(ex).await?;
+        let mut result: Vec<SE> = Vec::new();
+        for row in result_vec {
+            result.push(SE::from_row_full(row)?);
+        }
+        Ok(result)
     }
 
 

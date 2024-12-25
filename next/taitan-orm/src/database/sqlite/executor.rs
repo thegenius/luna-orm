@@ -65,12 +65,13 @@ impl SqlExecutor for SqliteDatabase {
         self.generic_fetch_execute_option(&mut *ex, stmt, args).await
     }
 
-    // async fn fetch_execute_all<'a, SE>(&'a mut self, stmt: &'a str, args: <Self::DB as Database>::Arguments<'a>) -> Result<Vec<SE>>
-    // where
-    //     SE: SelectedEntity<Self::DB> + Send + Unpin
-    // {
-    //     todo!()
-    // }
+    async fn fetch_execute_all<'a, SE>(&'a mut self, stmt: &'a str, args: <Self::DB as Database>::Arguments<'a>) -> Result<Vec<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin
+    {
+        let mut ex = self.get_pool()?.acquire().await?;
+        self.generic_fetch_execute_all(&mut *ex, stmt, args).await
+    }
 
     async fn fetch_optional<'a, SE>(
         &'a mut self,

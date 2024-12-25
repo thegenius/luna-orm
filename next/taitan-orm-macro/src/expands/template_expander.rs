@@ -1,4 +1,5 @@
 use crate::attrs::{AttrParser, DefaultAttrParser};
+use crate::fields::{FieldsFilter, FieldsParser};
 use crate::util::{build_impl_trait_token, copy_to_template_struct};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{format_ident, quote};
@@ -18,6 +19,13 @@ pub fn generate_template_struct_and_impl(
     let template_sql = ParsedTemplateSql::build(template_sql.as_str())
         .expect(format!("Failed to parse template sql: {}", template_sql).as_str());
 
+    let limit_fields = FieldsParser::from_named(fields).filter_annotated_fields("limit_field");
+    let limit_fields_names = limit_fields
+        .into_iter()
+        .map(|field| field.ident.unwrap().to_string())
+        .collect::<Vec<String>>();
+    // panic!("{:?}", limit_fields_names);
+
     let get_sql_render_fn_stream = gen_fn_get_sql(ident, data, generics, &template_sql);
 
     let count_sql = DefaultAttrParser::extract_template_count_sql(&attrs).unwrap_or_default();
@@ -30,15 +38,15 @@ pub fn generate_template_struct_and_impl(
     };
 
     let variables = template_sql.variables;
-    let args_add = variables
+    let args_add = gen_args_add_clause(&variables);
+
+
+    let count_variables = variables
         .iter()
-        .map(|variable| {
-            let ident = Ident::new(variable, Span::call_site());
-            quote! {
-                sqlx::Arguments::add(&mut args, &self.#ident)?;
-            }
-        })
-        .collect::<Vec<TokenStream>>();
+        .filter(|variable| !limit_fields_names.contains(variable))
+        .collect::<Vec<&String>>();
+    // panic!("{:?}", count_variables);
+    let count_args_add = gen_args_add_clause(&count_variables);
 
     let impl_ident = build_impl_trait_token(ident, generics, "taitan_orm::traits::TemplateRecord");
 
@@ -68,6 +76,24 @@ pub fn generate_template_struct_and_impl(
                 ]
             }
 
+            fn gen_template_count_arguments_sqlite(&self) -> Result<sqlx::sqlite::SqliteArguments<'_>, sqlx::error::BoxDynError> {
+                let mut args = sqlx::sqlite::SqliteArguments::default();
+                #(#count_args_add)*
+                Ok(args)
+            }
+
+            fn gen_template_count_arguments_mysql(&self) -> Result<sqlx::mysql::MySqlArguments, sqlx::error::BoxDynError> {
+                let mut args = sqlx::mysql::MySqlArguments::default();
+                #(#count_args_add)*
+                Ok(args)
+            }
+
+            fn gen_template_count_arguments_postgres(&self) -> Result<sqlx::postgres::PgArguments, sqlx::error::BoxDynError> {
+                let mut args = sqlx::postgres::PgArguments::default();
+                #(#count_args_add)*
+                Ok(args)
+            }
+
             fn gen_template_arguments_sqlite(&self) -> Result<sqlx::sqlite::SqliteArguments<'_>, sqlx::error::BoxDynError> {
                 let mut args = sqlx::sqlite::SqliteArguments::default();
                 #(#args_add)*
@@ -89,6 +115,18 @@ pub fn generate_template_struct_and_impl(
         }
     };
     output
+}
+
+fn gen_args_add_clause<T: AsRef<str>>(fields: &Vec<T>) -> Vec<TokenStream> {
+    fields
+        .iter()
+        .map(|variable| {
+            let ident = Ident::new(variable.as_ref(), Span::call_site());
+            quote! {
+                sqlx::Arguments::add(&mut args, &self.#ident)?;
+            }
+        })
+        .collect::<Vec<TokenStream>>()
 }
 
 struct SqlRenderFnStream {

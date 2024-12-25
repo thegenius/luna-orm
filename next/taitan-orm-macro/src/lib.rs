@@ -18,7 +18,7 @@ pub fn expand_schema_macro(input: TokenStream) -> TokenStream {
     impl_schema_macro(input)
 }
 
-#[proc_macro_derive(TemplateRecord, attributes(sql, count_sql))]
+#[proc_macro_derive(TemplateRecord, attributes(sql, count_sql, limit_field))]
 pub fn expand_template_record(input: TokenStream) -> TokenStream {
     impl_template_macro(input)
 }

@@ -203,6 +203,20 @@ impl<'s> SqlExecutor for SqliteTransaction<'s> {
             Ok(None)
         }
     }
+
+    async fn fetch_execute_all<'a, SE>(&'a mut self, stmt: &'a str, args: <Self::DB as Database>::Arguments<'a>) -> Result<Vec<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin
+    {
+        let query: Query<'a, Self::DB, SqliteArguments<'a>> = query_with(stmt, args);
+        let result_vec: Vec<<Self::DB as Database>::Row> =
+            query.fetch_all(&mut *self.transaction).await?;
+        let mut result: Vec<SE> = Vec::new();
+        for row in result_vec {
+            result.push(SE::from_row_full(row)?);
+        }
+        Ok(result)
+    }
 }
 
 impl<'a> SqlGeneratorContainer for SqliteTransaction<'a> {
