@@ -1,6 +1,6 @@
 use crate::attrs::{AttrParser, DefaultAttrParser};
 use crate::fields::{FieldsFilter, FieldsParser};
-use crate::util::{build_impl_trait_token, copy_to_template_struct};
+use crate::util::{build_impl_trait_token, copy_to_template_struct, create_path_from_str};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{format_ident, quote};
 use syn::{Attribute, Data, FieldsNamed, Generics};
@@ -24,7 +24,9 @@ pub fn generate_template_struct_and_impl(
         .into_iter()
         .map(|field| field.ident.unwrap().to_string())
         .collect::<Vec<String>>();
-    // panic!("{:?}", limit_fields_names);
+    if limit_fields_names.len() > 1 {
+        panic!("there is more than one limit fields in the template record");
+    }
 
     let get_sql_render_fn_stream = gen_fn_get_sql(ident, data, generics, &template_sql);
 
@@ -32,21 +34,33 @@ pub fn generate_template_struct_and_impl(
     let get_count_sql_render_fn_stream = if count_sql.is_empty() {
         gen_fn_get_count_sql(ident, data, generics, None)
     } else {
+        if limit_fields_names.len() < 1 {
+            panic!("you must specify at least one limit field");
+        }
         let parsed_count_sql = ParsedTemplateSql::build(count_sql.as_str())
-            .expect(format!("Failed to parse template sql: {}", count_sql).as_str());
+            .expect(format!("Failed to parse template count sql: {}", count_sql).as_str());
         gen_fn_get_count_sql(ident, data, generics, Some(&parsed_count_sql))
     };
 
     let variables = template_sql.variables;
     let args_add = gen_args_add_clause(&variables);
 
+    let limit_field: Option<&String> = limit_fields_names.first();
 
-    let count_variables = variables
-        .iter()
-        .filter(|variable| !limit_fields_names.contains(variable))
-        .collect::<Vec<&String>>();
-    // panic!("{:?}", count_variables);
-    let count_args_add = gen_args_add_clause(&count_variables);
+    let count_args_add = match limit_field {
+        None=> gen_args_add_clause(&variables),
+        Some(limit_field) => {
+            // panic!("limit field {} {:?}", limit_field, variables);
+            let limit_field_dot = format!("{}.", limit_field);
+            let count_variables = variables.clone()
+                .into_iter()
+                .filter(|variable| {
+                    variable.ne(limit_field) && !variable.starts_with(&limit_field_dot)
+                })
+                .collect::<Vec<String>>();
+            gen_args_add_clause(&count_variables)
+        }
+    };
 
     let impl_ident = build_impl_trait_token(ident, generics, "taitan_orm::traits::TemplateRecord");
 
@@ -57,6 +71,7 @@ pub fn generate_template_struct_and_impl(
         .struct_stream
         .unwrap_or_default();
     let get_count_sql_fn_stream = get_count_sql_render_fn_stream.fn_stream;
+
 
     let output = quote! {
 
@@ -69,6 +84,10 @@ pub fn generate_template_struct_and_impl(
             #get_sql_fn_stream
 
             #get_count_sql_fn_stream
+
+            fn get_pagination(&self) -> Option<taitan_orm::traits::Pagination> {
+                None
+            }
 
             fn get_variables(&self) -> Vec<String> {
                 vec![
@@ -117,13 +136,33 @@ pub fn generate_template_struct_and_impl(
     output
 }
 
+fn generate_dot_variables(idents: &Vec<Ident>) -> TokenStream {
+    let mut idents_iter = idents.into_iter().peekable();
+    let tokens = std::iter::from_fn(|| {
+        if let Some(ident) = idents_iter.next() {
+            // Check if there is a next item after this one
+            let has_next = idents_iter.peek().is_some();
+            let dot = if has_next { Some(quote!(.)) } else { None };
+            Some(quote! {
+                #ident #dot
+            })
+        } else {
+            None
+        }
+    }).collect::<TokenStream>();
+    tokens
+}
 fn gen_args_add_clause<T: AsRef<str>>(fields: &Vec<T>) -> Vec<TokenStream> {
     fields
         .iter()
         .map(|variable| {
-            let ident = Ident::new(variable.as_ref(), Span::call_site());
+            let variable_names = variable.as_ref().split('.').collect::<Vec<&str>>();
+            // panic!("{:?}", variable_names);
+            let variable_idents = variable_names.iter().map(|name| format_ident!("{}", name)).collect::<Vec<Ident>>();
+            let variable_stream = generate_dot_variables(&variable_idents);
+            // panic!("{}", variable_stream);
             quote! {
-                sqlx::Arguments::add(&mut args, &self.#ident)?;
+                sqlx::Arguments::add(&mut args, &self.#variable_stream )?;
             }
         })
         .collect::<Vec<TokenStream>>()

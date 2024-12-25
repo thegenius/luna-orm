@@ -14,6 +14,10 @@ pub trait TemplateRecord: Sync + Debug {
 
     fn get_count_sql(&self) -> Option<String>;
 
+    fn get_pagination(&self) -> Option<Pagination> {
+        None
+    }
+
     fn get_variables(&self) -> Vec<String>;
 
     fn gen_template_count_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {

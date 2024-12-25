@@ -79,14 +79,23 @@ pub trait SqliteTemplateCommander: SqlExecutor<DB = Sqlite> + SqlGeneratorContai
     // async fn search_paged_by_template<SE>(
     //     &mut self,
     //     template: &dyn TemplateRecord,
-    //     page: &Pagination,
     // ) -> Result<PagedList<Self::DB, SE>>
     // where
     //     SE: SelectedEntity<Self::DB> + Send + Unpin,
     // {
-    //     debug!(target: "taitan_orm", command = "search_paged_by_template", template = ?template, page = ?page);
-    //     let count_sql = template.get_count_sql();
-    //     let record_count: Option<RecordCount>;
+    //     debug!(target: "taitan_orm", command = "search_paged_by_template", template = ?template);
+    //     let count_sql = template.get_count_sql()
+    //         .ok_or(TaitanOrmError::TemplatePagedNotHasCountSql)?;
+    //     let count_sql = self.get_generator().post_process(count_sql);
+    //     debug!(target: "taitan_orm", command = "search_paged_by_template", count_sql = count_sql);
+    //     let count_args = template.gen_template_count_arguments_sqlite()?;
+    //     let count_result_opt: Option<CountResult> = self.fetch_execute_option(&count_sql, count_args).await?;
+    //     let record_count = count_result_opt.unwrap_or_default().count;
+    //     if record_count <= 0 {
+    //         return Ok(PagedList::empty(page.page_size, page.page_num));
+    //     }
+    //
+    //     let record_count: Option<CountResult>;
     //     let args = template.any_arguments();
     //     match count_sql {
     //         CountSql::Empty => {

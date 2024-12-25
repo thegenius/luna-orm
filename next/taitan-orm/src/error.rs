@@ -14,6 +14,9 @@ pub enum TaitanOrmError {
     #[error(transparent)]
     BoxDynError2(#[from] Box<dyn std::error::Error>),
 
+    #[error("execute template paged search must has count sql")]
+    TemplatePagedNotHasCountSql,
+
     #[error("deserialize entity from row  error")]
     FromRowToEntityError,
 
