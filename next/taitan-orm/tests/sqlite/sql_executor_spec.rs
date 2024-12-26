@@ -40,6 +40,7 @@
 use std::marker::PhantomData;
 use taitan_orm_trait::{CmpOperator, LocationExpr, LocationTrait, Selection};
 use taitan_orm_trait::{Entity, Location, Mutation, SelectedEntity, Unique, UpdateCommand};
+use taitan_orm::SqlGenericExecutor;
 
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqliteArguments;
@@ -60,7 +61,7 @@ async fn test_insert_user(db: &mut SqliteDatabase, user: &User) -> taitan_orm::R
 
     let args = user.gen_insert_arguments_sqlite().unwrap();
 
-    let result = db.generic_execute(&mut *conn, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES(?, ?, ?, ?, ?)",
+    let result =  SqliteDatabase::generic_execute(&mut *conn, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES(?, ?, ?, ?, ?)",
                                 args).await?;
     assert_eq!(result, 1);
 
@@ -71,8 +72,7 @@ async fn test_insert_user(db: &mut SqliteDatabase, user: &User) -> taitan_orm::R
     selection.birthday = true;
     let primary = UserPrimary { id: user.id };
     let primary_args = primary.gen_unique_arguments_sqlite().unwrap();
-    let entity_opt: Option<UserSelected> = db
-        .generic_fetch_option(
+    let entity_opt: Option<UserSelected> =  SqliteDatabase::generic_fetch_option(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
@@ -104,7 +104,7 @@ async fn test_update_user(
     // let args: SqliteArguments = user_primary
     //     .gen_update_arguments_sqlite(user_mutation)
     //     .unwrap();
-    let result = db.generic_execute(&mut *conn, "UPDATE `user` SET `request_id` = ?, `name` = ?, `age` = ?, `birthday` = ? WHERE `id` = ?",
+    let result =  SqliteDatabase::generic_execute(&mut *conn, "UPDATE `user` SET `request_id` = ?, `name` = ?, `age` = ?, `birthday` = ? WHERE `id` = ?",
                                 args).await?;
     assert_eq!(result, 1);
 
@@ -115,8 +115,7 @@ async fn test_update_user(
     selection.birthday = true;
 
     let primary_args = user_primary.gen_unique_arguments_sqlite().unwrap();
-    let entity_opt: Option<UserSelected> = db
-        .generic_fetch_option(
+    let entity_opt: Option<UserSelected> = SqliteDatabase::generic_fetch_option(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
@@ -137,7 +136,7 @@ async fn test_upsert_user(db: &mut SqliteDatabase, user: &User) -> taitan_orm::R
     let pool = db.get_pool()?;
     let mut conn = pool.acquire().await?;
     let args: SqliteArguments = user.gen_upsert_arguments_sqlite().unwrap();
-    let result = db.generic_execute(&mut *conn, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES (?, ?, ?, ?, ?)
+    let result =  SqliteDatabase::generic_execute(&mut *conn, "INSERT INTO `user`(`id`, `request_id`, `name`, `age`, `birthday`) VALUES (?, ?, ?, ?, ?)
 ON CONFLICT (`id`) DO UPDATE SET
 `request_id` = ?, `name` = ?, `age` = ?, `birthday` = ?", args).await?;
     assert_eq!(result, 1);
@@ -150,8 +149,7 @@ ON CONFLICT (`id`) DO UPDATE SET
 
     let user_primary: UserPrimary = UserPrimary { id: user.id };
     let primary_args = user_primary.gen_unique_arguments_sqlite().unwrap();
-    let entity_opt: Option<UserSelected> = db
-        .generic_fetch_option(
+    let entity_opt: Option<UserSelected> =  SqliteDatabase::generic_fetch_option(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
@@ -175,8 +173,7 @@ async fn test_delete_user(
     let pool = db.get_pool()?;
     let mut conn = pool.acquire().await?;
     let args: SqliteArguments = user_primary.gen_unique_arguments_sqlite().unwrap();
-    let result = db
-        .generic_execute(&mut *conn, "DELETE FROM `user` WHERE `id` = ?", args)
+    let result =  SqliteDatabase::generic_execute(&mut *conn, "DELETE FROM `user` WHERE `id` = ?", args)
         .await?;
     assert_eq!(result, 1);
 
@@ -190,8 +187,7 @@ async fn test_delete_user(
         id: user_primary.id,
     };
     let primary_args = user_primary.gen_unique_arguments_sqlite().unwrap();
-    let entity_opt: Option<UserSelected> = db
-        .generic_fetch_option(
+    let entity_opt: Option<UserSelected> =  SqliteDatabase::generic_fetch_option(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `id` = ?",
             &selection,
@@ -214,9 +210,7 @@ async fn test_select_all(db: &mut SqliteDatabase, expect_cnt: usize) -> taitan_o
     selection.birthday = true;
 
     let phantom = PhantomData::<SqliteArguments>::default();
-    let entity_vec: Vec<UserSelected> = db
-        .generic_fetch_all_plain(
-            &mut *conn,
+    let entity_vec: Vec<UserSelected> =  SqliteDatabase::generic_fetch_all_plain(&mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user`",
             &selection,
             phantom,
@@ -242,8 +236,7 @@ async fn test_select_location(
     selection.age = true;
     selection.birthday = true;
 
-    let entities: Vec<UserSelected> = db
-        .generic_fetch_all(
+    let entities: Vec<UserSelected> =  SqliteDatabase::generic_fetch_all(
             &mut *conn,
             "SELECT `request_id`, `name`, `age`, `birthday` FROM `user` WHERE `birthday` = ?",
             &selection,

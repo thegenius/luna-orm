@@ -21,6 +21,8 @@ Option<Row> -> Option<SE>
 2. 屏蔽query对象的构建
 3. connection 和 transaction要都能够传入
 4. 不同数据库的args都可以泛型传入
+generic_exists            (ex, stmt, args) -> Result<bool>
+generic_exists_plain      (ex, stmt, _   ) -> Result<bool>
 generic_execute           (ex, stmt, args) -> Result<u64>
 generic_execute_plain     (ex, stmt, _   ) -> Result<u64>
 generic_fetch_all         (ex, stmt, selection, args) -> Result<Vec<SE>>
@@ -38,12 +40,18 @@ generic_fetch_option_full_plain(ex, stmt, _   ) -> Result<Option<SE>>
 
 # Executor/Transaction的设计
 屏蔽掉ex，让更上层的API层不再感知connection/transaction
+但是现在sqlx的Executor实现还无法完全做到屏蔽
+现在通过GenericExecutor的泛型函数，大约可以把代码简化到160行
+但是数据库 N + 事务N，现在支持sqlite+mysql+postgres需要重复6遍这160行代码  
+
+exists            (stmt, args) -> Result<bool>
+exists_plain      (stmt, _   ) -> Result<bool>
 execute           (stmt, args) -> Result<u64>
 execute_plain     (stmt, _   ) -> Result<u64>
 fetch_all         (stmt, selection, args) -> Result<Vec<SE>>
 fetch_all_plain   (stmt, selection, _   ) -> Result<Vec<SE>>
-fetch_one         (stmt, selection, args) -> Result<SE>
-fetch_one_plain   (stmt, selection, _   ) -> Result<SE>
+-- fetch_one         (stmt, selection, args) -> Result<SE> -- skip
+-- fetch_one_plain   (stmt, selection, _   ) -> Result<SE> -- skip
 fetch_option      (stmt, selection, args) -> Result<Option<SE>>
 fetch_option_plain(stmt, selection, _   ) -> Result<Option<SE>>
 fetch_all_full         (stmt, args) -> Result<Vec<SE>>
@@ -52,6 +60,10 @@ fetch_one_full         (stmt, args) -> Result<SE>
 fetch_one_full_plain   (stmt, _   ) -> Result<SE>
 fetch_option_full      (stmt, args) -> Result<Option<SE>>
 fetch_option_full_plain(stmt, _   ) -> Result<Option<SE>>
+
+
+
+
 
 
 # API设计

@@ -7,7 +7,7 @@ macro_rules! execute_by_template_fn {
             let sql = self.get_generator().post_process(sql);
             debug!(target: "taitan_orm", command = "execute_by_template", sql = sql);
             let args = ($gen_args_fn)(template)?;
-            let result = self.execute::<$args_type>(&sql, args).await?;
+            let result = self.execute(&sql, args).await?;
             debug!(target: "taitan_orm", command = "execute_by_template", result = ?result);
             Ok(result as usize)
         }
@@ -27,7 +27,7 @@ macro_rules! fetch_one_by_template_fn {
             let sql = self.get_generator().post_process(sql);
             debug!(target: "taitan_orm", command = "procedure_by_template", sql = sql);
             let args = ($gen_args_fn)(template)?;
-            let result: SE = self.fetch_execute(&sql, args).await?;
+            let result: SE = self.fetch_one_full(&sql, args).await?;
             debug!(target: "taitan_orm", command = "procedure_by_template", result = ?result);
             Ok(result)
         }
@@ -46,7 +46,7 @@ macro_rules! fetch_option_by_template_fn {
             let sql = self.get_generator().post_process(sql);
             debug!(target: "taitan_orm", command = "select_by_template", sql = sql);
             let args = ($gen_args_fn)(template)?;
-            let result: Option<SE> = self.fetch_execute_option(&sql, args).await?;
+            let result: Option<SE> = self.fetch_option_full(&sql, args).await?;
             debug!(target: "taitan_orm", command = "select_by_template", result = ?result);
             Ok(result)
         }
@@ -66,7 +66,7 @@ macro_rules! fetch_all_by_template_fn {
             let sql = self.get_generator().post_process(sql);
             debug!(target: "taitan_orm", command = "search_by_template", sql = sql);
             let args = ($gen_args_fn)(template)?;
-            let result: Vec<SE> = self.fetch_execute_all(&sql, args).await?;
+            let result: Vec<SE> = self.fetch_all_full(&sql, args).await?;
             debug!(target: "taitan_orm", command = "search_by_template", result = ?result);
             Ok(result)
         }
@@ -96,7 +96,7 @@ macro_rules! fetch_paged_by_template_fn {
 
             let count_args = ($gen_count_args_fn)(template)?;
             let count_result_opt: Option<CountResult> =
-                self.fetch_execute_option(&count_sql, count_args).await?;
+                self.fetch_option_full(&count_sql, count_args).await?;
             let record_count = count_result_opt.unwrap_or_default().count;
             if record_count <= 0 {
                 return Ok(PagedList::empty(page.page_size, page.page_num));
@@ -106,7 +106,7 @@ macro_rules! fetch_paged_by_template_fn {
             let sql = self.get_generator().post_process(sql);
             debug!(target: "taitan_orm", command = "search_paged_by_template", sql = sql);
             let args = ($gen_args_fn)(template)?;
-            let entity_list: Vec<SE> = self.fetch_execute_all(&sql, args).await?;
+            let entity_list: Vec<SE> = self.fetch_all_full(&sql, args).await?;
 
             let page_info = PageInfo {
                 page_size: page.page_size,

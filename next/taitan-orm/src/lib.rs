@@ -15,6 +15,7 @@ pub mod sql_generator_container;
 
 #[macro_use]
 mod api_macro;
+mod sql_generic_executor;
 
 // pub use db::DB;
 pub use dto::CountResult;
@@ -22,6 +23,7 @@ pub use error::TaitanOrmError;
 pub use result::Result;
 pub use sql_api::SqlApi;
 pub use sql_executor::SqlExecutor;
+pub use sql_generic_executor::SqlGenericExecutor;
 pub use sql_generator::SqlGenerator;
 
 pub use taitan_orm_macro::Schema;

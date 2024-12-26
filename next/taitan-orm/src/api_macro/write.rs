@@ -8,7 +8,7 @@ macro_rules! insert_fn {
             let sql = self.get_generator().get_insert_sql(entity);
             debug!(target: "taitan_orm", command = "insert", sql = sql);
             let args = ($gen_args_fn)(entity)?;
-            let result = self.execute::<$args_type>(&sql, args).await?;
+            let result = self.execute(&sql, args).await?;
             debug!(target: "taitan_orm", command = "insert", result = ?result);
             Ok(result > 0)
         }
@@ -23,7 +23,7 @@ macro_rules! upsert_fn {
             let sql = self.get_generator().get_upsert_sql(entity);
             debug!(target: "taitan_orm", command = "upsert", sql = sql);
             let args = ($gen_args_fn)(entity)?;
-            let result = self.execute::<$args_type>(&sql, args).await?;
+            let result = self.execute(&sql, args).await?;
             debug!(target: "taitan_orm", command = "upsert", result = ?result);
             Ok(result > 0)
         }
@@ -42,7 +42,7 @@ macro_rules! update_fn {
             let sql = self.get_generator().get_update_sql(mutation, unique);
             debug!(target: "taitan_orm", command = "update", sql = sql);
             let args = ($gen_args_fn)(unique, mutation)?;
-            let result = self.execute::<$args_type>(&sql, args).await?;
+            let result = self.execute(&sql, args).await?;
             debug!(target: "taitan_orm", command = "update", result = ?result);
             Ok(result > 0)
         }
@@ -61,7 +61,7 @@ macro_rules! change_fn {
             let sql = self.get_generator().get_change_sql(mutation, location);
             debug!(target: "taitan_orm", command = "change", sql = sql);
             let args = ($gen_args_fn)(mutation, location)?;
-            let result = self.execute::<$args_type>(&sql, args).await?;
+            let result = self.execute(&sql, args).await?;
             debug!(target: "taitan_orm", command = "change", result = ?result);
             Ok(result)
         }
@@ -76,7 +76,7 @@ macro_rules! delete_fn {
            let sql = self.get_generator().get_delete_sql(unique);
            debug!(target: "taitan_orm", command = "delete", sql = sql);
            let args = ($gen_args_fn)(unique)?;
-           let result = self.execute::<$args_type>(&sql, args).await?;
+           let result = self.execute(&sql, args).await?;
            debug!(target: "taitan_orm", command = "delete", result = ?result);
            Ok(result > 0)
        }
@@ -91,7 +91,7 @@ macro_rules! purify_fn {
             let sql = self.get_generator().get_purify_sql(location);
             debug!(target: "taitan_orm", command = "purify", sql = sql);
             let args = ($gen_args_fn)(location)?;
-            let result = self.execute::<$args_type>(&sql, args).await?;
+            let result = self.execute(&sql, args).await?;
             debug!(target: "taitan_orm", command = "purify", result = ?result);
             Ok(result)
         }

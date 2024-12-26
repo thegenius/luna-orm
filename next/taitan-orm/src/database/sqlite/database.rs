@@ -8,6 +8,7 @@ use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous};
 use sqlx::SqlitePool;
 use std::fs;
 use std::path::Path;
+use crate::database::sqlite::commanders::template::SqliteTemplateCommander;
 
 #[derive(Debug, Clone)]
 pub struct SqliteDatabase {
@@ -53,6 +54,10 @@ impl SqliteDatabase {
         let transaction = SqliteTransaction::new(trx, generator);
         Ok(transaction)
     }
+
+    pub fn get_pool(&mut self) -> crate::Result<&SqlitePool> {
+        Ok(&self.sqlite_pool)
+    }
 }
 
 impl SqlGeneratorContainer for SqliteDatabase {
@@ -66,3 +71,5 @@ impl SqlGeneratorContainer for SqliteDatabase {
 impl SqliteWriteCommander for SqliteDatabase {}
 
 impl SqliteReadCommander for SqliteDatabase {}
+
+impl SqliteTemplateCommander for SqliteDatabase {}

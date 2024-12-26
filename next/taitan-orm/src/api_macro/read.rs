@@ -21,7 +21,7 @@ macro_rules! count_fn {
             let args = ($gen_args_fn)(location)?;
             let count_sql = self.get_generator().get_count_sql(location);
             debug!(target: "taitan_orm", command = "count", sql = count_sql);
-            let record_count: CountResult = self.fetch_execute(&count_sql, args).await?;
+            let record_count: CountResult = self.fetch_one_full(&count_sql, args).await?;
             debug!(target: "taitan_orm", command = "count", result = ?record_count);
             Ok(record_count.count)
         }
@@ -35,7 +35,7 @@ macro_rules! count_all_fn {
             debug!(target: "taitan_orm", command = "count", table_name = ?table_name);
             let count_sql = self.get_generator().get_count_table_sql(table_name);
             debug!(target: "taitan_orm", command = "count", sql = count_sql);
-            let record_count: CountResult = self.fetch_execute_plain(&count_sql).await?;
+            let record_count: CountResult = self.fetch_one_full_plain(&count_sql).await?;
             debug!(target: "taitan_orm", command = "count", result = ?record_count);
             Ok(record_count.count)
         }
@@ -58,7 +58,7 @@ macro_rules! select_fn {
             let sql = self.get_generator().get_select_sql(selection, unique);
             debug!(target: "taitan_orm", command = "select", sql = sql);
             let args = ($gen_args_fn)(unique)?;
-            let result: Option<SE> = self.fetch_optional(&sql, selection, args).await?;
+            let result: Option<SE> = self.fetch_option(&sql, selection, args).await?;
             debug!(target: "taitan_orm", command = "select", result = ?result);
             Ok(result)
         }

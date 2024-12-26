@@ -1,79 +1,55 @@
 use crate::database::sqlite::database::SqliteDatabase;
-use crate::Result;
+use crate::sql_generic_executor::SqlGenericExecutor;
+use crate::{execute_fn, execute_plain_fn, fetch_exists_fn, fetch_exists_plain_fn, Result};
 use crate::SqlExecutor;
+use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteArguments;
-use sqlx::{Database, Sqlite, SqlitePool};
+use sqlx::{Database, IntoArguments, Sqlite, SqliteConnection};
 use std::marker::PhantomData;
 use taitan_orm_trait::SelectedEntity;
 
-impl SqlExecutor for SqliteDatabase {
+impl SqlGenericExecutor for SqliteDatabase {
     type DB = Sqlite;
-    fn get_pool(&mut self) -> Result<&SqlitePool> {
-        Ok(&self.sqlite_pool)
+
+    fn get_affected_rows(query_result: &<Self::DB as Database>::QueryResult) -> u64 {
+        query_result.rows_affected()
     }
-    fn get_affected_rows(
-        &mut self,
-        query_result: &<Self::DB as Database>::QueryResult,
-    ) -> Result<u64> {
-        Ok(query_result.rows_affected())
+}
+
+impl SqlExecutor for SqliteDatabase {
+    type Connection = SqliteConnection;
+
+    #[inline(always)]
+    async fn get_connection(&mut self) -> Result<PoolConnection<Self::DB>> {
+        Ok(self.get_pool()?.acquire().await?)
     }
 
-    async fn fetch_optional_plain<'a, SE>(
-        &'a mut self,
-        stmt: &'a str,
-        selection: &'a SE::Selection,
-    ) -> Result<Option<SE>>
+    execute_fn!();
+
+    execute_plain_fn!();
+
+
+    // async fn fetch_exists<'a>(
+    //     &'a mut self,
+    //     stmt: &'a str,
+    //     args: <Self::DB as Database>::Arguments<'a>,
+    // ) -> Result<bool> {
+    //     let mut ex = self.get_pool()?.acquire().await?;
+    //     Self::generic_exists(&mut *ex, stmt, args).await
+    // }
+    fetch_exists_fn!();
+
+    async fn fetch_exists_plain<'a, A>(&'a mut self, stmt: &'a str) -> Result<bool>
     where
-        SE: SelectedEntity<Self::DB> + Send + Unpin,
+        A: IntoArguments<'a, Self::DB> + 'a + Default,
     {
         let mut ex = self.get_pool()?.acquire().await?;
         let args: PhantomData<SqliteArguments> = PhantomData::default();
-        self.generic_fetch_option_plain(&mut *ex, stmt, selection, args)
-            .await
+        Self::generic_exists_plain(&mut *ex, stmt, args).await
     }
+    // fetch_exists_plain_fn!();
 
-    async fn fetch_execute<'a, SE>(
-        &'a mut self,
-        stmt: &'a str,
-        args: SqliteArguments<'a>,
-    ) -> Result<SE>
-    where
-        SE: SelectedEntity<Self::DB> + Send + Unpin,
-    {
-        let mut ex = self.get_pool()?.acquire().await?;
-        self.generic_fetch_one_full(&mut *ex, stmt, args).await
-    }
-
-    async fn fetch_execute_plain<'a, SE>(&'a mut self, stmt: &'a str) -> Result<SE>
-    where
-        SE: SelectedEntity<Self::DB> + Send + Unpin,
-    {
-        let mut ex = self.get_pool()?.acquire().await?;
-        let args: PhantomData<SqliteArguments> = PhantomData::default();
-        self.generic_fetch_one_full_plain(&mut *ex, stmt, args).await
-    }
-
-    async fn fetch_execute_option<'a, SE>(
-        &'a mut self,
-        stmt: &'a str,
-        args: <Self::DB as Database>::Arguments<'a>,
-    ) -> Result<Option<SE>>
-    where
-        SE: SelectedEntity<Self::DB> + Send + Unpin,
-    {
-        let mut ex = self.get_pool()?.acquire().await?;
-        self.generic_fetch_option_full(&mut *ex, stmt, args).await
-    }
-
-    async fn fetch_execute_all<'a, SE>(&'a mut self, stmt: &'a str, args: <Self::DB as Database>::Arguments<'a>) -> Result<Vec<SE>>
-    where
-        SE: SelectedEntity<Self::DB> + Send + Unpin
-    {
-        let mut ex = self.get_pool()?.acquire().await?;
-        self.generic_fetch_all_full(&mut *ex, stmt, args).await
-    }
-
-    async fn fetch_optional<'a, SE>(
+    async fn fetch_option<'a, SE>(
         &'a mut self,
         stmt: &'a str,
         selection: &'a SE::Selection,
@@ -83,22 +59,20 @@ impl SqlExecutor for SqliteDatabase {
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
         let mut ex = self.get_pool()?.acquire().await?;
-        self.generic_fetch_option(&mut *ex, stmt, selection, args)
-            .await
+        Self::generic_fetch_option(&mut *ex, stmt, selection, args).await
     }
 
-    async fn fetch_all_plain<'a, SE>(
+    async fn fetch_option_plain<'a, SE>(
         &'a mut self,
         stmt: &'a str,
         selection: &'a SE::Selection,
-    ) -> Result<Vec<SE>>
+    ) -> Result<Option<SE>>
     where
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
         let mut ex = self.get_pool()?.acquire().await?;
         let args: PhantomData<SqliteArguments> = PhantomData::default();
-        self.generic_fetch_all_plain(&mut *ex, stmt, selection, args)
-            .await
+        Self::generic_fetch_option_plain(&mut *ex, stmt, selection, args).await
     }
 
     async fn fetch_all<'a, SE>(
@@ -111,29 +85,82 @@ impl SqlExecutor for SqliteDatabase {
         SE: SelectedEntity<Self::DB> + Send + Unpin,
     {
         let mut ex = self.get_pool()?.acquire().await?;
-        self.generic_fetch_all(&mut *ex, stmt, selection, args)
-            .await
+        Self::generic_fetch_all(&mut *ex, stmt, selection, args).await
     }
 
-    async fn execute_plain<'a>(&'a mut self, stmt: &'a str) -> Result<u64> {
+    async fn fetch_all_plain<'a, SE>(
+        &'a mut self,
+        stmt: &'a str,
+        selection: &'a SE::Selection,
+    ) -> Result<Vec<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+    {
         let mut ex = self.get_pool()?.acquire().await?;
         let args: PhantomData<SqliteArguments> = PhantomData::default();
-        self.generic_execute_plain(&mut *ex, stmt, args).await
+        Self::generic_fetch_all_plain(&mut *ex, stmt, selection, args).await
     }
 
-    async fn execute<'a, A>(&'a mut self, stmt: &'a str, args: SqliteArguments<'a>) -> Result<u64> {
+    async fn fetch_one_full<'a, SE>(
+        &'a mut self,
+        stmt: &'a str,
+        args: SqliteArguments<'a>,
+    ) -> Result<SE>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+    {
         let mut ex = self.get_pool()?.acquire().await?;
-        self.generic_execute(&mut *ex, stmt, args).await
+        Self::generic_fetch_one_full(&mut *ex, stmt, args).await
     }
 
-    async fn fetch_exists<'a>(
+    async fn fetch_one_full_plain<'a, SE>(&'a mut self, stmt: &'a str) -> Result<SE>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+    {
+        let mut ex = self.get_pool()?.acquire().await?;
+        let args: PhantomData<SqliteArguments> = PhantomData::default();
+        Self::generic_fetch_one_full_plain(&mut *ex, stmt, args).await
+    }
+
+    async fn fetch_option_full<'a, SE>(
         &'a mut self,
         stmt: &'a str,
         args: <Self::DB as Database>::Arguments<'a>,
-    ) -> Result<bool> {
+    ) -> Result<Option<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+    {
         let mut ex = self.get_pool()?.acquire().await?;
-        self.generic_exists(&mut *ex, stmt, args).await
+        Self::generic_fetch_option_full(&mut *ex, stmt, args).await
     }
 
+    async fn fetch_option_full_plain<'a, SE>(&'a mut self, stmt: &'a str) -> Result<Option<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+    {
+        let mut ex = self.get_pool()?.acquire().await?;
+        let args: PhantomData<SqliteArguments> = PhantomData::default();
+        Self::generic_fetch_option_full_plain(&mut *ex, stmt, args).await
+    }
 
+    async fn fetch_all_full<'a, SE>(
+        &'a mut self,
+        stmt: &'a str,
+        args: <Self::DB as Database>::Arguments<'a>,
+    ) -> Result<Vec<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+    {
+        let mut ex = self.get_pool()?.acquire().await?;
+        Self::generic_fetch_all_full(&mut *ex, stmt, args).await
+    }
+
+    async fn fetch_all_full_plain<'a, SE>(&'a mut self, stmt: &'a str) -> Result<Vec<SE>>
+    where
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+    {
+        let mut ex = self.get_pool()?.acquire().await?;
+        let args: PhantomData<SqliteArguments> = PhantomData::default();
+        Self::generic_fetch_all_full_plain(&mut *ex, stmt, args).await
+    }
 }
