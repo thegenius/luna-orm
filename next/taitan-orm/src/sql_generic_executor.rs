@@ -1,7 +1,7 @@
 use crate::result::Result;
 use crate::TaitanOrmError;
 use sqlx::query::Query;
-use sqlx::{Database, Executor, IntoArguments, Row};
+use sqlx::{Database, Decode, Executor, IntoArguments, Row, Type};
 use std::marker::PhantomData;
 use taitan_orm_trait::SelectedEntity;
 
@@ -16,10 +16,16 @@ Option<Row> -> bool
 2. sqlx::query::Query结构体的封装，上层抽象不再感知这个结构体的存在
 
 本模块提供以下泛型接口函数
-generic_exists            (ex, stmt, args) -> Result<bool>
-generic_exists_plain      (ex, stmt, _   ) -> Result<bool>
+
+
 generic_execute           (ex, stmt, args) -> Result<u64>
 generic_execute_plain     (ex, stmt, _   ) -> Result<u64>
+
+generic_exists            (ex, stmt, args) -> Result<bool>
+generic_exists_plain      (ex, stmt, _   ) -> Result<bool>
+generic_count            (ex, stmt, args) -> Result<bool>
+generic_count_plain      (ex, stmt, _   ) -> Result<bool>
+
 generic_fetch_all         (ex, stmt, selection, args) -> Result<Vec<SE>>
 generic_fetch_all_plain   (ex, stmt, selection, _   ) -> Result<Vec<SE>>
 generic_fetch_one         (ex, stmt, selection, args) -> Result<SE>
@@ -36,6 +42,7 @@ generic_fetch_option_full_plain(ex, stmt, _   ) -> Result<Option<SE>>
 
 pub trait SqlGenericExecutor {
     type DB: Database;
+    type CountType: SelectedEntity<Self::DB>;
 
     fn get_affected_rows(query_result: &<Self::DB as Database>::QueryResult) -> u64;
 
@@ -70,6 +77,41 @@ pub trait SqlGenericExecutor {
             Ok(true)
         } else {
             Ok(false)
+        }
+    }
+
+    // generic_count            (ex, stmt, args) -> Result<bool>
+    async fn generic_count<'s, 'a, EX, A>(ex: EX, stmt: &'s str, args: A) -> Result<Self::CountType>
+    where
+        's: 'a,
+        EX: Executor<'a, Database = Self::DB>,
+        A: IntoArguments<'a, Self::DB> + 'a,
+    {
+        let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, args);
+        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(ex).await?;
+        if let Some(row) = result_opt {
+            Ok(Self::CountType::from_row_full(row)?)
+        } else {
+            Ok(Default::default())
+        }
+    }
+
+    // generic_count_plain      (ex, stmt, _   ) -> Result<bool>
+    async fn generic_count_plain<'a, EX, A>(
+        ex: EX,
+        stmt: &'a str,
+        _args: PhantomData<A>,
+    ) -> Result<Self::CountType>
+    where
+        EX: Executor<'a, Database = Self::DB>,
+        A: IntoArguments<'a, Self::DB> + 'a + Default,
+    {
+        let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, Default::default());
+        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(ex).await?;
+        if let Some(row) = result_opt {
+            Ok(Self::CountType::from_row_full(row)?)
+        } else {
+            Ok(Default::default())
         }
     }
 

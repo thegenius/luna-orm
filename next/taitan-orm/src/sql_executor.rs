@@ -41,12 +41,11 @@ pub trait SqlExecutor: SqlGenericExecutor {
     }
 
     // execute           (stmt, args) -> Result<u64>
-    async fn execute<'a, A>(
+    async fn execute<'a>(
         &'a mut self,
         stmt: &'a str,
-        args: A,
-    ) -> Result<u64>
-    where A: IntoArguments<'a, Self::DB> + 'a;
+        args: <Self::DB as Database>::Arguments<'a>,
+    ) -> Result<u64>;
 
     // execute_plain     (stmt, _   ) -> Result<u64>
     async fn execute_plain<'a>(&'a mut self, stmt: &'a str) -> Result<u64>;
@@ -60,12 +59,25 @@ pub trait SqlExecutor: SqlGenericExecutor {
     ) -> Result<bool>;
 
     // fetch_exists_plain      (stmt) -> Result<bool>
+    // async fn fetch_exists_plain<'a, A>(
+    //     &'a mut self,
+    //     stmt: &'a str,
+    // ) -> Result<bool>
+    // where
+    //     A: IntoArguments<'a, Self::DB> + 'a + Default;
+
     async fn fetch_exists_plain<'a, A>(
         &'a mut self,
         stmt: &'a str,
-    ) -> Result<bool>
-    where
-        A: IntoArguments<'a, Self::DB> + 'a + Default;
+    ) -> Result<bool>;
+
+    async fn fetch_count<'s, 'a>(
+        &'a mut self,
+        stmt: &'s str,
+        args: <Self::DB as sqlx::Database>::Arguments<'a>,
+    ) -> crate::Result<u64> where 'a: 's;
+
+    async fn fetch_count_plain<'a>(&'a mut self, stmt: &'a str) -> crate::Result<u64>;
 
 
     // fetch_option      (stmt, selection, args) -> Result<Option<SE>>

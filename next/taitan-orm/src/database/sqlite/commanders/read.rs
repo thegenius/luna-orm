@@ -1,48 +1,16 @@
-use crate::database::sqlite::SqliteLocalConfig;
-use crate::sql_generator::DefaultSqlGenerator;
-use crate::{count_all_fn, count_fn, devour_fn, devour_paged_fn, exists_fn, search_fn, search_paged_fn, select_fn, CountResult, Result};
-use crate::{SqlApi, SqlExecutor, SqlGenerator, TaitanOrmError};
-use path_absolutize::Absolutize;
-use std::fmt::Debug;
-// use sqlx::error::BoxDynError;
-use crate::sql_generator_container::SqlGeneratorContainer;
-use sqlx::sqlite::{SqliteArguments, SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous};
-use sqlx::{Database, Sqlite, SqlitePool};
-use std::fs;
-use std::marker::PhantomData;
-use std::path::Path;
-use taitan_orm_trait::page_info::PageInfo;
-use taitan_orm_trait::paged_list::PagedList;
-use taitan_orm_trait::pagination::Pagination;
+
+
+use crate::{count_all_fn, count_fn, devour_fn, devour_paged_fn, exists_fn, search_fn, search_paged_fn, select_fn};
+use crate::{SqlExecutor, SqlGenerator, SqlGeneratorContainer};
+use crate::{CountResult, Result};
+
+
 use taitan_orm_trait::{
     Entity, Location, Mutation, OrderBy, SelectedEntity, Selection, TemplateRecord, Unique,
 };
-use tracing::debug;
-
-fn build_paged_list<DB: Database, SE>(
-    data: Vec<SE>,
-    record_count: u64,
-    page: &Pagination,
-) -> PagedList<DB, SE>
-where
-    SE: SelectedEntity<DB> + Send + Unpin,
-{
-    let page_info = PageInfo {
-        page_size: page.page_size,
-        page_num: page.page_num,
-        page_total: (record_count + page.page_size - 1) / page.page_size, // ceil
-        total: record_count,
-    };
-
-    PagedList {
-        data,
-        page: page_info,
-        _phantom: PhantomData,
-    }
-}
 
 
-pub trait SqliteReadCommander: SqlExecutor<DB = Sqlite> + SqlGeneratorContainer {
+pub trait SqliteReadCommander: SqlExecutor<DB = sqlx::Sqlite> + SqlGeneratorContainer {
 
     // async fn exists<M: Mutation>(&mut self, unique: &dyn Unique<Mutation = M>) -> Result<bool> {
     //     debug!(target: "taitan_orm", command = "exists", unique = ?unique);
@@ -173,7 +141,7 @@ pub trait SqliteReadCommander: SqlExecutor<DB = Sqlite> + SqlGeneratorContainer 
     //         }
     //     }
     // }
-    devour_fn!(Pagination::gen_page_arguments_sqlite);
+    devour_fn!(crate::page::Pagination::gen_page_arguments_sqlite);
 
     // async fn devour_paged<SE>(
     //     &mut self,
@@ -199,6 +167,6 @@ pub trait SqliteReadCommander: SqlExecutor<DB = Sqlite> + SqlGeneratorContainer 
     //     debug!(target: "taitan_orm", command = "devour_paged", result = ?result);
     //     Ok(result)
     // }
-    devour_paged_fn!(Pagination::gen_page_arguments_sqlite);
+    devour_paged_fn!(crate::page::Pagination::gen_page_arguments_sqlite);
 
 }

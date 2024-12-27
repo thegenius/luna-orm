@@ -1,12 +1,12 @@
 #[derive(Clone, Debug)]
-pub struct PageInfo {
+pub struct PagedInfo {
     pub page_size: u64,
     pub page_num: u64,
     pub page_total: u64,
     pub total: u64,
 }
 
-impl PageInfo {
+impl PagedInfo {
     pub fn empty(page_size: u64, page_num: u64) -> Self {
         Self {
             page_size,

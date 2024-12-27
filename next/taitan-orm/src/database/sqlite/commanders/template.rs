@@ -1,26 +1,10 @@
-use crate::database::sqlite::SqliteLocalConfig;
-use crate::sql_generator::DefaultSqlGenerator;
-use crate::{execute_by_template_fn, fetch_all_by_template_fn, fetch_one_by_template_fn, fetch_option_by_template_fn, fetch_paged_by_template_fn, CountResult, Result};
-use crate::{SqlApi, SqlExecutor, SqlGenerator, TaitanOrmError};
-use path_absolutize::Absolutize;
-use std::fmt::Debug;
-// use sqlx::error::BoxDynError;
-use crate::sql_generator_container::SqlGeneratorContainer;
-use sqlx::sqlite::{SqliteArguments, SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous};
-use sqlx::{Database, Sqlite, SqlitePool};
-use std::fs;
-use std::marker::PhantomData;
-use std::path::Path;
-use taitan_orm_trait::page_info::PageInfo;
-use taitan_orm_trait::paged_list::PagedList;
-use taitan_orm_trait::pagination::Pagination;
-use taitan_orm_trait::{
-    Entity, Location, Mutation, OrderBy, SelectedEntity, Selection, TemplateRecord, Unique,
-};
-use tracing::debug;
 
 
-pub trait SqliteTemplateCommander: SqlExecutor<DB = Sqlite> + SqlGeneratorContainer {
+use crate::{execute_by_template_fn, fetch_all_by_template_fn, fetch_one_by_template_fn, fetch_option_by_template_fn, fetch_paged_by_template_fn};
+use crate::{SqlExecutor, SqlGenerator,SqlGeneratorContainer};
+
+
+pub trait SqliteTemplateCommander: SqlExecutor<DB = sqlx::Sqlite> + SqlGeneratorContainer {
     // async fn execute_by_template(&mut self, template: &dyn TemplateRecord) -> Result<usize> {
     //     debug!(target: "taitan_orm", command = "execute_by_template", template = ?template);
     //     let sql = template.get_sql(None);
@@ -31,7 +15,7 @@ pub trait SqliteTemplateCommander: SqlExecutor<DB = Sqlite> + SqlGeneratorContai
     //     debug!(target: "taitan_orm", command = "execute_by_template", result = ?result);
     //     Ok(result as usize)
     // }
-    execute_by_template_fn!(SqliteArguments, TemplateRecord::gen_template_arguments_sqlite);
+    execute_by_template_fn!(crate::traits::TemplateRecord::gen_template_arguments_sqlite);
 
     // async fn fetch_one_by_template<SE>(&mut self, template: &dyn TemplateRecord) -> Result<SE>
     // where
@@ -46,7 +30,7 @@ pub trait SqliteTemplateCommander: SqlExecutor<DB = Sqlite> + SqlGeneratorContai
     //     debug!(target: "taitan_orm", command = "procedure_by_template", result = ?result);
     //     Ok(result)
     // }
-    fetch_one_by_template_fn!(TemplateRecord::gen_template_arguments_sqlite);
+    fetch_one_by_template_fn!(crate::traits::TemplateRecord::gen_template_arguments_sqlite);
 
     // async fn fetch_option_by_template<SE>(&mut self, template: &dyn TemplateRecord) -> Result<Option<SE>>
     // where
@@ -61,7 +45,7 @@ pub trait SqliteTemplateCommander: SqlExecutor<DB = Sqlite> + SqlGeneratorContai
     //     debug!(target: "taitan_orm", command = "select_by_template", result = ?result);
     //     Ok(result)
     // }
-    fetch_option_by_template_fn!(TemplateRecord::gen_template_arguments_sqlite);
+    fetch_option_by_template_fn!(crate::traits::TemplateRecord::gen_template_arguments_sqlite);
 
     // async fn fetch_all_by_template<SE>(&mut self, template: &dyn TemplateRecord) -> Result<Vec<SE>>
     // where
@@ -76,7 +60,7 @@ pub trait SqliteTemplateCommander: SqlExecutor<DB = Sqlite> + SqlGeneratorContai
     //     debug!(target: "taitan_orm", command = "search_by_template", result = ?result);
     //     Ok(result)
     // }
-    fetch_all_by_template_fn!(TemplateRecord::gen_template_arguments_sqlite);
+    fetch_all_by_template_fn!(crate::traits::TemplateRecord::gen_template_arguments_sqlite);
 
     // async fn fetch_paged_by_template<SE>(
     //     &mut self,
@@ -123,5 +107,5 @@ pub trait SqliteTemplateCommander: SqlExecutor<DB = Sqlite> + SqlGeneratorContai
     //     debug!(target: "taitan_orm", command = "search_paged_by_template", result = ?result);
     //     Ok(result)
     // }
-    fetch_paged_by_template_fn!(TemplateRecord::gen_template_count_arguments_sqlite, TemplateRecord::gen_template_arguments_sqlite);
+    fetch_paged_by_template_fn!(crate::traits::TemplateRecord::gen_template_count_arguments_sqlite, crate::traits::TemplateRecord::gen_template_arguments_sqlite);
 }

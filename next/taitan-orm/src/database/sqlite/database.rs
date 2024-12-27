@@ -2,10 +2,10 @@ use crate::database::sqlite::commanders::read::SqliteReadCommander;
 use crate::database::sqlite::{SqliteLocalConfig, SqliteTransaction, SqliteWriteCommander};
 use crate::sql_generator::DefaultSqlGenerator;
 use crate::sql_generator_container::SqlGeneratorContainer;
-use crate::{SqlExecutor, TaitanOrmError};
+use crate::{executor_impl, CountResult, SqlExecutor, SqlGenericExecutor, TaitanOrmError};
 use path_absolutize::Absolutize;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous};
-use sqlx::SqlitePool;
+use sqlx::{Sqlite, SqliteConnection, SqlitePool};
 use std::fs;
 use std::path::Path;
 use crate::database::sqlite::commanders::template::SqliteTemplateCommander;
@@ -58,6 +58,18 @@ impl SqliteDatabase {
     pub fn get_pool(&mut self) -> crate::Result<&SqlitePool> {
         Ok(&self.sqlite_pool)
     }
+}
+
+impl SqlGenericExecutor for SqliteDatabase {
+    type DB = Sqlite;
+    type CountType = CountResult;
+
+    fn get_affected_rows(query_result: &<Self::DB as sqlx::Database>::QueryResult) -> u64 {
+        query_result.rows_affected()
+    }
+}
+impl SqlExecutor for SqliteDatabase {
+    executor_impl!(SqliteConnection);
 }
 
 impl SqlGeneratorContainer for SqliteDatabase {
