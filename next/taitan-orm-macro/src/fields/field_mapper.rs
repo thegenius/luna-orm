@@ -138,7 +138,7 @@ pub trait FieldMapper {
         let span = field_name.span();
         let field_name_lit = LitStr::new(&field_name.to_string(), span);
         quote_spanned! { span =>
-            if let Some(#field_name) = &self.#field_name {
+            if let taitan_orm::Optional::Some(#field_name) = &self.#field_name {
                 sql.push(wrap_char);
                 sql.push_str(#field_name_lit);
                 sql.push(wrap_char);

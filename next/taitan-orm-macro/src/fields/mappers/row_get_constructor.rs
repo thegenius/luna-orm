@@ -12,7 +12,7 @@ pub trait RowGetConstructor {
         let field_name_lit = LitStr::new(&field_name.to_string(), span);
         quote_spanned! { span =>
             if selection.#field_name {
-                selected.#field_name = sqlx::Row::try_get(&row, #field_name_lit).ok();
+                selected.#field_name = sqlx::Row::try_get(&row, #field_name_lit).ok().into();
             }
         }
     }
@@ -23,7 +23,7 @@ pub trait RowGetConstructor {
         let field_name_lit = LitStr::new(&field_name.to_string(), span);
         quote_spanned! { span =>
             if selection.#field_name {
-                selected.#field_name = sqlx::Row::try_get(&row, i).ok();
+                selected.#field_name = sqlx::Row::try_get(&row, i).ok().into();
                 i += 1;
             }
         }
@@ -34,7 +34,7 @@ pub trait RowGetConstructor {
         let span = field_name.span();
         let field_name_lit = LitStr::new(&field_name.to_string(), span);
         quote_spanned! { span =>
-            selected.#field_name = sqlx::Row::try_get(&row, #field_name_lit).ok();
+            selected.#field_name = sqlx::Row::try_get(&row, #field_name_lit).ok().into();
         }
     }
 
@@ -43,7 +43,7 @@ pub trait RowGetConstructor {
         let span = field_name.span();
         let field_name_lit = LitStr::new(&field_name.to_string(), span);
         quote_spanned! { span =>
-            selected.#field_name = sqlx::Row::try_get(&row, i).ok();
+            selected.#field_name = sqlx::Row::try_get(&row, i).ok().into();
             i += 1;
         }
     }

@@ -42,7 +42,7 @@ pub trait NamesAddConstructor {
         let field_name = field.ident.unwrap();
         let field_name_string = LitStr::new(&field_name.to_string(), span);
         quote_spanned! { span=>
-            if let Some(_) = self.#field_name {
+            if let taitan_orm::Optional::Some(_) = self.#field_name {
                 fields.push(#field_name_string.to_string());
             }
         }
@@ -62,7 +62,7 @@ pub trait NamesAddConstructor {
         let field_name = field.ident.unwrap();
         let field_name_string = LitStr::new(&field_name.to_string(), span);
         quote_spanned! { span=>
-            if let Some(true) = self.#field_name {
+            if let taitan_orm::Optional::Some(true) = self.#field_name {
                 fields.push(#field_name_string.to_string());
             }
         }
@@ -83,7 +83,7 @@ pub trait NamesAddConstructor {
         let span = field_name.span();
         let field_name_lit = LitStr::new(&field_name.to_string(), span);
         quote_spanned! { span =>
-            if let Some(#field_name) = &self.#field_name {
+            if let taitan_orm::Optional::Some(#field_name) = &self.#field_name {
                 sql.push(wrap_char);
                 sql.push_str(#field_name_lit);
                 sql.push(wrap_char);

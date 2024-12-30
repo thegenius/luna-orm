@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::error::BoxDynError;
-use sqlx::sqlite::{SqliteArguments, SqliteRow};
+use sqlx::sqlite::{SqliteArguments};
 use sqlx::{Arguments, Row};
 use sqlx::{Database, Sqlite};
 use std::borrow::Cow;

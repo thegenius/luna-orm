@@ -26,12 +26,16 @@ pub trait StructFieldConstructor {
         let field_ident = field.ident;
         let field_ty = field.ty;
         if DefaultTypeChecker::type_is_option(&field_ty) {
+            let inner_type = DefaultTypeExtractor::get_option_inner_type(&field_ty).unwrap();
+            // quote! {
+            //     #field_ident: #field_ty
+            // }
             quote! {
-                #field_ident: #field_ty
+                #field_ident: taitan_orm::Optional<#inner_type>
             }
         } else {
             quote! {
-                #field_ident: Option<#field_ty>
+                #field_ident: taitan_orm::Optional<#field_ty>
             }
         }
     }
@@ -41,13 +45,13 @@ pub trait StructFieldConstructor {
         let field_ident = field.ident;
         let field_ty = field.ty;
         if DefaultTypeChecker::type_is_option(&field_ty) {
-            let inner_type = DefaultTypeExtractor::get_option_inner_type(&field_ty);
+            let inner_type = DefaultTypeExtractor::get_option_inner_type(&field_ty).unwrap();
             quote! {
-                #field_ident: Option<taitan_orm::traits::LocationExpr<#inner_type>>
+                #field_ident: taitan_orm::Optional<taitan_orm::traits::LocationExpr<#inner_type>>
             }
         } else {
             quote! {
-                #field_ident: Option<taitan_orm::traits::LocationExpr<#field_ty>>
+                #field_ident: taitan_orm::Optional<taitan_orm::traits::LocationExpr<#field_ty>>
             }
         }
     }
