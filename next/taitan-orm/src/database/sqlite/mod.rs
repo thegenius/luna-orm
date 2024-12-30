@@ -3,6 +3,7 @@ mod database;
 pub mod executor;
 mod transaction;
 mod commanders;
+mod extractor;
 
 pub use commanders::write::SqliteWriteCommander;
 pub use commanders::read::SqliteReadCommander;

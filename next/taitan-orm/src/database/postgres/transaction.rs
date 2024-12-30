@@ -1,15 +1,15 @@
-use sqlx::{MySql, MySqlConnection};
+use sqlx::{MySql, MySqlConnection, PgConnection, Postgres};
 use crate::{transaction_impl, CountResult, SqlExecutor, SqlGeneratorContainer, SqlGenericExecutor};
-use crate::sql_generator::MySqlGenerator;
+use crate::sql_generator::{MySqlGenerator, PostgresGenerator};
 
 #[derive(Debug)]
-pub struct MySqlTransaction<'a> {
-    transaction: sqlx::Transaction<'a, MySql>,
-    generator: &'a MySqlGenerator,
+pub struct PostgresTransaction<'a> {
+    transaction: sqlx::Transaction<'a, Postgres>,
+    generator: &'a PostgresGenerator,
 }
 
-impl<'a> MySqlTransaction<'a> {
-    pub fn new(trx: sqlx::Transaction<'a, MySql>, generator: &'a MySqlGenerator) -> Self {
+impl<'a> PostgresTransaction<'a> {
+    pub fn new(trx: sqlx::Transaction<'a, Postgres>, generator: &'a PostgresGenerator) -> Self {
         Self {
             transaction: trx,
             generator,
@@ -27,8 +27,8 @@ impl<'a> MySqlTransaction<'a> {
     }
 }
 
-impl<'t> SqlGenericExecutor for MySqlTransaction<'t> {
-    type DB = MySql;
+impl<'t> SqlGenericExecutor for PostgresTransaction<'t> {
+    type DB = Postgres;
     type CountType = CountResult;
 
     fn get_affected_rows(query_result: &<Self::DB as sqlx::Database>::QueryResult) -> u64 {
@@ -36,11 +36,11 @@ impl<'t> SqlGenericExecutor for MySqlTransaction<'t> {
     }
 }
 
-impl<'t> SqlExecutor for MySqlTransaction<'t> {
-    transaction_impl!(MySqlConnection);
+impl<'t> SqlExecutor for PostgresTransaction<'t> {
+    transaction_impl!(PgConnection);
 }
-impl<'a> SqlGeneratorContainer for MySqlTransaction<'a> {
-    type G = MySqlGenerator;
+impl<'a> SqlGeneratorContainer for PostgresTransaction<'a> {
+    type G = PostgresGenerator;
 
     fn get_generator(&mut self) -> &Self::G {
         &self.generator

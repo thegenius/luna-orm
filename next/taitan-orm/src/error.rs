@@ -11,6 +11,9 @@ pub enum TaitanOrmError {
     #[error(transparent)]
     BoxDynError(#[from] Box<dyn std::error::Error + 'static + Send + Sync>),
 
+    // #[error(transparent)]
+    // BoxDynNoStaticError(#[from] Box<dyn std::error::Error + Send + Sync>),
+
     #[error(transparent)]
     BoxDynError2(#[from] Box<dyn std::error::Error>),
 
