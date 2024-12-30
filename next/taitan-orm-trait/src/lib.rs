@@ -14,8 +14,10 @@ mod unique;
 mod update_command;
 mod write_command;
 mod template;
+mod optional;
 
 pub use schema::Schema;
+pub use optional::Optional;
 
 pub use error::NotImplementError;
 pub use error::NotValidOrderByError;

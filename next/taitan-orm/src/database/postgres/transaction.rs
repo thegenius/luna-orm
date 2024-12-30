@@ -1,6 +1,6 @@
-use sqlx::{MySql, MySqlConnection, PgConnection, Postgres};
+use sqlx::{PgConnection, Postgres};
 use crate::{transaction_impl, CountResult, SqlExecutor, SqlGeneratorContainer, SqlGenericExecutor};
-use crate::sql_generator::{MySqlGenerator, PostgresGenerator};
+use crate::sql_generator::{PostgresGenerator};
 
 #[derive(Debug)]
 pub struct PostgresTransaction<'a> {

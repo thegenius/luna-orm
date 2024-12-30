@@ -6,7 +6,7 @@ use time::macros::datetime;
 use uuid::Uuid;
 
 use crate::entities::user::*;
-use taitan_orm_trait::Selection;
+use taitan_orm_trait::{Optional, Selection};
 
 #[sqlx_macros::test]
 pub async fn transaction_spec() -> taitan_orm::Result<()> {
@@ -20,15 +20,15 @@ pub async fn transaction_spec() -> taitan_orm::Result<()> {
         id: 1,
         request_id: Uuid::new_v4(),
         name: "Allen".to_string(),
-        age: Some(23),
-        birthday: Some(datetime!(2019-01-01 0:00)),
+        age: Optional::Some(23),
+        birthday: Optional::Some(datetime!(2019-01-01 0:00)),
     };
     let user2 = User {
         id: 2,
         request_id: Uuid::new_v4(),
         name: "Bob".to_string(),
-        age: Some(24),
-        birthday: Some(datetime!(2019-01-01 0:00)),
+        age: Optional::Some(24),
+        birthday: Optional::Some(datetime!(2019-01-01 0:00)),
     };
     test_insert_user(&mut db, &user1, &user2).await?;
 
@@ -36,15 +36,15 @@ pub async fn transaction_spec() -> taitan_orm::Result<()> {
         id: 3,
         request_id: Uuid::new_v4(),
         name: "Allen".to_string(),
-        age: Some(24),
-        birthday: Some(datetime!(2019-01-01 0:00)),
+        age: Optional::Some(24),
+        birthday: Optional::Some(datetime!(2019-01-01 0:00)),
     };
     let user4 = User {
         id: 3,
         request_id: Uuid::new_v4(),
         name: "Bob".to_string(),
-        age: Some(24),
-        birthday: Some(datetime!(2019-01-01 0:00)),
+        age: Optional::Some(24),
+        birthday: Optional::Some(datetime!(2019-01-01 0:00)),
     };
     test_rollback(&mut db, &user3, &user4).await?;
 

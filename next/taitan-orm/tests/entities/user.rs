@@ -7,10 +7,7 @@ use std::borrow::Cow;
 use std::error::Error;
 use taitan_orm::database::sqlite::SqliteDatabase;
 use taitan_orm::SqlExecutor;
-use taitan_orm_trait::{
-    validate_order_by, Entity, Location, LocationExpr, LocationTrait, Mutation, OrderBy,
-    SelectedEntity, Selection, Unique, UpdateCommand,
-};
+use taitan_orm_trait::{validate_order_by, Entity, Location, LocationExpr, LocationTrait, Mutation, Optional, OrderBy, SelectedEntity, Selection, Unique, UpdateCommand};
 use time::PrimitiveDateTime;
 use uuid::Uuid;
 
@@ -19,8 +16,8 @@ pub struct User {
     pub id: i64,
     pub request_id: Uuid,
     pub name: String,
-    pub age: Option<i32>,
-    pub birthday: Option<PrimitiveDateTime>,
+    pub age: Optional<i32>,
+    pub birthday: Optional<PrimitiveDateTime>,
 }
 
 pub async fn prepare_user_table(db: &mut SqliteDatabase) -> taitan_orm::Result<()> {
@@ -48,10 +45,10 @@ impl Entity for User {
         fields.push("id".to_string());
         fields.push("request_id".to_string());
         fields.push("name".to_string());
-        if let Some(_) = &self.age {
+        if let Optional::Some(_) = &self.age {
             fields.push("age".to_string());
         }
-        if let Some(_) = &self.birthday {
+        if let Optional::Some(_) = &self.birthday {
             fields.push("birthday".to_string());
         }
         fields
@@ -61,10 +58,10 @@ impl Entity for User {
         let mut fields = Vec::new();
         fields.push("request_id".to_string());
         fields.push("name".to_string());
-        if let Some(_) = &self.age {
+        if let Optional::Some(_) = &self.age {
             fields.push("age".to_string());
         }
-        if let Some(_) = &self.birthday {
+        if let Optional::Some(_) = &self.birthday {
             fields.push("birthday".to_string());
         }
         fields
@@ -83,10 +80,10 @@ impl Entity for User {
         args.add(&self.id)?;
         args.add(&self.request_id)?;
         args.add(&self.name)?;
-        if let Some(age) = &self.age {
+        if let Optional::Some(age) = &self.age {
             args.add(age)?;
         }
-        if let Some(birthday) = &self.birthday {
+        if let Optional::Some(birthday) = &self.birthday {
             args.add(birthday)?;
         }
         Ok(args)
@@ -98,19 +95,19 @@ impl Entity for User {
 
         args.add(&self.request_id)?;
         args.add(&self.name)?;
-        if let Some(age) = &self.age {
+        if let Optional::Some(age) = &self.age {
             args.add(age)?;
         }
-        if let Some(birthday) = &self.birthday {
+        if let Optional::Some(birthday) = &self.birthday {
             args.add(birthday)?;
         }
 
         args.add(&self.request_id)?;
         args.add(&self.name)?;
-        if let Some(age) = &self.age {
+        if let Optional::Some(age) = &self.age {
             args.add(age)?;
         }
-        if let Some(birthday) = &self.birthday {
+        if let Optional::Some(birthday) = &self.birthday {
             args.add(birthday)?;
         }
         Ok(args)
@@ -134,16 +131,16 @@ impl Unique for UserPrimary {
 
     fn gen_update_arguments_sqlite<'a>(&'a self, mutation: &'a Self::Mutation) -> Result<SqliteArguments<'a>, BoxDynError> {
         let mut args = SqliteArguments::default();
-        if let Some(request_id) = &mutation.request_id {
+        if let Optional::Some(request_id) = &mutation.request_id {
             args.add(request_id)?;
         }
-        if let Some(name) = &mutation.name {
+        if let Optional::Some(name) = &mutation.name {
             args.add(name)?;
         }
-        if let Some(age) = &mutation.age {
+        if let Optional::Some(age) = &mutation.age {
             args.add(age)?;
         }
-        if let Some(birthday) = mutation.birthday {
+        if let Optional::Some(birthday) = mutation.birthday {
             args.add(birthday)?;
         }
         args.add(&self.id)?;
@@ -160,11 +157,11 @@ impl Unique for UserPrimary {
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct UserSelected {
-    pub id: Option<u64>,
-    pub request_id: Option<Uuid>,
-    pub name: Option<String>,
-    pub age: Option<i32>,
-    pub birthday: Option<PrimitiveDateTime>,
+    pub id: Optional<u64>,
+    pub request_id: Optional<Uuid>,
+    pub name: Optional<String>,
+    pub age: Optional<i32>,
+    pub birthday: Optional<PrimitiveDateTime>,
     // money: Option<BigDecimal>,
     // ipv4addr: Option<Ipv4Addr>,
     // ipv6addr: Option<Ipv6Addr>,
@@ -182,19 +179,19 @@ impl SelectedEntity<Sqlite> for UserSelected {
     {
         let mut selected = Self::default();
         if selection.id {
-            selected.id = row.try_get("id").ok();
+            selected.id = row.try_get("id").ok().into();
         }
         if selection.request_id {
-            selected.request_id = row.try_get("request_id").ok();
+            selected.request_id = row.try_get("request_id").ok().into();
         }
         if selection.name {
-            selected.name = row.try_get("name").ok();
+            selected.name = row.try_get("name").ok().into();
         }
         if selection.age {
-            selected.age = row.try_get("age").ok();
+            selected.age = row.try_get("age").ok().into();
         }
         if selection.birthday {
-            selected.birthday = row.try_get("birthday").ok();
+            selected.birthday = row.try_get("birthday").ok().into();
         }
         Ok(selected)
     }
@@ -253,10 +250,10 @@ impl Selection for UserSelection {
 
 #[derive(Debug)]
 pub struct UserMutation {
-    pub request_id: Option<Uuid>,
-    pub name: Option<String>,
-    pub age: Option<i32>,
-    pub birthday: Option<PrimitiveDateTime>,
+    pub request_id: taitan_orm::Optional<Uuid>,
+    pub name: taitan_orm::Optional<String>,
+    pub age: taitan_orm::Optional<i32>,
+    pub birthday: taitan_orm::Optional<PrimitiveDateTime>,
     // money: Option<BigDecimal>,
     // ipv4addr: Option<Ipv4Addr>,
     // ipv6addr: Option<Ipv6Addr>,
@@ -267,16 +264,16 @@ impl Mutation for UserMutation {
     type Location = UserLocation;
     fn get_mutation_fields_name(&self) -> Vec<String> {
         let mut fields = Vec::new();
-        if let Some(_) = &self.request_id {
+        if let Optional::Some(_) = &self.request_id {
             fields.push("request_id".to_string());
         }
-        if let Some(_) = &self.name {
+        if let Optional::Some(_) = &self.name {
             fields.push("name".to_string());
         }
-        if let Some(_) = &self.age {
+        if let Optional::Some(_) = &self.age {
             fields.push("age".to_string());
         }
-        if let Some(_) = &self.birthday {
+        if let Optional::Some(_) = &self.birthday {
             fields.push("birthday".to_string());
         }
         // if let Some(_) = &self.money {
@@ -299,16 +296,16 @@ impl<'a> UpdateCommand for UserPrimaryMutationPair<'a> {
     fn gen_update_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
         let mut args = SqliteArguments::default();
 
-        if let Some(request_id) = &self.0.request_id {
+        if let Optional::Some(request_id) = &self.0.request_id {
             args.add(request_id)?;
         }
-        if let Some(name) = &self.0.name {
+        if let Optional::Some(name) = &self.0.name {
             args.add(name)?;
         }
-        if let Some(age) = &self.0.age {
+        if let Optional::Some(age) = &self.0.age {
             args.add(age)?;
         }
-        if let Some(birthday) = &self.0.birthday {
+        if let Optional::Some(birthday) = &self.0.birthday {
             args.add(birthday)?;
         }
 
@@ -320,10 +317,10 @@ impl<'a> UpdateCommand for UserPrimaryMutationPair<'a> {
 
 #[derive(Debug)]
 pub struct UserLocation {
-    pub request_id: Option<LocationExpr<Uuid>>,
-    pub name: Option<LocationExpr<String>>,
-    pub age: Option<LocationExpr<i32>>,
-    pub birthday: Option<LocationExpr<PrimitiveDateTime>>,
+    pub request_id: Optional<LocationExpr<Uuid>>,
+    pub name: Optional<LocationExpr<String>>,
+    pub age: Optional<LocationExpr<i32>>,
+    pub birthday: Optional<LocationExpr<PrimitiveDateTime>>,
     // money: LocationExpr<BigDecimal>,
     // ipv4addr: LocationExpr<Ipv4Addr>,
     // ipv6addr: LocationExpr<Ipv6Addr>,
@@ -354,16 +351,16 @@ impl Location for UserLocation {
 
     fn get_location_fields_name(&self) -> Vec<String> {
         let mut fields = Vec::new();
-        if let Some(_) = &self.request_id {
+        if let Optional::Some(_) = &self.request_id {
             fields.push("request_id".to_string());
         }
-        if let Some(_) = &self.name {
+        if let Optional::Some(_) = &self.name {
             fields.push("name".to_string());
         }
-        if let Some(_) = &self.age {
+        if let Optional::Some(_) = &self.age {
             fields.push("age".to_string());
         }
-        if let Some(_) = &self.birthday {
+        if let Optional::Some(_) = &self.birthday {
             fields.push("birthday".to_string());
         }
         // if let Some(_) = &self.money {
@@ -380,28 +377,28 @@ impl Location for UserLocation {
 
     fn get_where_clause(&self, wrap_char: char, place_holder: char) -> String {
         let mut sql = String::default();
-        if let Some(request_id) = &self.request_id {
+        if let Optional::Some(request_id) = &self.request_id {
             sql.push(wrap_char);
             sql.push_str("request_id");
             sql.push(wrap_char);
             sql.push_str(request_id.get_cmp_sql());
             sql.push(place_holder);
         }
-        if let Some(name) = &self.name {
+        if let Optional::Some(name) = &self.name {
             sql.push(wrap_char);
             sql.push_str("name");
             sql.push(wrap_char);
             sql.push_str(name.get_cmp_sql());
             sql.push(place_holder);
         }
-        if let Some(age) = &self.age {
+        if let Optional::Some(age) = &self.age {
             sql.push(wrap_char);
             sql.push_str("age");
             sql.push(wrap_char);
             sql.push_str(age.get_cmp_sql());
             sql.push(place_holder);
         }
-        if let Some(birthday) = &self.birthday {
+        if let Optional::Some(birthday) = &self.birthday {
             sql.push(wrap_char);
             sql.push_str("birthday");
             sql.push(wrap_char);
@@ -414,16 +411,16 @@ impl Location for UserLocation {
     fn gen_location_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
         let mut args = SqliteArguments::default();
 
-        if let Some(request_id) = &self.request_id {
+        if let Optional::Some(request_id) = &self.request_id {
             args.add(&request_id.val)?;
         }
-        if let Some(name) = &self.name {
+        if let Optional::Some(name) = &self.name {
             args.add(&name.val)?;
         }
-        if let Some(age) = &self.age {
+        if let Optional::Some(age) = &self.age {
             args.add(&age.val)?;
         }
-        if let Some(birthday) = &self.birthday {
+        if let Optional::Some(birthday) = &self.birthday {
             args.add(&birthday.val)?;
         }
 
@@ -473,29 +470,29 @@ impl UpdateCommand for UserLocationMutationPair {
     fn gen_update_arguments_sqlite(&self) -> Result<SqliteArguments<'_>, BoxDynError> {
         let mut args = SqliteArguments::default();
 
-        if let Some(request_id) = &self.0.request_id {
+        if let Optional::Some(request_id) = &self.0.request_id {
             args.add(request_id)?;
         }
-        if let Some(name) = &self.0.name {
+        if let Optional::Some(name) = &self.0.name {
             args.add(name)?;
         }
-        if let Some(age) = &self.0.age {
+        if let Optional::Some(age) = &self.0.age {
             args.add(age)?;
         }
-        if let Some(birthday) = &self.0.birthday {
+        if let Optional::Some(birthday) = &self.0.birthday {
             args.add(birthday)?;
         }
 
-        if let Some(request_id) = &self.1.request_id {
+        if let Optional::Some(request_id) = &self.1.request_id {
             args.add(request_id.val)?;
         }
-        if let Some(name) = &self.1.name {
+        if let Optional::Some(name) = &self.1.name {
             args.add(name.clone().val)?;
         }
-        if let Some(age) = &self.1.age {
+        if let Optional::Some(age) = &self.1.age {
             args.add(age.val)?;
         }
-        if let Some(birthday) = &self.1.birthday {
+        if let Optional::Some(birthday) = &self.1.birthday {
             args.add(birthday.val)?;
         }
 

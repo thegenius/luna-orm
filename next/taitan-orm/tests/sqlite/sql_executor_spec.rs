@@ -38,7 +38,7 @@
 //! | `uuid::fmt::Simple`                   | CHAR(32), VARCHAR, TEXT                              |
 
 use std::marker::PhantomData;
-use taitan_orm_trait::{CmpOperator, LocationExpr, LocationTrait, Selection};
+use taitan_orm_trait::{CmpOperator, LocationExpr, LocationTrait, Optional, Selection};
 use taitan_orm_trait::{Entity, Location, Mutation, SelectedEntity, Unique, UpdateCommand};
 use taitan_orm::SqlGenericExecutor;
 
@@ -276,17 +276,17 @@ pub async fn sql_executor_spec() -> taitan_orm::Result<()> {
         id: 1,
         request_id: Uuid::new_v4(),
         name: "Allen".to_string(),
-        age: Some(23),
-        birthday: Some(datetime!(2019-01-01 0:00)),
+        age: Optional::Some(23),
+        birthday: Optional::Some(datetime!(2019-01-01 0:00)),
     };
 
     test_insert_user(&mut db.clone(), &entity1).await?;
 
     let mutaion1 = UserMutation {
-        request_id: Some(Uuid::new_v4()),
-        name: Some("Allen Woods".to_string()),
-        age: Some(25),
-        birthday: Some(datetime!(2019-01-02 0:00)),
+        request_id: Optional::Some(Uuid::new_v4()),
+        name: Optional::Some("Allen Woods".to_string()),
+        age: Optional::Some(25),
+        birthday: Optional::Some(datetime!(2019-01-02 0:00)),
     };
     let primary1 = UserPrimary { id: 1 };
     test_update_user(&mut db.clone(), &mutaion1, &primary1).await?;
@@ -295,8 +295,8 @@ pub async fn sql_executor_spec() -> taitan_orm::Result<()> {
         id: 1,
         request_id: Uuid::new_v4(),
         name: "Bob".to_string(),
-        age: Some(24),
-        birthday: Some(datetime!(2020-01-03 12:59)),
+        age: Optional::Some(24),
+        birthday: Optional::Some(datetime!(2020-01-03 12:59)),
     };
     test_upsert_user(&mut db.clone(), &entity1).await?;
 
@@ -304,8 +304,8 @@ pub async fn sql_executor_spec() -> taitan_orm::Result<()> {
         id: 2,
         request_id: Uuid::new_v4(),
         name: "Bob Woods".to_string(),
-        age: Some(24),
-        birthday: Some(datetime!(2020-01-01 0:00)),
+        age: Optional::Some(24),
+        birthday: Optional::Some(datetime!(2020-01-01 0:00)),
     };
     test_insert_user(&mut db.clone(), &entity1).await?;
     test_select_all(&mut db.clone(), 2).await?;
@@ -315,10 +315,10 @@ pub async fn sql_executor_spec() -> taitan_orm::Result<()> {
     test_select_all(&mut db.clone(), 1).await?;
 
     let user_location: UserLocation = UserLocation {
-        request_id: None,
-        name: None,
-        age: None,
-        birthday: Some(LocationExpr::new(
+        request_id: Optional::None,
+        name: Optional::None,
+        age: Optional::None,
+        birthday: Optional::Some(LocationExpr::new(
             CmpOperator::Eq,
             datetime!(2020-01-03 12:59),
         )),

@@ -19,6 +19,9 @@ mod sql_generic_executor;
 mod extractor;
 mod api;
 
+
+pub use taitan_orm_trait::Optional;
+
 // pub use db::DB;
 pub use dto::CountResult;
 pub use error::TaitanOrmError;
