@@ -1,4 +1,5 @@
 use bit_vec::BitVec;
+use sqlx::Sqlite;
 use taitan_orm_trait::FieldName;
 use time::PrimitiveDateTime;
 use uuid::Uuid;
@@ -620,6 +621,35 @@ impl taitan_orm::traits::SelectedEntity<sqlx::Sqlite> for UserSelectedEntity {
         };
         Ok(selected)
     }
+
+    fn from_row_bits(bits: &bit_vec::BitVec, row: <sqlx::Sqlite as sqlx::Database>::Row) -> Result<Self, sqlx::Error>
+    where
+        Self: Sized {
+        let mut selected = Self::default();
+        let mut i = 0;
+        if bits.get(0).unwrap_or(false) {
+            selected.id = sqlx::Row::try_get(&row, i).ok();
+            i += 1;
+        };
+        if bits.get(1).unwrap_or(false) {
+            selected.request_id = sqlx::Row::try_get(&row, i).ok();
+            i += 1;
+        };
+        if bits.get(2).unwrap_or(false)  {
+            selected.age = sqlx::Row::try_get(&row, i).ok();
+            i += 1;
+        };
+        if bits.get(3).unwrap_or(false)  {
+            selected.name = sqlx::Row::try_get(&row, i).ok();
+            i += 1;
+        };
+        if bits.get(4).unwrap_or(false)  {
+            selected.birthday = sqlx::Row::try_get(&row, i).ok();
+            i += 1;
+        };
+        Ok(selected)
+    }
+
     fn from_row_full(row: <sqlx::Sqlite as sqlx::Database>::Row) -> Result<Self, sqlx::Error>
     where
         Self: Sized,

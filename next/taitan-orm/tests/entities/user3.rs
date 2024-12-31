@@ -926,6 +926,37 @@ impl taitan_orm::traits::SelectedEntity<sqlx::Sqlite> for UserSelectedEntity {
         };
         Ok(selected)
     }
+    fn from_row_bits(
+        bits: &bit_vec::BitVec,
+        row: <sqlx::Sqlite as sqlx::Database>::Row,
+    ) -> Result<Self, sqlx::Error>
+    where
+        Self: Sized,
+    {
+        let mut selected = Self::default();
+        let mut i = 0;
+        if bits.get(0usize).unwrap_or(false) {
+            selected.id = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if bits.get(1usize).unwrap_or(false) {
+            selected.request_id = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if bits.get(2usize).unwrap_or(false) {
+            selected.age = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if bits.get(3usize).unwrap_or(false) {
+            selected.name = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if bits.get(4usize).unwrap_or(false) {
+            selected.birthday = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        Ok(selected)
+    }
     fn from_row_full(row: <sqlx::Sqlite as sqlx::Database>::Row) -> Result<Self, sqlx::Error>
     where
         Self: Sized,
@@ -978,6 +1009,37 @@ impl taitan_orm::traits::SelectedEntity<sqlx::MySql> for UserSelectedEntity {
         };
         Ok(selected)
     }
+    fn from_row_bits(
+        bits: &bit_vec::BitVec,
+        row: <sqlx::MySql as sqlx::Database>::Row,
+    ) -> Result<Self, sqlx::Error>
+    where
+        Self: Sized,
+    {
+        let mut selected = Self::default();
+        let mut i = 0;
+        if bits.get(0usize).unwrap_or(false) {
+            selected.id = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if bits.get(1usize).unwrap_or(false) {
+            selected.request_id = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if bits.get(2usize).unwrap_or(false) {
+            selected.age = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if bits.get(3usize).unwrap_or(false) {
+            selected.name = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if bits.get(4usize).unwrap_or(false) {
+            selected.birthday = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        Ok(selected)
+    }
     fn from_row_full(row: <sqlx::MySql as sqlx::Database>::Row) -> Result<Self, sqlx::Error>
     where
         Self: Sized,
@@ -1025,6 +1087,37 @@ impl taitan_orm::traits::SelectedEntity<sqlx::Postgres> for UserSelectedEntity {
             i += 1;
         };
         if selection.birthday {
+            selected.birthday = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        Ok(selected)
+    }
+    fn from_row_bits(
+        bits: &bit_vec::BitVec,
+        row: <sqlx::Postgres as sqlx::Database>::Row,
+    ) -> Result<Self, sqlx::Error>
+    where
+        Self: Sized,
+    {
+        let mut selected = Self::default();
+        let mut i = 0;
+        if bits.get(0usize).unwrap_or(false) {
+            selected.id = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if bits.get(1usize).unwrap_or(false) {
+            selected.request_id = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if bits.get(2usize).unwrap_or(false) {
+            selected.age = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if bits.get(3usize).unwrap_or(false) {
+            selected.name = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if bits.get(4usize).unwrap_or(false) {
             selected.birthday = sqlx::Row::try_get(&row, i).ok().into();
             i += 1;
         };

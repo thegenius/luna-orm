@@ -1,5 +1,10 @@
 use crate::attrs::{AttrParser, DefaultAttrParser};
 use crate::fields::fields_filter::FieldsFilter;
+use crate::fields::mappers::{
+    ArgsAddConstructor, ArgsConstructorMySql, ArgsConstructorPostgres, ArgsConstructorSqlite,
+    NamesAddConstructor, NamesConstructor, RowConstructor, RowGetConstructor, StructConstructor,
+    StructFieldConstructor,
+};
 use crate::fields::{DefaultFieldMapper, FieldMapType, FieldMapper, LocationParser, UniqueParser};
 use crate::types::{DefaultTypeChecker, TypeChecker};
 use crate::types::{DefaultTypeExtractor, TypeExtractor};
@@ -8,7 +13,6 @@ use quote::{quote, quote_spanned};
 use syn::Field;
 use syn::FieldsNamed;
 use taitan_orm_trait::NotImplementError;
-use crate::fields::mappers::{ArgsAddConstructor, ArgsConstructorMySql, ArgsConstructorPostgres, ArgsConstructorSqlite, NamesAddConstructor, NamesConstructor, RowConstructor, RowGetConstructor, StructConstructor, StructFieldConstructor};
 
 pub struct FieldsParser {
     fields: Vec<Field>,
@@ -39,6 +43,18 @@ pub trait FieldsContainer {
             .map(wrap_fn)
             .collect::<Vec<TokenStream>>()
     }
+
+    fn map_field_vec_with_index<F>(&self, wrap_fn: F) -> Vec<TokenStream>
+    where
+        F: Fn(&Field, usize) -> TokenStream,
+    {
+        let cloned_names = self.get_fields().clone();
+        cloned_names
+            .iter() // 注意这里我们使用 iter() 而不是 into_iter()，因为我们不想消耗 cloned_names
+            .enumerate() // 使用 enumerate() 来获取索引
+            .map(|(index, field)| wrap_fn(field, index))
+            .collect::<Vec<TokenStream>>()
+    }
 }
 
 impl FieldsContainer for FieldsParser {
@@ -65,7 +81,6 @@ impl LocationParser for FieldsParser {}
 impl RowGetConstructor for FieldsParser {}
 
 impl RowConstructor for FieldsParser {}
-
 
 impl FieldsParser {
     pub fn map_with<F>(self, map_fn: &F) -> Vec<TokenStream>
@@ -213,10 +228,9 @@ impl FieldsParser {
     // }
 
     pub fn get_bool_name_vec(&self) -> TokenStream {
-        let tokens =
-            DefaultFieldMapper::map_field_vec(&self.fields, &|field: Field| {
-                DefaultFieldMapper::map_field(field, FieldMapType::BoolPush)
-            });
+        let tokens = DefaultFieldMapper::map_field_vec(&self.fields, &|field: Field| {
+            DefaultFieldMapper::map_field(field, FieldMapType::BoolPush)
+        });
         quote!(
             let mut fields = Vec::new();
             #(#tokens)*
