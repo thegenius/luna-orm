@@ -509,7 +509,13 @@ fn wrap_locate_fields(fields: &[String], wrap_char: char, place_holder: char) ->
 fn wrap_locate_fields_from_name(fields: &[FieldName], wrap_char: char, place_holder: char) -> String {
     fields
         .iter()
-        .map(|e| format!("{}{}{} = {}", wrap_char, e.name, wrap_char, place_holder))
+        .map(|e|
+            if e.is_null {
+                format!("{}{}{} IS NULL ", wrap_char, e.name, wrap_char)
+            } else {
+                format!("{}{}{} = {}", wrap_char, e.name, wrap_char, place_holder)
+            }
+        )
         .collect::<Vec<String>>()
         .join(",")
 }
@@ -572,7 +578,13 @@ fn generate_question_mark_list(fields: &[String]) -> String {
 fn generate_question_mark_list_from_names(fields: &[FieldName]) -> String {
     fields
         .iter()
-        .map(|_| "?".to_string())
+        .map(|e| {
+            if e.is_null {
+                "NULL".to_string()
+            } else {
+                "?".to_string()
+            }
+        })
         .collect::<Vec<String>>()
         .join(", ")
 }
