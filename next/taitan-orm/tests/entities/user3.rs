@@ -24,11 +24,11 @@ impl taitan_orm::traits::Entity for UserEntity {
     fn get_insert_fields(&self) -> Vec<String> {
         let mut fields = Vec::new();
         fields.push("request_id".to_string());
-        if self.age.is_some() {
+        if self.age.not_none() {
             fields.push("age".to_string());
         };
         fields.push("name".to_string());
-        if self.birthday.is_some() {
+        if self.birthday.not_none() {
             fields.push("birthday".to_string());
         };
         return fields;
@@ -36,11 +36,11 @@ impl taitan_orm::traits::Entity for UserEntity {
     fn get_upsert_set_fields(&self) -> Vec<String> {
         let mut fields = Vec::new();
         fields.push("request_id".to_string());
-        if self.age.is_some() {
+        if self.age.not_none() {
             fields.push("age".to_string());
         };
         fields.push("name".to_string());
-        if self.birthday.is_some() {
+        if self.birthday.not_none() {
             fields.push("birthday".to_string());
         };
         return fields;
@@ -463,55 +463,100 @@ impl taitan_orm::traits::Location for UserLocation {
     }
     fn get_location_fields_name(&self) -> Vec<String> {
         let mut fields = Vec::new();
-        if self.id.is_some() {
+        if self.id.not_none() {
             fields.push("id".to_string());
         };
         fields.push("request_id".to_string());
-        if self.age.is_some() {
+        if self.age.not_none() {
             fields.push("age".to_string());
         };
         fields.push("name".to_string());
-        if self.birthday.is_some() {
+        if self.birthday.not_none() {
             fields.push("birthday".to_string());
         };
         return fields;
     }
     fn get_where_clause(&self, wrap_char: char, place_holder: char) -> String {
         let mut sql = String::default();
-        if let taitan_orm::Optional::Some(id) = &self.id {
-            sql.push(wrap_char);
-            sql.push_str("id");
-            sql.push(wrap_char);
-            sql.push_str(id.cmp.get_sql());
-            sql.push(place_holder);
+        match &self.id {
+            Optional::Some(id) => {
+                sql.push(wrap_char);
+                sql.push_str("id");
+                sql.push(wrap_char);
+                sql.push_str(id.cmp.get_sql());
+                sql.push(place_holder);
+            }
+            Optional::None => {
+                sql.push(wrap_char);
+                sql.push_str("id");
+                sql.push(wrap_char);
+                sql.push_str(" IS NULL ");
+            }
+            _ => {}
         }
-        if let taitan_orm::Optional::Some(request_id) = &self.request_id {
-            sql.push(wrap_char);
-            sql.push_str("request_id");
-            sql.push(wrap_char);
-            sql.push_str(request_id.cmp.get_sql());
-            sql.push(place_holder);
+        match &self.request_id {
+            Optional::Some(request_id) => {
+                sql.push(wrap_char);
+                sql.push_str("request_id");
+                sql.push(wrap_char);
+                sql.push_str(request_id.cmp.get_sql());
+                sql.push(place_holder);
+            }
+            Optional::None => {
+                sql.push(wrap_char);
+                sql.push_str("request_id");
+                sql.push(wrap_char);
+                sql.push_str(" IS NULL ");
+            }
+            _ => {}
         }
-        if let taitan_orm::Optional::Some(age) = &self.age {
-            sql.push(wrap_char);
-            sql.push_str("age");
-            sql.push(wrap_char);
-            sql.push_str(age.cmp.get_sql());
-            sql.push(place_holder);
+        match &self.age {
+            Optional::Some(age) => {
+                sql.push(wrap_char);
+                sql.push_str("age");
+                sql.push(wrap_char);
+                sql.push_str(age.cmp.get_sql());
+                sql.push(place_holder);
+            }
+            Optional::None => {
+                sql.push(wrap_char);
+                sql.push_str("age");
+                sql.push(wrap_char);
+                sql.push_str(" IS NULL ");
+            }
+            _ => {}
         }
-        if let taitan_orm::Optional::Some(name) = &self.name {
-            sql.push(wrap_char);
-            sql.push_str("name");
-            sql.push(wrap_char);
-            sql.push_str(name.cmp.get_sql());
-            sql.push(place_holder);
+        match &self.name {
+            Optional::Some(name) => {
+                sql.push(wrap_char);
+                sql.push_str("name");
+                sql.push(wrap_char);
+                sql.push_str(name.cmp.get_sql());
+                sql.push(place_holder);
+            }
+            Optional::None => {
+                sql.push(wrap_char);
+                sql.push_str("name");
+                sql.push(wrap_char);
+                sql.push_str(" IS NULL ");
+            }
+            _ => {}
         }
-        if let taitan_orm::Optional::Some(birthday) = &self.birthday {
-            sql.push(wrap_char);
-            sql.push_str("birthday");
-            sql.push(wrap_char);
-            sql.push_str(birthday.cmp.get_sql());
-            sql.push(place_holder);
+        match &self.birthday {
+            Optional::Some(birthday) => {
+                sql.push(wrap_char);
+                sql.push_str("birthday");
+                sql.push(wrap_char);
+                sql.push_str(birthday.cmp.get_sql());
+                sql.push(place_holder);
+            }
+            Optional::None => {
+                sql.push(wrap_char);
+                sql.push_str("birthday");
+                sql.push(wrap_char);
+                sql.push_str(" IS NULL ");
+            }
+            _ => {}
         }
         return sql;
     }
@@ -590,16 +635,16 @@ impl taitan_orm::traits::Mutation for UserMutation {
     type Location = UserLocation;
     fn get_mutation_fields_name(&self) -> Vec<String> {
         let mut fields = Vec::new();
-        if let taitan_orm::Optional::Some(_) = self.request_id {
+        if self.request_id.not_none() {
             fields.push("request_id".to_string());
         };
-        if let taitan_orm::Optional::Some(_) = self.age {
+        if self.age.not_none() {
             fields.push("age".to_string());
         };
-        if let taitan_orm::Optional::Some(_) = self.name {
+        if self.name.not_none() {
             fields.push("name".to_string());
         };
-        if let taitan_orm::Optional::Some(_) = self.birthday {
+        if self.birthday.not_none() {
             fields.push("birthday".to_string());
         };
         return fields;

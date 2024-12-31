@@ -12,7 +12,7 @@ impl<T> PartialEq<Option<T>> for Optional<T> {
         match self {
             Optional::Null => false,
             Optional::None => matches!(other, None),
-            Optional::Some(s) => matches!(other, Some(s))
+            Optional::Some(s) => matches!(other, Some(s)),
         }
     }
 }
@@ -39,6 +39,42 @@ impl<T> Optional<T> {
             _ => panic!("called `Optional::unwrap()` on a `None`"),
         }
     }
+
+    pub fn unwrap_or(self, default: T) -> T {
+        match self {
+            Optional::Some(value) => value,
+            _ => default,
+        }
+    }
+
+    pub fn unwrap_or_default(self) -> T where T: Default {
+        match self {
+            Optional::Some(value) => value,
+            _ => Default::default(),
+        }
+    }
+
+    pub fn not_some(&self) -> bool {
+        match self {
+            Optional::Some(_) => false,
+            _ => true,
+        }
+    }
+
+    pub fn not_none(&self) -> bool {
+        match self {
+            Optional::None => false,
+            _ => true,
+        }
+    }
+
+    pub fn not_null(&self) -> bool {
+        match self {
+            Optional::Null => false,
+            _ => true,
+        }
+    }
+
     pub fn is_some(&self) -> bool {
         match self {
             Optional::Some(_) => true,
