@@ -1,3 +1,4 @@
+use taitan_orm_trait::FieldName;
 use time::PrimitiveDateTime;
 use uuid::Uuid;
 
@@ -17,29 +18,30 @@ impl taitan_orm::traits::Entity for UserEntity {
     fn get_table_name(&self) -> &'static str {
         "user"
     }
-    fn get_insert_fields(&self) -> Vec<String> {
-        let mut fields = Vec::new();
-        fields.push("request_id".to_string());
+    fn get_insert_fields(&self) -> Vec<FieldName> {
+        let mut fields: Vec<FieldName> = Vec::new();
+        fields.push(FieldName::from_str("request_id", false));
         if self.age.is_some() {
-            fields.push("age".to_string());
+            fields.push(FieldName::from_str("age", true));
         };
-        fields.push("name".to_string());
+
+        FieldName::from_str("name", false);
         if self.birthday.is_some() {
-            fields.push("birthday".to_string());
+            fields.push(FieldName::from_str("birthday", false));
         };
         return fields;
     }
-    fn get_upsert_set_fields(&self) -> Vec<String> {
+    fn get_upsert_set_fields(&self) -> Vec<FieldName> {
         let mut fields = Vec::new();
-        fields.push("request_id".to_string());
+        fields.push(FieldName::from_str("request_id", false));
         if self.age.is_some() {
-            fields.push("age".to_string());
+            fields.push(FieldName::from_str("age", false));
         };
-        fields.push("name".to_string());
+        fields.push(FieldName::from_str("name", false));
         if self.birthday.is_some() {
-            fields.push("birthday".to_string());
+            fields.push(FieldName::from_str("birthday", false));
         };
-        return fields;
+        fields
     }
     fn get_auto_increment_field(&self) -> Option<&'static str> {
         Some("id")
@@ -196,7 +198,6 @@ pub struct UserAgeUnique {
     age: i32,
 }
 impl taitan_orm::traits::Unique for UserAgeUnique {
-
     type Mutation = UserMutation;
     fn get_table_name(&self) -> &'static str {
         "user"
@@ -403,21 +404,21 @@ pub struct UserMutation {
 }
 impl taitan_orm::traits::Mutation for UserMutation {
     type Location = UserLocation;
-    fn get_mutation_fields_name(&self) -> Vec<String> {
+    fn get_mutation_fields_name(&self) -> Vec<FieldName> {
         let mut fields = Vec::new();
         if let Some(_) = self.request_id {
-            fields.push("request_id".to_string());
+            fields.push(FieldName::from_str("request_id", false));
         };
         if let Some(_) = self.age {
-            fields.push("age".to_string());
+            fields.push(FieldName::from_str("age", false));
         };
         if let Some(_) = self.name {
-            fields.push("name".to_string());
+            fields.push(FieldName::from_str("name", false));
         };
         if let Some(_) = self.birthday {
-            fields.push("birthday".to_string());
+            fields.push(FieldName::from_str("birthday", false));
         };
-        return fields;
+        fields
     }
 
     fn gen_change_arguments_sqlite<'a>(

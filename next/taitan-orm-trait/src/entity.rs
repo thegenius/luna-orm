@@ -4,12 +4,14 @@ use sqlx::mysql::MySqlArguments;
 use sqlx::postgres::PgArguments;
 use sqlx::sqlite::SqliteArguments;
 use std::fmt::Debug;
+use crate::FieldName;
+
 pub trait Entity: Sync + Debug {
     fn get_table_name(&self) -> &str;
 
-    fn get_insert_fields(&self) -> Vec<String>;
+    fn get_insert_fields(&self) -> Vec<FieldName>;
 
-    fn get_upsert_set_fields(&self) -> Vec<String>;
+    fn get_upsert_set_fields(&self) -> Vec<FieldName>;
 
     fn get_auto_increment_field(&self) -> Option<&str>;
 

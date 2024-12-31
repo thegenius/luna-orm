@@ -15,6 +15,7 @@ mod update_command;
 mod write_command;
 mod template;
 mod optional;
+mod field;
 
 pub use schema::Schema;
 pub use optional::Optional;
@@ -53,3 +54,4 @@ pub use template::TemplateValue;
 
 pub use write_command::WriteCommand;
 pub use page::paged_list::build_paged_list;
+pub use field::FieldName;

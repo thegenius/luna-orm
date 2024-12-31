@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 use taitan_orm_trait::pagination::Pagination;
-use taitan_orm_trait::FromClause;
+use taitan_orm_trait::{FieldName, FromClause};
 use taitan_orm_trait::JoinedConditions;
 use taitan_orm_trait::{Entity, Location, Mutation, Unique};
 use taitan_orm_trait::{OrderBy, Selection};
@@ -25,10 +25,10 @@ impl SqlGenerator for MySqlGenerator {
     fn get_upsert_sql(&self, entity: &dyn Entity) -> String {
         let table_name = entity.get_table_name();
         let field_names = entity.get_insert_fields();
-        let fields = wrap_fields(&field_names, self.get_wrap_char());
-        let marks = generate_question_mark_list(&field_names);
+        let fields = wrap_field_names(&field_names, self.get_wrap_char());
+        let marks = generate_question_mark_list_from_names(&field_names);
         let set_field_names = entity.get_upsert_set_fields();
-        let assign_clause = wrap_locate_fields(
+        let assign_clause = wrap_locate_fields_from_name(
             &set_field_names,
             self.get_wrap_char(),
             self.get_place_holder(),
@@ -51,8 +51,8 @@ impl SqlGenerator for MySqlGenerator {
     fn get_create_sql(&self, entity: &dyn Entity) -> String {
         let table_name = entity.get_table_name();
         let field_names = entity.get_insert_fields();
-        let fields = wrap_fields(&field_names, self.get_wrap_char());
-        let marks = generate_question_mark_list(&field_names);
+        let fields = wrap_field_names(&field_names, self.get_wrap_char());
+        let marks = generate_question_mark_list_from_names(&field_names);
         let insert_sql = format!(
             "INSERT INTO {}{}{} ({}) VALUES({})",
             self.get_wrap_char(),
@@ -291,8 +291,8 @@ pub trait SqlGenerator {
     fn get_insert_sql(&self, entity: &dyn Entity) -> String {
         let table_name = entity.get_table_name();
         let field_names = entity.get_insert_fields();
-        let fields = wrap_fields(&field_names, self.get_wrap_char());
-        let marks = generate_question_mark_list(&field_names);
+        let fields = wrap_field_names(&field_names, self.get_wrap_char());
+        let marks = generate_question_mark_list_from_names(&field_names);
         let insert_sql = format!(
             "INSERT INTO {}{}{} ({}) VALUES({})",
             self.get_wrap_char(),
@@ -308,8 +308,8 @@ pub trait SqlGenerator {
     fn get_create_sql(&self, entity: &dyn Entity) -> String {
         let table_name = entity.get_table_name();
         let field_names = entity.get_insert_fields();
-        let fields = wrap_fields(&field_names, self.get_wrap_char());
-        let marks = generate_question_mark_list(&field_names);
+        let fields = wrap_field_names(&field_names, self.get_wrap_char());
+        let marks = generate_question_mark_list_from_names(&field_names);
         let auto_field_name = entity.get_auto_increment_field();
         let create_sql = if auto_field_name.is_some() {
             let auto_field_name = auto_field_name.unwrap();
@@ -343,10 +343,10 @@ pub trait SqlGenerator {
         let table_name = entity.get_table_name();
 
         let field_names = entity.get_insert_fields();
-        let fields = wrap_fields(&field_names, self.get_wrap_char());
-        let marks = generate_question_mark_list(&field_names);
+        let fields = wrap_field_names(&field_names, self.get_wrap_char());
+        let marks = generate_question_mark_list_from_names(&field_names);
         let set_field_names = entity.get_upsert_set_fields();
-        let assign_clause = wrap_locate_fields(
+        let assign_clause = wrap_locate_fields_from_name(
             &set_field_names,
             self.get_wrap_char(),
             self.get_place_holder(),
@@ -373,7 +373,7 @@ pub trait SqlGenerator {
     ) -> String {
         let table_name = unique.get_table_name();
         let body_field_names = mutation.get_mutation_fields_name();
-        let body_fields = wrap_locate_fields(
+        let body_fields = wrap_locate_fields_from_name(
             &body_field_names,
             self.get_wrap_char(),
             self.get_place_holder(),
@@ -428,7 +428,7 @@ pub trait SqlGenerator {
     ) -> String {
         let table_name = location.get_table_name();
         let mutation_fields = mutation.get_mutation_fields_name();
-        let update_clause = wrap_locate_fields(
+        let update_clause = wrap_locate_fields_from_name(
             &mutation_fields,
             self.get_wrap_char(),
             self.get_place_holder(),
@@ -485,12 +485,31 @@ fn wrap_fields(fields: &[String], wrap_char: char) -> String {
         .collect::<Vec<String>>()
         .join(",")
 }
+#[inline]
+fn wrap_field_names(fields: &[FieldName], wrap_char: char) -> String {
+    fields
+        .iter()
+        .map(|e| format!("{}{}{}", wrap_char, e.name, wrap_char))
+        .collect::<Vec<String>>()
+        .join(",")
+}
+
+
 
 #[inline]
 fn wrap_locate_fields(fields: &[String], wrap_char: char, place_holder: char) -> String {
     fields
         .iter()
         .map(|e| format!("{}{}{} = {}", wrap_char, e, wrap_char, place_holder))
+        .collect::<Vec<String>>()
+        .join(",")
+}
+
+#[inline]
+fn wrap_locate_fields_from_name(fields: &[FieldName], wrap_char: char, place_holder: char) -> String {
+    fields
+        .iter()
+        .map(|e| format!("{}{}{} = {}", wrap_char, e.name, wrap_char, place_holder))
         .collect::<Vec<String>>()
         .join(",")
 }
@@ -542,6 +561,15 @@ fn generate_question_marks(fields: &[&str]) -> String {
 }
 #[inline]
 fn generate_question_mark_list(fields: &[String]) -> String {
+    fields
+        .iter()
+        .map(|_| "?".to_string())
+        .collect::<Vec<String>>()
+        .join(", ")
+}
+
+#[inline]
+fn generate_question_mark_list_from_names(fields: &[FieldName]) -> String {
     fields
         .iter()
         .map(|_| "?".to_string())

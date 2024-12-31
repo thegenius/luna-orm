@@ -1,4 +1,4 @@
-use crate::{Location, NotImplementError, Unique};
+use crate::{FieldName, Location, NotImplementError, Unique};
 use sqlx::error::BoxDynError;
 use sqlx::mysql::MySqlArguments;
 use sqlx::postgres::PgArguments;
@@ -9,7 +9,7 @@ pub trait Mutation: Sync + Debug {
 
     type Location: Location;
 
-    fn get_mutation_fields_name(&self) -> Vec<String>;
+    fn get_mutation_fields_name(&self) -> Vec<FieldName>;
 
     // fn gen_update_arguments_sqlite<'a>(
     //     &'a self,

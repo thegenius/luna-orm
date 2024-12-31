@@ -1,5 +1,5 @@
 use taitan_orm_macro::Schema;
-use taitan_orm_trait::Optional;
+use taitan_orm_trait::{FieldName, Optional};
 use time::PrimitiveDateTime;
 use uuid::Uuid;
 
@@ -21,29 +21,30 @@ impl taitan_orm::traits::Entity for UserEntity {
     fn get_table_name(&self) -> &'static str {
         "user"
     }
-    fn get_insert_fields(&self) -> Vec<String> {
-        let mut fields = Vec::new();
-        fields.push("request_id".to_string());
+    fn get_insert_fields(&self) -> Vec<FieldName> {
+        let mut fields: Vec<FieldName> = Vec::new();
+        fields.push(FieldName::from_str("request_id", false));
         if self.age.not_none() {
-            fields.push("age".to_string());
+            fields.push(FieldName::from_str("age",true));
         };
-        fields.push("name".to_string());
+
+        FieldName::from_str("name", false);
         if self.birthday.not_none() {
-            fields.push("birthday".to_string());
+            fields.push(FieldName::from_str("birthday", false));
         };
         return fields;
     }
-    fn get_upsert_set_fields(&self) -> Vec<String> {
+    fn get_upsert_set_fields(&self) -> Vec<FieldName> {
         let mut fields = Vec::new();
-        fields.push("request_id".to_string());
+        fields.push(FieldName::from_str("request_id", false));
         if self.age.not_none() {
-            fields.push("age".to_string());
+            fields.push(FieldName::from_str("age", false));
         };
-        fields.push("name".to_string());
+        fields.push(FieldName::from_str("name", false));
         if self.birthday.not_none() {
-            fields.push("birthday".to_string());
+            fields.push(FieldName::from_str("birthday", false));
         };
-        return fields;
+        fields
     }
     fn get_auto_increment_field(&self) -> Option<&'static str> {
         Some("id")
@@ -633,21 +634,21 @@ pub struct UserMutation {
 }
 impl taitan_orm::traits::Mutation for UserMutation {
     type Location = UserLocation;
-    fn get_mutation_fields_name(&self) -> Vec<String> {
+    fn get_mutation_fields_name(&self) -> Vec<FieldName> {
         let mut fields = Vec::new();
         if self.request_id.not_none() {
-            fields.push("request_id".to_string());
+            fields.push(FieldName::from_str("request_id", false));
         };
         if self.age.not_none() {
-            fields.push("age".to_string());
+            fields.push(FieldName::from_str("age", false));
         };
         if self.name.not_none() {
-            fields.push("name".to_string());
+            fields.push(FieldName::from_str("name", false));
         };
         if self.birthday.not_none() {
-            fields.push("birthday".to_string());
+            fields.push(FieldName::from_str("birthday", false));
         };
-        return fields;
+        fields
     }
     fn gen_change_arguments_sqlite<'a>(
         &'a self,

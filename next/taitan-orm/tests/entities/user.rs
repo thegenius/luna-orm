@@ -1,13 +1,16 @@
 use serde::{Deserialize, Serialize};
 use sqlx::error::BoxDynError;
-use sqlx::sqlite::{SqliteArguments};
+use sqlx::sqlite::SqliteArguments;
 use sqlx::{Arguments, Row};
 use sqlx::{Database, Sqlite};
 use std::borrow::Cow;
 use std::error::Error;
 use taitan_orm::database::sqlite::SqliteDatabase;
 use taitan_orm::SqlExecutor;
-use taitan_orm_trait::{validate_order_by, Entity, Location, LocationExpr, LocationTrait, Mutation, Optional, OrderBy, SelectedEntity, Selection, Unique, UpdateCommand};
+use taitan_orm_trait::{
+    validate_order_by, Entity, FieldName, Location, LocationExpr, LocationTrait, Mutation,
+    Optional, OrderBy, SelectedEntity, Selection, Unique, UpdateCommand,
+};
 use time::PrimitiveDateTime;
 use uuid::Uuid;
 
@@ -40,29 +43,31 @@ impl Entity for User {
         "user"
     }
 
-    fn get_insert_fields(&self) -> Vec<String> {
+    fn get_insert_fields(&self) -> Vec<FieldName> {
         let mut fields = Vec::new();
-        fields.push("id".to_string());
-        fields.push("request_id".to_string());
-        fields.push("name".to_string());
+        fields.push(FieldName::from_str("id", false));
+        fields.push(FieldName::from_str("request_id", false));
+        fields.push(FieldName::from_str("name", false));
+
         if let Optional::Some(_) = &self.age {
-            fields.push("age".to_string());
+            fields.push(FieldName::from_str("age", false));
         }
         if let Optional::Some(_) = &self.birthday {
-            fields.push("birthday".to_string());
+            fields.push(FieldName::from_str("birthday", false));
         }
         fields
     }
 
-    fn get_upsert_set_fields(&self) -> Vec<String> {
+    fn get_upsert_set_fields(&self) -> Vec<FieldName> {
         let mut fields = Vec::new();
-        fields.push("request_id".to_string());
-        fields.push("name".to_string());
+        fields.push(FieldName::from_str("request_id", false));
+
+        fields.push(FieldName::from_str("name", false));
         if let Optional::Some(_) = &self.age {
-            fields.push("age".to_string());
+            fields.push(FieldName::from_str("age", false));
         }
         if let Optional::Some(_) = &self.birthday {
-            fields.push("birthday".to_string());
+            fields.push(FieldName::from_str("birthday", false));
         }
         fields
     }
@@ -129,7 +134,10 @@ impl Unique for UserPrimary {
         &["id"]
     }
 
-    fn gen_update_arguments_sqlite<'a>(&'a self, mutation: &'a Self::Mutation) -> Result<SqliteArguments<'a>, BoxDynError> {
+    fn gen_update_arguments_sqlite<'a>(
+        &'a self,
+        mutation: &'a Self::Mutation,
+    ) -> Result<SqliteArguments<'a>, BoxDynError> {
         let mut args = SqliteArguments::default();
         if let Optional::Some(request_id) = &mutation.request_id {
             args.add(request_id)?;
@@ -146,7 +154,6 @@ impl Unique for UserPrimary {
         args.add(&self.id)?;
         Ok(args)
     }
-
 
     fn gen_unique_arguments_sqlite(&self) -> std::result::Result<SqliteArguments<'_>, BoxDynError> {
         let mut args = SqliteArguments::default();
@@ -260,21 +267,20 @@ pub struct UserMutation {
 }
 
 impl Mutation for UserMutation {
-
     type Location = UserLocation;
-    fn get_mutation_fields_name(&self) -> Vec<String> {
+    fn get_mutation_fields_name(&self) -> Vec<FieldName> {
         let mut fields = Vec::new();
         if let Optional::Some(_) = &self.request_id {
-            fields.push("request_id".to_string());
+            fields.push(FieldName::from_str("request_id", false));
         }
         if let Optional::Some(_) = &self.name {
-            fields.push("name".to_string());
+            fields.push(FieldName::from_str("name", false));
         }
         if let Optional::Some(_) = &self.age {
-            fields.push("age".to_string());
+            fields.push(FieldName::from_str("age", false));
         }
         if let Optional::Some(_) = &self.birthday {
-            fields.push("birthday".to_string());
+            fields.push(FieldName::from_str("birthday", false));
         }
         // if let Some(_) = &self.money {
         //     fields.push("money".to_string());
@@ -525,7 +531,11 @@ impl<'a> UserOrderBy<'a> {
         S: AsRef<str> + Into<Cow<'a, str>>, // 确保每个元素可以转换为 Cow<'a, str>
     {
         let order_by = Self::default();
-        validate_order_by(fields.clone(), order_by.all_fields(), order_by.unique_fields())?;
+        validate_order_by(
+            fields.clone(),
+            order_by.all_fields(),
+            order_by.unique_fields(),
+        )?;
 
         Ok(Self {
             fields: fields.into_iter().map(Into::into).collect(),
