@@ -1,3 +1,4 @@
+use bit_vec::BitVec;
 use taitan_orm_trait::FieldName;
 use time::PrimitiveDateTime;
 use uuid::Uuid;
@@ -554,6 +555,16 @@ impl taitan_orm::traits::Selection for UserSelection {
             fields.push("birthday".to_string());
         };
         return fields;
+    }
+
+    fn get_selected_bits(&self) -> BitVec {
+        let mut fields = bit_vec::BitVec::new();
+        fields.push(self.id);
+        fields.push(self.request_id);
+        fields.push(self.name);
+        fields.push(self.age);
+        fields.push(self.birthday);
+        fields
     }
     fn full_fields() -> Self
     where

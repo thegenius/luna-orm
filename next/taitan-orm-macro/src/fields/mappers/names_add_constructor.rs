@@ -113,6 +113,16 @@ pub trait NamesAddConstructor {
         }
     }
 
+    fn of_bool_bit(field: Field) -> TokenStream {
+        let field_alias = DefaultAttrParser::extract_field_db_ident(&field);
+        let span = field.span();
+        let field_name = field.ident.unwrap();
+        let field_name_string = LitStr::new(&field_alias.to_string(), span);
+        quote_spanned! { span=>
+            bits.push(self.#field_name);
+        }
+    }
+
     fn of_where_seg(field: Field) -> TokenStream {
         let field_alias = DefaultAttrParser::extract_field_db_ident(&field);
         let field_name = field.ident.unwrap();

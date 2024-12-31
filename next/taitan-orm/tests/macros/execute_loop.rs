@@ -1,21 +1,22 @@
-use sqlx::Database;
-use taitan_orm::database::sqlite::{SqliteDatabase};
-use taitan_orm::{WriterApi, ReaderApi, SqlGenericExecutor, DB, SqlExecutor, TemplateApi};
-use taitan_orm::traits::Selection;
-use taitan_orm_trait::{Entity, SelectedEntity};
 use crate::entities::user::{User, UserMutation, UserPrimary, UserSelected, UserSelection};
+use sqlx::Database;
+use taitan_orm::database::sqlite::SqliteDatabase;
+use taitan_orm::traits::Selection;
+use taitan_orm::{ReaderApi, SqlExecutor, SqlGenericExecutor, TemplateApi, WriterApi, DB};
+use taitan_orm_trait::{Entity, SelectedEntity};
 
-// async fn test_insert_user<DB, EX, E, SL, SE>(db: &mut EX, user: &E) -> taitan_orm::Result<()>
-// where EX: SqlExecutor<Database = DB> + SqlGenericExecutor + SqlGenericExecutor + WriterApi + ReaderApi + TemplateApi,
-//       E: Entity,
-//       SE: SelectedEntity<<T as SqlGenericExecutor>::DB>,
-//       SL: Selection {
+// async fn test_insert_user<DB, EX, E, SL, SE>(db: &mut EX, user: &User) -> taitan_orm::Result<()>
+// where
+//     EX: SqlExecutor + SqlGenericExecutor + SqlGenericExecutor + WriterApi + ReaderApi + TemplateApi,
+//     UserSelected: SelectedEntity<<EX as SqlGenericExecutor>::DB>,
+//     // UserSelection: <UserSelected as SelectedEntity<<EX as SqlGenericExecutor>::DB>>::Selection
+// {
 //     let success = db.insert(user).await?;
 //     assert!(success);
 //
 //     let mut selection = UserSelection::full_fields();
 //     let primary = UserPrimary { id: user.id };
-//     let entity_opt: Option<<UserSelected as SelectedEntity<<T as SqlGenericExecutor>::DB>>::Selection> = db.select(&selection, &primary).await?;
+//     let entity_opt: Option<UserSelected> = db.select::<UserSelected, UserMutation>(&selection, &primary).await?;
 //     assert!(entity_opt.is_some());
 //
 //     let selected_entity = entity_opt.unwrap();

@@ -54,6 +54,15 @@ pub trait NamesConstructor : FieldsContainer + NamesAddConstructor {
         )
     }
 
+    fn of_bool_bits_vec(&self) -> TokenStream {
+        let tokens =self.map_field_vec(&<Self as NamesAddConstructor>::of_bool_bit);
+        quote!(
+            let mut bits = bit_vec::BitVec::new();
+            #(#tokens;)*
+            return bits;
+        )
+    }
+
     fn of_where_clause(&self) -> TokenStream {
         let tokens =self.map_field_vec(&<Self as NamesAddConstructor>::of_where_seg);
         quote! {

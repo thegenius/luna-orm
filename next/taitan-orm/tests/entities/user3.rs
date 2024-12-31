@@ -1,3 +1,4 @@
+use bit_vec::BitVec;
 use taitan_orm_trait::Optional;
 use time::PrimitiveDateTime;
 use uuid::Uuid;
@@ -14,7 +15,6 @@ pub struct UserEntity {
 
     pub birthday: Optional<PrimitiveDateTime>,
 }
-
 impl taitan_orm::traits::Entity for UserEntity {
     fn get_table_name(&self) -> &'static str {
         "user"
@@ -843,6 +843,15 @@ pub struct UserSelection {
 impl taitan_orm::traits::Selection for UserSelection {
     fn get_table_name(&self) -> &'static str {
         "user"
+    }
+    fn get_selected_bits(&self) -> bit_vec::BitVec {
+        let mut bits = bit_vec::BitVec::new();
+        bits.push(self.id);
+        bits.push(self.request_id);
+        bits.push(self.age);
+        bits.push(self.name);
+        bits.push(self.birthday);
+        return bits;
     }
     fn get_selected_fields(&self) -> Vec<String> {
         let mut fields = Vec::new();

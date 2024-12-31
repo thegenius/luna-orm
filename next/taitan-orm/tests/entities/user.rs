@@ -274,6 +274,17 @@ impl Selection for UserSelection {
         fields
     }
 
+    fn get_selected_bits(&self) -> bit_vec::BitVec {
+        let mut fields = bit_vec::BitVec::new();
+        fields.push(self.id);
+        fields.push(self.request_id);
+        fields.push(self.name);
+        fields.push(self.age);
+        fields.push(self.birthday);
+        fields
+    }
+
+
     fn full_fields() -> Self
     where
         Self: Sized,
