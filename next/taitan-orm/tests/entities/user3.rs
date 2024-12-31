@@ -22,7 +22,7 @@ impl taitan_orm::traits::Entity for UserEntity {
     }
     fn get_insert_fields(&self) -> Vec<taitan_orm::FieldName> {
         let mut fields = Vec::new();
-        fields.push(taitan_orm::FieldName::from_str("request_id", false));
+        fields.push(taitan_orm::FieldName::from_str("r_id", false));
         match &self.age {
             taitan_orm::Optional::Some(age) => {
                 fields.push(taitan_orm::FieldName::from_str("age", false));
@@ -46,7 +46,7 @@ impl taitan_orm::traits::Entity for UserEntity {
     }
     fn get_upsert_set_fields(&self) -> Vec<taitan_orm::FieldName> {
         let mut fields = Vec::new();
-        fields.push(taitan_orm::FieldName::from_str("request_id", false));
+        fields.push(taitan_orm::FieldName::from_str("r_id", false));
         match &self.age {
             taitan_orm::Optional::Some(age) => {
                 fields.push(taitan_orm::FieldName::from_str("age", false));
@@ -495,7 +495,7 @@ impl taitan_orm::traits::Location for UserLocation {
             }
             taitan_orm::Optional::None => {}
         };
-        fields.push(taitan_orm::FieldName::from_str("request_id", false));
+        fields.push(taitan_orm::FieldName::from_str("r_id", false));
         match &self.age {
             taitan_orm::Optional::Some(age) => {
                 fields.push(taitan_orm::FieldName::from_str("age", false));
@@ -678,10 +678,10 @@ impl taitan_orm::traits::Mutation for UserMutation {
         let mut fields = Vec::new();
         match &self.request_id {
             taitan_orm::Optional::Some(request_id) => {
-                fields.push(taitan_orm::FieldName::from_str("request_id", false));
+                fields.push(taitan_orm::FieldName::from_str("r_id", false));
             }
             taitan_orm::Optional::Null => {
-                fields.push(taitan_orm::FieldName::from_str("request_id", true));
+                fields.push(taitan_orm::FieldName::from_str("r_id", true));
             }
             taitan_orm::Optional::None => {}
         };
