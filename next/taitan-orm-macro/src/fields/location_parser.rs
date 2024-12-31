@@ -15,7 +15,7 @@ pub trait LocationParser:
     + ArgsConstructorMySql
 {
     fn get_location_fields_name(&self) -> TokenStream {
-        self.of_maybe_option_names_vec()
+        self.of_option_names_vec()
     }
 
     fn get_where_clause(&self) -> TokenStream {

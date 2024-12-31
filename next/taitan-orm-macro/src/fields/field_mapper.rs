@@ -155,7 +155,7 @@ pub trait FieldMapper {
                     sql.push_str(#field_name.cmp.get_sql());
                     sql.push(place_holder);
                 },
-                Optional::None => {
+                Optional::Null => {
                     sql.push(wrap_char);
                     sql.push_str(#field_name_lit);
                     sql.push(wrap_char);

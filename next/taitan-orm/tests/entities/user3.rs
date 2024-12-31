@@ -1,10 +1,8 @@
-use taitan_orm_macro::Schema;
-use taitan_orm_trait::{FieldName, Optional};
+use taitan_orm_trait::Optional;
 use time::PrimitiveDateTime;
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
-
 pub struct UserEntity {
     id: Optional<i64>,
 
@@ -14,8 +12,9 @@ pub struct UserEntity {
 
     name: String,
 
-    pub birthday: taitan_orm::Optional<PrimitiveDateTime>,
+    pub birthday: Optional<PrimitiveDateTime>,
 }
+
 impl taitan_orm::traits::Entity for UserEntity {
     fn get_table_name(&self) -> &'static str {
         "user"
@@ -495,7 +494,15 @@ impl taitan_orm::traits::Location for UserLocation {
             }
             taitan_orm::Optional::None => {}
         };
-        fields.push(taitan_orm::FieldName::from_str("r_id", false));
+        match &self.request_id {
+            taitan_orm::Optional::Some(request_id) => {
+                fields.push(taitan_orm::FieldName::from_str("r_id", false));
+            }
+            taitan_orm::Optional::Null => {
+                fields.push(taitan_orm::FieldName::from_str("r_id", true));
+            }
+            taitan_orm::Optional::None => {}
+        };
         match &self.age {
             taitan_orm::Optional::Some(age) => {
                 fields.push(taitan_orm::FieldName::from_str("age", false));
@@ -505,7 +512,15 @@ impl taitan_orm::traits::Location for UserLocation {
             }
             taitan_orm::Optional::None => {}
         };
-        fields.push(taitan_orm::FieldName::from_str("name", false));
+        match &self.name {
+            taitan_orm::Optional::Some(name) => {
+                fields.push(taitan_orm::FieldName::from_str("name", false));
+            }
+            taitan_orm::Optional::Null => {
+                fields.push(taitan_orm::FieldName::from_str("name", true));
+            }
+            taitan_orm::Optional::None => {}
+        };
         match &self.birthday {
             taitan_orm::Optional::Some(birthday) => {
                 fields.push(taitan_orm::FieldName::from_str("birthday", false));
@@ -527,7 +542,7 @@ impl taitan_orm::traits::Location for UserLocation {
                 sql.push_str(id.cmp.get_sql());
                 sql.push(place_holder);
             }
-            Optional::None => {
+            Optional::Null => {
                 sql.push(wrap_char);
                 sql.push_str("id");
                 sql.push(wrap_char);
@@ -543,7 +558,7 @@ impl taitan_orm::traits::Location for UserLocation {
                 sql.push_str(request_id.cmp.get_sql());
                 sql.push(place_holder);
             }
-            Optional::None => {
+            Optional::Null => {
                 sql.push(wrap_char);
                 sql.push_str("request_id");
                 sql.push(wrap_char);
@@ -559,7 +574,7 @@ impl taitan_orm::traits::Location for UserLocation {
                 sql.push_str(age.cmp.get_sql());
                 sql.push(place_holder);
             }
-            Optional::None => {
+            Optional::Null => {
                 sql.push(wrap_char);
                 sql.push_str("age");
                 sql.push(wrap_char);
@@ -575,7 +590,7 @@ impl taitan_orm::traits::Location for UserLocation {
                 sql.push_str(name.cmp.get_sql());
                 sql.push(place_holder);
             }
-            Optional::None => {
+            Optional::Null => {
                 sql.push(wrap_char);
                 sql.push_str("name");
                 sql.push(wrap_char);
@@ -591,7 +606,7 @@ impl taitan_orm::traits::Location for UserLocation {
                 sql.push_str(birthday.cmp.get_sql());
                 sql.push(place_holder);
             }
-            Optional::None => {
+            Optional::Null => {
                 sql.push(wrap_char);
                 sql.push_str("birthday");
                 sql.push(wrap_char);
