@@ -1,3 +1,3 @@
-mod writer;
-mod reader;
-mod template;
+pub mod writer;
+pub mod reader;
+pub mod template;

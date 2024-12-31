@@ -1,6 +1,6 @@
 use sqlx::sqlx_macros;
 use taitan_orm::database::sqlite::{
-    SqliteWriteCommander, SqliteReadCommander,  SqliteDatabase, SqliteLocalConfig, SqliteTransaction,
+    SqliteWriteCommander, SqliteReadCommander,  SqliteDatabase, SqliteLocalConfig,
 };
 use time::macros::datetime;
 use uuid::Uuid;

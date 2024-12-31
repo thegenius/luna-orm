@@ -35,6 +35,10 @@ pub use sql_generator::SqlGenerator;
 
 pub use taitan_orm_macro::Schema;
 pub use taitan_orm_trait::FieldName;
+pub use api::reader::ReaderApi;
+pub use api::writer::WriterApi;
+pub use api::template::TemplateApi;
+pub use db::DB;
 
 pub mod page {
     pub use taitan_orm_trait::pagination::Pagination;

@@ -1,16 +1,13 @@
 use serde::{Deserialize, Serialize};
 use sqlx::error::BoxDynError;
 use sqlx::sqlite::SqliteArguments;
-use sqlx::{Arguments, Row};
+use sqlx::{Arguments, ColumnIndex, Decode, Row, Type};
 use sqlx::{Database, Sqlite};
 use std::borrow::Cow;
 use std::error::Error;
 use taitan_orm::database::sqlite::SqliteDatabase;
 use taitan_orm::SqlExecutor;
-use taitan_orm_trait::{
-    validate_order_by, Entity, FieldName, Location, LocationExpr, LocationTrait, Mutation,
-    Optional, OrderBy, SelectedEntity, Selection, Unique, UpdateCommand,
-};
+use taitan_orm_trait::{validate_order_by, Entity, FieldName, Location, LocationExpr, LocationTrait, Mutation, Optional, OrderBy, SelectedEntity, SelectedEntityNew, Selection, Unique, UpdateCommand};
 use time::PrimitiveDateTime;
 use uuid::Uuid;
 
@@ -172,6 +169,42 @@ pub struct UserSelected {
     // money: Option<BigDecimal>,
     // ipv4addr: Option<Ipv4Addr>,
     // ipv6addr: Option<Ipv6Addr>,
+}
+
+impl SelectedEntityNew for UserSelected {
+    type Selection = UserSelection;
+
+    fn from_row<DB: Database>(selection: &Self::Selection, row: DB::Row) -> Result<Self, sqlx::Error>
+    where
+        Self: Sized,
+        for <'a> PrimitiveDateTime: Type<DB> + Decode<'a, DB>,
+        for <'a> i32: Type<DB> + Decode<'a, DB>,
+        for <'a>String: Type<DB> + Decode<'a, DB>,
+        for <'a>Uuid: Type<DB> + Decode<'a, DB>,
+        for <'a>u64: Type<DB> + Decode<'a, DB>,
+        for <'a> &'a str: ColumnIndex<DB::Row>,
+        usize: ColumnIndex<DB::Row>
+    {
+        let mut selected = Self::default();
+        let mut i = 0;
+        if selection.id {
+            selected.id = row.try_get(i).ok().into();
+            i += 1;
+        }
+        if selection.request_id {
+            selected.request_id = row.try_get("request_id").ok().into();
+        }
+        if selection.name {
+            selected.name = row.try_get("name").ok().into();
+        }
+        if selection.age {
+            selected.age = row.try_get("age").ok().into();
+        }
+        if selection.birthday {
+            selected.birthday = row.try_get("birthday").ok().into();
+        }
+        Ok(selected)
+    }
 }
 
 impl SelectedEntity<Sqlite> for UserSelected {

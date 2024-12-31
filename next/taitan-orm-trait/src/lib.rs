@@ -31,6 +31,7 @@ pub use update_command::UpdateCommand;
 
 pub use selected::SelectedEntity;
 pub use selection::Selection;
+pub use selected::SelectedEntityNew;
 
 pub use join::FromClause;
 pub use location::CmpOperator;
