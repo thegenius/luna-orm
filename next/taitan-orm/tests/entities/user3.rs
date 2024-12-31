@@ -25,7 +25,7 @@ impl taitan_orm::traits::Entity for UserEntity {
         let mut fields: Vec<FieldName> = Vec::new();
         fields.push(FieldName::from_str("request_id", false));
         if self.age.not_none() {
-            fields.push(FieldName::from_str("age",true));
+            fields.push(FieldName::from_str("age", true));
         };
 
         FieldName::from_str("name", false);
@@ -462,20 +462,21 @@ impl taitan_orm::traits::Location for UserLocation {
     fn get_table_name(&self) -> &'static str {
         "user"
     }
-    fn get_location_fields_name(&self) -> Vec<String> {
+    fn get_location_fields_name(&self) -> Vec<FieldName> {
         let mut fields = Vec::new();
         if self.id.not_none() {
-            fields.push("id".to_string());
+            fields.push(FieldName::from_str("id", false));
         };
-        fields.push("request_id".to_string());
+        fields.push(FieldName::from_str("request_id", false));
         if self.age.not_none() {
-            fields.push("age".to_string());
+            fields.push(FieldName::from_str("age", false));
         };
-        fields.push("name".to_string());
+
+        fields.push(FieldName::from_str("name", false));
         if self.birthday.not_none() {
-            fields.push("birthday".to_string());
+            fields.push(FieldName::from_str("birthday", false));
         };
-        return fields;
+        fields
     }
     fn get_where_clause(&self, wrap_char: char, place_holder: char) -> String {
         let mut sql = String::default();

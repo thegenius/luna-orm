@@ -1,4 +1,4 @@
-use crate::NotImplementError;
+use crate::{FieldName, NotImplementError};
 use sqlx::error::BoxDynError;
 use sqlx::mysql::MySqlArguments;
 use sqlx::postgres::PgArguments;
@@ -8,7 +8,7 @@ use std::fmt::Debug;
 pub trait Location: Sync + Debug {
     fn get_table_name(&self) -> &'static str;
 
-    fn get_location_fields_name(&self) -> Vec<String>;
+    fn get_location_fields_name(&self) -> Vec<FieldName>;
 
     fn get_where_clause(&self, wrap_char: char, place_holder: char) -> String;
 

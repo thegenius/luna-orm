@@ -355,29 +355,20 @@ impl Location for UserLocation {
         "user"
     }
 
-    fn get_location_fields_name(&self) -> Vec<String> {
+    fn get_location_fields_name(&self) -> Vec<FieldName> {
         let mut fields = Vec::new();
         if let Optional::Some(_) = &self.request_id {
-            fields.push("request_id".to_string());
+            fields.push(FieldName::from_str("request_id", false));
         }
         if let Optional::Some(_) = &self.name {
-            fields.push("name".to_string());
+            fields.push(FieldName::from_str("name", false));
         }
         if let Optional::Some(_) = &self.age {
-            fields.push("age".to_string());
+            fields.push(FieldName::from_str("age", false));
         }
         if let Optional::Some(_) = &self.birthday {
-            fields.push("birthday".to_string());
+            fields.push(FieldName::from_str("birthday", false));
         }
-        // if let Some(_) = &self.money {
-        //     fields.push("money".to_string());
-        // }
-        // if let Some(_) = &self.ipv4addr {
-        //     fields.push("ipv4addr".to_string());
-        // }
-        // if let Some(_) = &self.ipv6addr {
-        //     fields.push("ipv6addr".to_string());
-        // }
         fields
     }
 
