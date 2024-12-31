@@ -81,11 +81,11 @@ pub fn generate_entity_impl(
                 #table_name
             }
 
-            fn get_insert_fields(&self) -> Vec<String> {
+            fn get_insert_fields(&self) -> Vec<taitan_orm::FieldName> {
                 #insert_fields_name
             }
 
-            fn get_upsert_set_fields(&self) -> Vec<String> {
+            fn get_upsert_set_fields(&self) -> Vec<taitan_orm::FieldName> {
                 #upsert_set_fields_name
             }
 

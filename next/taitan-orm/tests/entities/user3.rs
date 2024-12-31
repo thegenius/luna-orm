@@ -16,35 +16,57 @@ pub struct UserEntity {
 
     pub birthday: taitan_orm::Optional<PrimitiveDateTime>,
 }
-
 impl taitan_orm::traits::Entity for UserEntity {
     fn get_table_name(&self) -> &'static str {
         "user"
     }
-    fn get_insert_fields(&self) -> Vec<FieldName> {
-        let mut fields: Vec<FieldName> = Vec::new();
-        fields.push(FieldName::from_str("request_id", false));
-        if self.age.not_none() {
-            fields.push(FieldName::from_str("age", true));
+    fn get_insert_fields(&self) -> Vec<taitan_orm::FieldName> {
+        let mut fields = Vec::new();
+        fields.push(taitan_orm::FieldName::from_str("request_id", false));
+        match &self.age {
+            taitan_orm::Optional::Some(age) => {
+                fields.push(taitan_orm::FieldName::from_str("age", false));
+            }
+            taitan_orm::Optional::Null => {
+                fields.push(taitan_orm::FieldName::from_str("age", true));
+            }
+            taitan_orm::Optional::None => {}
         };
-
-        FieldName::from_str("name", false);
-        if self.birthday.not_none() {
-            fields.push(FieldName::from_str("birthday", false));
+        fields.push(taitan_orm::FieldName::from_str("name", false));
+        match &self.birthday {
+            taitan_orm::Optional::Some(birthday) => {
+                fields.push(taitan_orm::FieldName::from_str("birthday", false));
+            }
+            taitan_orm::Optional::Null => {
+                fields.push(taitan_orm::FieldName::from_str("birthday", true));
+            }
+            taitan_orm::Optional::None => {}
         };
         return fields;
     }
-    fn get_upsert_set_fields(&self) -> Vec<FieldName> {
+    fn get_upsert_set_fields(&self) -> Vec<taitan_orm::FieldName> {
         let mut fields = Vec::new();
-        fields.push(FieldName::from_str("request_id", false));
-        if self.age.not_none() {
-            fields.push(FieldName::from_str("age", false));
+        fields.push(taitan_orm::FieldName::from_str("request_id", false));
+        match &self.age {
+            taitan_orm::Optional::Some(age) => {
+                fields.push(taitan_orm::FieldName::from_str("age", false));
+            }
+            taitan_orm::Optional::Null => {
+                fields.push(taitan_orm::FieldName::from_str("age", true));
+            }
+            taitan_orm::Optional::None => {}
         };
-        fields.push(FieldName::from_str("name", false));
-        if self.birthday.not_none() {
-            fields.push(FieldName::from_str("birthday", false));
+        fields.push(taitan_orm::FieldName::from_str("name", false));
+        match &self.birthday {
+            taitan_orm::Optional::Some(birthday) => {
+                fields.push(taitan_orm::FieldName::from_str("birthday", false));
+            }
+            taitan_orm::Optional::Null => {
+                fields.push(taitan_orm::FieldName::from_str("birthday", true));
+            }
+            taitan_orm::Optional::None => {}
         };
-        fields
+        return fields;
     }
     fn get_auto_increment_field(&self) -> Option<&'static str> {
         Some("id")
@@ -462,21 +484,38 @@ impl taitan_orm::traits::Location for UserLocation {
     fn get_table_name(&self) -> &'static str {
         "user"
     }
-    fn get_location_fields_name(&self) -> Vec<FieldName> {
+    fn get_location_fields_name(&self) -> Vec<taitan_orm::FieldName> {
         let mut fields = Vec::new();
-        if self.id.not_none() {
-            fields.push(FieldName::from_str("id", false));
+        match &self.id {
+            taitan_orm::Optional::Some(id) => {
+                fields.push(taitan_orm::FieldName::from_str("id", false));
+            }
+            taitan_orm::Optional::Null => {
+                fields.push(taitan_orm::FieldName::from_str("id", true));
+            }
+            taitan_orm::Optional::None => {}
         };
-        fields.push(FieldName::from_str("request_id", false));
-        if self.age.not_none() {
-            fields.push(FieldName::from_str("age", false));
+        fields.push(taitan_orm::FieldName::from_str("request_id", false));
+        match &self.age {
+            taitan_orm::Optional::Some(age) => {
+                fields.push(taitan_orm::FieldName::from_str("age", false));
+            }
+            taitan_orm::Optional::Null => {
+                fields.push(taitan_orm::FieldName::from_str("age", true));
+            }
+            taitan_orm::Optional::None => {}
         };
-
-        fields.push(FieldName::from_str("name", false));
-        if self.birthday.not_none() {
-            fields.push(FieldName::from_str("birthday", false));
+        fields.push(taitan_orm::FieldName::from_str("name", false));
+        match &self.birthday {
+            taitan_orm::Optional::Some(birthday) => {
+                fields.push(taitan_orm::FieldName::from_str("birthday", false));
+            }
+            taitan_orm::Optional::Null => {
+                fields.push(taitan_orm::FieldName::from_str("birthday", true));
+            }
+            taitan_orm::Optional::None => {}
         };
-        fields
+        return fields;
     }
     fn get_where_clause(&self, wrap_char: char, place_holder: char) -> String {
         let mut sql = String::default();
@@ -635,21 +674,45 @@ pub struct UserMutation {
 }
 impl taitan_orm::traits::Mutation for UserMutation {
     type Location = UserLocation;
-    fn get_mutation_fields_name(&self) -> Vec<FieldName> {
+    fn get_mutation_fields_name(&self) -> Vec<taitan_orm::FieldName> {
         let mut fields = Vec::new();
-        if self.request_id.not_none() {
-            fields.push(FieldName::from_str("request_id", false));
+        match &self.request_id {
+            taitan_orm::Optional::Some(request_id) => {
+                fields.push(taitan_orm::FieldName::from_str("request_id", false));
+            }
+            taitan_orm::Optional::Null => {
+                fields.push(taitan_orm::FieldName::from_str("request_id", true));
+            }
+            taitan_orm::Optional::None => {}
         };
-        if self.age.not_none() {
-            fields.push(FieldName::from_str("age", false));
+        match &self.age {
+            taitan_orm::Optional::Some(age) => {
+                fields.push(taitan_orm::FieldName::from_str("age", false));
+            }
+            taitan_orm::Optional::Null => {
+                fields.push(taitan_orm::FieldName::from_str("age", true));
+            }
+            taitan_orm::Optional::None => {}
         };
-        if self.name.not_none() {
-            fields.push(FieldName::from_str("name", false));
+        match &self.name {
+            taitan_orm::Optional::Some(name) => {
+                fields.push(taitan_orm::FieldName::from_str("name", false));
+            }
+            taitan_orm::Optional::Null => {
+                fields.push(taitan_orm::FieldName::from_str("name", true));
+            }
+            taitan_orm::Optional::None => {}
         };
-        if self.birthday.not_none() {
-            fields.push(FieldName::from_str("birthday", false));
+        match &self.birthday {
+            taitan_orm::Optional::Some(birthday) => {
+                fields.push(taitan_orm::FieldName::from_str("birthday", false));
+            }
+            taitan_orm::Optional::Null => {
+                fields.push(taitan_orm::FieldName::from_str("birthday", true));
+            }
+            taitan_orm::Optional::None => {}
         };
-        fields
+        return fields;
     }
     fn gen_change_arguments_sqlite<'a>(
         &'a self,

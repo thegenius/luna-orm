@@ -40,7 +40,7 @@ pub fn generate_mutation_struct_and_impl(
 
             type Location = #location_struct_ident;
 
-            fn get_mutation_fields_name(&self) -> Vec<String> {
+            fn get_mutation_fields_name(&self) -> Vec<taitan_orm::FieldName> {
                 #fields_name_vec
             }
 
