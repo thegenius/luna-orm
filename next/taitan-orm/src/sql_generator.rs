@@ -489,7 +489,7 @@ fn wrap_fields(fields: &[String], wrap_char: char) -> String {
 fn wrap_field_names(fields: &[FieldName], wrap_char: char) -> String {
     fields
         .iter()
-        .map(|e| format!("{}{}{}", wrap_char, e.name, wrap_char))
+        .map(|e| format!("{}{}{}", wrap_char, e.database_field_name(), wrap_char))
         .collect::<Vec<String>>()
         .join(",")
 }
@@ -511,9 +511,9 @@ fn wrap_locate_fields_from_name(fields: &[FieldName], wrap_char: char, place_hol
         .iter()
         .map(|e|
             if e.is_null {
-                format!("{}{}{} IS NULL ", wrap_char, e.name, wrap_char)
+                format!("{}{}{} IS NULL ", wrap_char, e.database_field_name(), wrap_char)
             } else {
-                format!("{}{}{} = {}", wrap_char, e.name, wrap_char, place_holder)
+                format!("{}{}{} = {}", wrap_char, e.database_field_name(), wrap_char, place_holder)
             }
         )
         .collect::<Vec<String>>()
