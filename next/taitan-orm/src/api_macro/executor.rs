@@ -1,12 +1,12 @@
 #[macro_export]
 macro_rules! executor_impl {
     ($conn_type:ty) => {
-        type Connection = $conn_type;
-
-        #[inline(always)]
-        async fn get_connection(&mut self) -> crate::Result<sqlx::pool::PoolConnection<Self::DB>> {
-            Ok(self.get_pool()?.acquire().await?)
-        }
+        // type Connection = $conn_type;
+        //
+        // #[inline(always)]
+        // async fn get_connection(&mut self) -> crate::Result<sqlx::pool::PoolConnection<Self::DB>> {
+        //     Ok(self.get_pool()?.acquire().await?)
+        // }
 
         async fn execute<'a>(
             &'a mut self,

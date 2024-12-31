@@ -58,6 +58,10 @@ impl SqliteDatabase {
     pub fn get_pool(&mut self) -> crate::Result<&SqlitePool> {
         Ok(&self.sqlite_pool)
     }
+
+    async fn get_connection(&mut self) -> crate::Result<sqlx::pool::PoolConnection<Sqlite>> {
+        Ok(self.get_pool()?.acquire().await?)
+    }
 }
 
 impl SqlGenericExecutor for SqliteDatabase {

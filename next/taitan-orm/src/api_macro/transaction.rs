@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! transaction_impl {
     ($conn_type:ty) => {
-        type Connection = $conn_type;
+        // type Connection = $conn_type;
 
         async fn execute<'a>(
             &'a mut self,

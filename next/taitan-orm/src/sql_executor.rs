@@ -34,11 +34,11 @@ fetch_option_full_plain(stmt,     ) -> Result<Option<SE>>
 */
 pub trait SqlExecutor: SqlGenericExecutor {
 
-    type Connection: Connection;
-
-    async fn get_connection(&mut self) -> Result<PoolConnection<Self::DB>> {
-        Err(NotImplement("get_connection not implemented".to_string()))
-    }
+    // type Connection: Connection;
+    //
+    // async fn get_connection(&mut self) -> Result<PoolConnection<Self::DB>> {
+    //     Err(NotImplement("get_connection not implemented".to_string()))
+    // }
 
     // execute           (stmt, args) -> Result<u64>
     async fn execute<'a>(

@@ -1,13 +1,15 @@
+use sqlx::Database;
 use taitan_orm::database::sqlite::{SqliteDatabase};
 use taitan_orm::{WriterApi, ReaderApi, SqlGenericExecutor, DB, SqlExecutor, TemplateApi};
 use taitan_orm::traits::Selection;
-use taitan_orm_trait::SelectedEntity;
+use taitan_orm_trait::{Entity, SelectedEntity};
 use crate::entities::user::{User, UserMutation, UserPrimary, UserSelected, UserSelection};
 
-// async fn test_insert_user<T, S>(db: &mut DB(T), user: &User) -> taitan_orm::Result<()>
-// where T: SqlExecutor + SqlGenericExecutor + SqlGenericExecutor + WriterApi + ReaderApi + TemplateApi,
-//       UserSelected: SelectedEntity<<T as SqlGenericExecutor>::DB>,
-//       S: Selection {
+// async fn test_insert_user<DB, EX, E, SL, SE>(db: &mut EX, user: &E) -> taitan_orm::Result<()>
+// where EX: SqlExecutor<Database = DB> + SqlGenericExecutor + SqlGenericExecutor + WriterApi + ReaderApi + TemplateApi,
+//       E: Entity,
+//       SE: SelectedEntity<<T as SqlGenericExecutor>::DB>,
+//       SL: Selection {
 //     let success = db.insert(user).await?;
 //     assert!(success);
 //

@@ -12,6 +12,10 @@ impl MySqlDatabase {
     pub fn get_pool(&mut self) -> crate::Result<&MySqlPool> {
         Ok(&self.pool)
     }
+
+    async fn get_connection(&mut self) -> crate::Result<sqlx::pool::PoolConnection<MySql>> {
+        Ok(self.get_pool()?.acquire().await?)
+    }
 }
 impl SqlGenericExecutor for MySqlDatabase {
     type DB = MySql;
