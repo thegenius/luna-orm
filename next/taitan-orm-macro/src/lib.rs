@@ -12,7 +12,7 @@ mod template;
 
 #[proc_macro_derive(
     Schema,
-    attributes(table_name, primary_key, unique_key, auto_increment, generated)
+    attributes(table_name, primary_key, unique_key, auto_increment, generated, field_name)
 )]
 pub fn expand_schema_macro(input: TokenStream) -> TokenStream {
     impl_schema_macro(input)

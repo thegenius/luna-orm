@@ -14,6 +14,7 @@ pub struct UserEntity {
     #[auto_increment]
     id: Optional<i64>,
 
+    #[field_name = "r_id"]
     pub request_id: Uuid,
 
     age: Optional<i32>,

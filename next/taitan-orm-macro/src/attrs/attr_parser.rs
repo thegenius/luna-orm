@@ -1,10 +1,12 @@
 use proc_macro2::Ident;
-use syn::{parenthesized, Attribute, Expr, Lit, LitStr, Meta, MetaNameValue, Path, Token};
+use syn::{parenthesized, Attribute, Expr, Field, Lit, LitStr, Meta, MetaNameValue, Path, Token};
 use syn::meta::ParseNestedMeta;
 use syn::parse::ParseStream;
 use darling::ast::NestedMeta;
+use quote::format_ident;
 
 pub trait AttrParser {
+    fn extract_field_db_ident(field: &Field) -> Ident;
     fn extract_val_from_attr(attr: &Attribute, name: &str) -> Option<String>;
 
     fn check_is_attr(attr: &Attribute, name: &str) -> bool;
@@ -105,6 +107,18 @@ impl AttrParser for DefaultAttrParser {
         //     _ => panic!("malformed attribute syntax"),
         // };
         // return Some(value);
+    }
+
+    fn extract_field_db_ident(field: &Field) -> Ident {
+        let alias = Self::extract_val_from_attrs(&field.attrs, "field_name");
+        match alias {
+            None => {
+                return field.ident.as_ref().unwrap().clone();
+            }
+            Some(alias) => {
+                format_ident!("{}", alias)
+            }
+        }
     }
 
     fn check_is_attr(attr: &Attribute, name: &str) -> bool {

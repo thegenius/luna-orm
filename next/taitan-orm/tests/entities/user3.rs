@@ -835,7 +835,7 @@ impl taitan_orm::traits::Selection for UserSelection {
             fields.push("id".to_string());
         };
         if self.request_id {
-            fields.push("request_id".to_string());
+            fields.push("r_id".to_string());
         };
         if self.age {
             fields.push("age".to_string());
