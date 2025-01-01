@@ -1,5 +1,5 @@
 use bit_vec::BitVec;
-use sqlx::Sqlite;
+use sqlx::{Error, Sqlite};
 use taitan_orm_trait::FieldName;
 use time::PrimitiveDateTime;
 use uuid::Uuid;

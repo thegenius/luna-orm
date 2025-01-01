@@ -1,8 +1,8 @@
 use crate::selection::Selection;
 use crate::NotImplementError;
+use sqlx::types::Uuid;
 use sqlx::{ColumnIndex, Database, Decode, Type};
 use std::fmt::Debug;
-use sqlx::types::Uuid;
 use time::PrimitiveDateTime;
 
 pub trait SelectedEntity<DB: Database>: Debug + Default {
@@ -13,7 +13,15 @@ pub trait SelectedEntity<DB: Database>: Debug + Default {
 
     fn from_row_bits(bits: &bit_vec::BitVec, row: DB::Row) -> Result<Self, sqlx::Error>
     where
-        Self: Sized {
+        Self: Sized,
+    {
+        todo!()
+    }
+
+    fn select_from_row(selection: &Self, row: DB::Row) -> Result<Self, sqlx::Error>
+    where
+        Self: Sized,
+    {
         todo!()
     }
 
@@ -27,18 +35,20 @@ pub trait SelectedEntity<DB: Database>: Debug + Default {
     }
 }
 
-
 pub trait SelectedEntityNew: Debug + Default {
     type Selection: Selection;
-    fn from_row<DB: Database>(selection: &Self::Selection, row: DB::Row) -> Result<Self, sqlx::Error>
+    fn from_row<DB: Database>(
+        selection: &Self::Selection,
+        row: DB::Row,
+    ) -> Result<Self, sqlx::Error>
     where
         Self: Sized,
-        for <'a>PrimitiveDateTime: Type<DB> + Decode<'a, DB>,
-        for <'a>i32: Type<DB> + Decode<'a, DB>,
-        for <'a>String: Type<DB> + Decode<'a, DB>,
-        for <'a>Uuid: Type<DB> + Decode<'a, DB>,
-        for <'a>u64: Type<DB> + Decode<'a, DB>,
-        for <'a> &'a str: ColumnIndex<DB::Row>,
+        for<'a> PrimitiveDateTime: Type<DB> + Decode<'a, DB>,
+        for<'a> i32: Type<DB> + Decode<'a, DB>,
+        for<'a> String: Type<DB> + Decode<'a, DB>,
+        for<'a> Uuid: Type<DB> + Decode<'a, DB>,
+        for<'a> u64: Type<DB> + Decode<'a, DB>,
+        for<'a> &'a str: ColumnIndex<DB::Row>,
         usize: ColumnIndex<DB::Row>;
 
     fn from_row_full<DB: Database>(row: DB::Row) -> Result<Self, sqlx::Error>

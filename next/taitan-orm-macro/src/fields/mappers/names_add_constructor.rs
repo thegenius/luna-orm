@@ -47,7 +47,7 @@ pub trait NamesAddConstructor {
                     taitan_orm::Optional::Null => {
                         fields.push(taitan_orm::FieldName::from_str(#field_name_string, true));
                     }
-                    taitan_orm::Optional::None => {}
+                    _ => {}
                 };
             }
         } else {
@@ -76,7 +76,7 @@ pub trait NamesAddConstructor {
                 taitan_orm::Optional::Null => {
                     fields.push(taitan_orm::FieldName::from_str(#field_name_string, true));
                 }
-                taitan_orm::Optional::None => {}
+                _ => {}
             };
         }
     }
@@ -130,9 +130,6 @@ pub trait NamesAddConstructor {
         let field_name_lit = LitStr::new(&field_alias.to_string(), span);
         quote_spanned! { span =>
             if let taitan_orm::Optional::Some(#field_name) = &self.#field_name {
-
-
-
                 sql.push(wrap_char);
                 sql.push_str(#field_name_lit);
                 sql.push(wrap_char);

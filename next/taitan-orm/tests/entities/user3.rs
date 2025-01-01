@@ -1,4 +1,5 @@
 use bit_vec::BitVec;
+use sqlx::{Error, Sqlite};
 use taitan_orm_trait::Optional;
 use time::PrimitiveDateTime;
 use uuid::Uuid;
@@ -29,7 +30,7 @@ impl taitan_orm::traits::Entity for UserEntity {
             taitan_orm::Optional::Null => {
                 fields.push(taitan_orm::FieldName::from_str("age", true));
             }
-            taitan_orm::Optional::None => {}
+            _ => {}
         };
         fields.push(taitan_orm::FieldName::from_str("name", false));
         match &self.birthday {
@@ -39,7 +40,7 @@ impl taitan_orm::traits::Entity for UserEntity {
             taitan_orm::Optional::Null => {
                 fields.push(taitan_orm::FieldName::from_str("birthday", true));
             }
-            taitan_orm::Optional::None => {}
+            _ => {}
         };
         return fields;
     }
@@ -53,7 +54,7 @@ impl taitan_orm::traits::Entity for UserEntity {
             taitan_orm::Optional::Null => {
                 fields.push(taitan_orm::FieldName::from_str("age", true));
             }
-            taitan_orm::Optional::None => {}
+            _ => {}
         };
         fields.push(taitan_orm::FieldName::from_str("name", false));
         match &self.birthday {
@@ -63,7 +64,7 @@ impl taitan_orm::traits::Entity for UserEntity {
             taitan_orm::Optional::Null => {
                 fields.push(taitan_orm::FieldName::from_str("birthday", true));
             }
-            taitan_orm::Optional::None => {}
+            _ => {}
         };
         return fields;
     }
@@ -492,7 +493,7 @@ impl taitan_orm::traits::Location for UserLocation {
             taitan_orm::Optional::Null => {
                 fields.push(taitan_orm::FieldName::from_str("id", true));
             }
-            taitan_orm::Optional::None => {}
+            _ => {}
         };
         match &self.request_id {
             taitan_orm::Optional::Some(request_id) => {
@@ -501,7 +502,7 @@ impl taitan_orm::traits::Location for UserLocation {
             taitan_orm::Optional::Null => {
                 fields.push(taitan_orm::FieldName::from_str("r_id", true));
             }
-            taitan_orm::Optional::None => {}
+            _ => {}
         };
         match &self.age {
             taitan_orm::Optional::Some(age) => {
@@ -510,7 +511,7 @@ impl taitan_orm::traits::Location for UserLocation {
             taitan_orm::Optional::Null => {
                 fields.push(taitan_orm::FieldName::from_str("age", true));
             }
-            taitan_orm::Optional::None => {}
+            _ => {}
         };
         match &self.name {
             taitan_orm::Optional::Some(name) => {
@@ -519,7 +520,7 @@ impl taitan_orm::traits::Location for UserLocation {
             taitan_orm::Optional::Null => {
                 fields.push(taitan_orm::FieldName::from_str("name", true));
             }
-            taitan_orm::Optional::None => {}
+            _ => {}
         };
         match &self.birthday {
             taitan_orm::Optional::Some(birthday) => {
@@ -528,7 +529,7 @@ impl taitan_orm::traits::Location for UserLocation {
             taitan_orm::Optional::Null => {
                 fields.push(taitan_orm::FieldName::from_str("birthday", true));
             }
-            taitan_orm::Optional::None => {}
+            _ => {}
         };
         return fields;
     }
@@ -698,7 +699,7 @@ impl taitan_orm::traits::Mutation for UserMutation {
             taitan_orm::Optional::Null => {
                 fields.push(taitan_orm::FieldName::from_str("r_id", true));
             }
-            taitan_orm::Optional::None => {}
+            _ => {}
         };
         match &self.age {
             taitan_orm::Optional::Some(age) => {
@@ -707,7 +708,7 @@ impl taitan_orm::traits::Mutation for UserMutation {
             taitan_orm::Optional::Null => {
                 fields.push(taitan_orm::FieldName::from_str("age", true));
             }
-            taitan_orm::Optional::None => {}
+            _ => {}
         };
         match &self.name {
             taitan_orm::Optional::Some(name) => {
@@ -716,7 +717,7 @@ impl taitan_orm::traits::Mutation for UserMutation {
             taitan_orm::Optional::Null => {
                 fields.push(taitan_orm::FieldName::from_str("name", true));
             }
-            taitan_orm::Optional::None => {}
+            _ => {}
         };
         match &self.birthday {
             taitan_orm::Optional::Some(birthday) => {
@@ -725,7 +726,7 @@ impl taitan_orm::traits::Mutation for UserMutation {
             taitan_orm::Optional::Null => {
                 fields.push(taitan_orm::FieldName::from_str("birthday", true));
             }
-            taitan_orm::Optional::None => {}
+            _ => {}
         };
         return fields;
     }
@@ -957,6 +958,37 @@ impl taitan_orm::traits::SelectedEntity<sqlx::Sqlite> for UserSelectedEntity {
         };
         Ok(selected)
     }
+    fn select_from_row(
+        selection: &Self,
+        row: <sqlx::Sqlite as sqlx::Database>::Row,
+    ) -> Result<Self, sqlx::Error>
+    where
+        Self: Sized,
+    {
+        let mut selected = Self::default();
+        let mut i = 0;
+        if selection.id.is_selected() {
+            selected.id = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if selection.request_id.is_selected() {
+            selected.request_id = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if selection.age.is_selected() {
+            selected.age = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if selection.name.is_selected() {
+            selected.name = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if selection.birthday.is_selected() {
+            selected.birthday = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        Ok(selected)
+    }
     fn from_row_full(row: <sqlx::Sqlite as sqlx::Database>::Row) -> Result<Self, sqlx::Error>
     where
         Self: Sized,
@@ -1040,6 +1072,37 @@ impl taitan_orm::traits::SelectedEntity<sqlx::MySql> for UserSelectedEntity {
         };
         Ok(selected)
     }
+    fn select_from_row(
+        selection: &Self,
+        row: <sqlx::MySql as sqlx::Database>::Row,
+    ) -> Result<Self, sqlx::Error>
+    where
+        Self: Sized,
+    {
+        let mut selected = Self::default();
+        let mut i = 0;
+        if selection.id.is_selected() {
+            selected.id = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if selection.request_id.is_selected() {
+            selected.request_id = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if selection.age.is_selected() {
+            selected.age = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if selection.name.is_selected() {
+            selected.name = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if selection.birthday.is_selected() {
+            selected.birthday = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        Ok(selected)
+    }
     fn from_row_full(row: <sqlx::MySql as sqlx::Database>::Row) -> Result<Self, sqlx::Error>
     where
         Self: Sized,
@@ -1118,6 +1181,37 @@ impl taitan_orm::traits::SelectedEntity<sqlx::Postgres> for UserSelectedEntity {
             i += 1;
         };
         if bits.get(4usize).unwrap_or(false) {
+            selected.birthday = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        Ok(selected)
+    }
+    fn select_from_row(
+        selection: &Self,
+        row: <sqlx::Postgres as sqlx::Database>::Row,
+    ) -> Result<Self, sqlx::Error>
+    where
+        Self: Sized,
+    {
+        let mut selected = Self::default();
+        let mut i = 0;
+        if selection.id.is_selected() {
+            selected.id = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if selection.request_id.is_selected() {
+            selected.request_id = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if selection.age.is_selected() {
+            selected.age = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if selection.name.is_selected() {
+            selected.name = sqlx::Row::try_get(&row, i).ok().into();
+            i += 1;
+        };
+        if selection.birthday.is_selected() {
             selected.birthday = sqlx::Row::try_get(&row, i).ok().into();
             i += 1;
         };

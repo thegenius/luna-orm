@@ -45,6 +45,7 @@ fn generate_selected_and_impl(fields: &FieldsNamed, selected_ident: &Ident, sele
 
     let selected_row_construct = parser.gen_selected_row();
     let selected_bits_row_construct = parser.gen_selected_bits_row();
+    let selected_self_row_construct = parser.gen_selected_self_row();
     let full_row_construct = parser.gen_full_row();
 
     let output = quote! {
@@ -62,6 +63,12 @@ fn generate_selected_and_impl(fields: &FieldsNamed, selected_ident: &Ident, sele
                     Self: Sized {
                     #selected_bits_row_construct
                 }
+
+            fn select_from_row(selection: &Self, row: <sqlx::#db_ident as sqlx::Database>::Row) -> Result<Self, sqlx::Error>
+                where
+                    Self: Sized {
+                    #selected_self_row_construct
+            }
 
             fn from_row_full(row: <sqlx::#db_ident as sqlx::Database>::Row) -> Result<Self, sqlx::Error>
             where

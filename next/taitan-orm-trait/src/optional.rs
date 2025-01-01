@@ -4,15 +4,16 @@ use serde::{Deserialize, Serialize};
 pub enum Optional<T> {
     None,    // 不传递到数据库层
     Null,    // 传递到数据库，值为null
+    Selected,
     Some(T), // 传递到数据库，值为具体值
 }
 
 impl<T> PartialEq<Option<T>> for Optional<T> {
     fn eq(&self, other: &Option<T>) -> bool {
         match self {
-            Optional::Null => false,
             Optional::None => matches!(other, None),
             Optional::Some(s) => matches!(other, Some(s)),
+            _ => false,
         }
     }
 }
@@ -72,6 +73,19 @@ impl<T> Optional<T> {
         match self {
             Optional::Null => false,
             _ => true,
+        }
+    }
+
+    pub fn not_selected(&self) -> bool {
+        match self {
+            Optional::Selected => false,
+            _ => true,
+        }
+    }
+    pub fn is_selected(&self) -> bool {
+        match self {
+            Optional::Selected => true,
+            _ => false,
         }
     }
 

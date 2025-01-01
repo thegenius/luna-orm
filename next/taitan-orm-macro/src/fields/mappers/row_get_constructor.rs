@@ -29,6 +29,18 @@ pub trait RowGetConstructor {
         }
     }
 
+    fn of_selected_self_row_i(field: Field) -> TokenStream {
+        let field_name = field.ident.unwrap();
+        let span = field_name.span();
+        let field_name_lit = LitStr::new(&field_name.to_string(), span);
+        quote_spanned! { span =>
+            if selection.#field_name.is_selected() {
+                selected.#field_name = sqlx::Row::try_get(&row, i).ok().into();
+                i += 1;
+            }
+        }
+    }
+
     fn of_selected_bits_row_i(field: Field) -> TokenStream {
         let field_name = field.ident.unwrap();
         let span = field_name.span();
