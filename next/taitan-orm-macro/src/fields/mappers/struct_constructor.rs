@@ -58,4 +58,13 @@ pub trait StructConstructor: FieldsContainer + StructFieldConstructor {
             }
         }
     }
+
+    fn of_optional_selected(&self) -> TokenStream {
+        let fields_tokens = self.map_field_vec(&<Self as StructFieldConstructor>::get_optional_selected_field);
+        quote! {
+            Self {
+                #(#fields_tokens,)*
+            }
+        }
+    }
 }

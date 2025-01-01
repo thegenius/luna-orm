@@ -32,6 +32,15 @@ generic_fetch_one         (ex, stmt, selection, args) -> Result<SE>
 generic_fetch_one_plain   (ex, stmt, selection, _   ) -> Result<SE>
 generic_fetch_option      (ex, stmt, selection, args) -> Result<Option<SE>>
 generic_fetch_option_plain(ex, stmt, selection, _   ) -> Result<Option<SE>>
+
+generic_fetch_all_         (ex, stmt, se, args) -> Result<Vec<SE>>
+generic_fetch_all_plain_   (ex, stmt, se, _   ) -> Result<Vec<SE>>
+generic_fetch_one_         (ex, stmt, se, args) -> Result<SE>
+generic_fetch_one_plain_   (ex, stmt, se, _   ) -> Result<SE>
+generic_fetch_option_      (ex, stmt, se, args) -> Result<Option<SE>>
+generic_fetch_option_plain_(ex, stmt, se, _   ) -> Result<Option<SE>>
+
+
 generic_fetch_all_full         (ex, stmt, args) -> Result<Vec<SE>>
 generic_fetch_all_full_plain   (ex, stmt, _   ) -> Result<Vec<SE>>
 generic_fetch_one_full         (ex, stmt, args) -> Result<SE>
@@ -167,6 +176,31 @@ pub trait SqlGenericExecutor {
         Ok(result)
     }
 
+    async fn generic_fetch_all_<'a, EX, SE, A>(
+        ex: EX,
+        stmt: &'a str,
+        selection: &SE,
+        args: A,
+    ) -> Result<Vec<SE>>
+    where
+        EX: Executor<'a, Database = Self::DB>,
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+        A: IntoArguments<'a, Self::DB> + 'a + Default,
+    {
+        let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, args);
+        let result_opt: Vec<<Self::DB as Database>::Row> = query.fetch_all(ex).await?;
+        let mut result: Vec<SE> = Vec::new();
+        for row in result_opt {
+            let selected_result = SE::select_from_row(selection, row);
+            if let Ok(selected_entity) = selected_result {
+                result.push(selected_entity);
+            } else {
+                return Err(TaitanOrmError::FromRowToEntityError);
+            }
+        }
+        Ok(result)
+    }
+
     // 6. generic_fetch_all_plain   (ex, stmt, selection, _   ) -> Result<Vec<SE>>
     async fn generic_fetch_all_plain<'a, EX, SE, A>(
         ex: EX,
@@ -193,6 +227,31 @@ pub trait SqlGenericExecutor {
         Ok(result)
     }
 
+    async fn generic_fetch_all_plain_<'a, EX, SE, A>(
+        ex: EX,
+        stmt: &'a str,
+        selection: &SE,
+        _: PhantomData<A>,
+    ) -> Result<Vec<SE>>
+    where
+        EX: Executor<'a, Database = Self::DB>,
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+        A: IntoArguments<'a, Self::DB> + 'a + Default,
+    {
+        let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, Default::default());
+        let result_opt: Vec<<Self::DB as Database>::Row> = query.fetch_all(ex).await?;
+        let mut result: Vec<SE> = Vec::new();
+        for row in result_opt {
+            let selected_result = SE::select_from_row(selection, row);
+            if let Ok(selected_entity) = selected_result {
+                result.push(selected_entity);
+            } else {
+                return Err(TaitanOrmError::FromRowToEntityError);
+            }
+        }
+        Ok(result)
+    }
+
     // 7. generic_fetch_one         (ex, stmt, selection, args) -> Result<SE>
     async fn generic_fetch_one<'a, EX, SE, A>(
         ex: EX,
@@ -210,6 +269,22 @@ pub trait SqlGenericExecutor {
         Ok(SE::from_row(selection, result)?)
     }
 
+    async fn generic_fetch_one_<'a, EX, SE, A>(
+        ex: EX,
+        stmt: &'a str,
+        selection: &SE,
+        args: A,
+    ) -> Result<SE>
+    where
+        EX: Executor<'a, Database = Self::DB>,
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+        A: IntoArguments<'a, Self::DB> + 'a,
+    {
+        let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, args);
+        let result: <Self::DB as Database>::Row = query.fetch_one(ex).await?;
+        Ok(SE::select_from_row(selection, result)?)
+    }
+
     // 8. generic_fetch_one_plain   (ex, stmt, selection, _   ) -> Result<SE>
     async fn generic_fetch_one_plain<'a, EX, SE, A>(
         ex: EX,
@@ -225,6 +300,22 @@ pub trait SqlGenericExecutor {
         let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, Default::default());
         let result: <Self::DB as Database>::Row = query.fetch_one(ex).await?;
         Ok(SE::from_row(selection, result)?)
+    }
+
+    async fn generic_fetch_one_plain_<'a, EX, SE, A>(
+        ex: EX,
+        stmt: &'a str,
+        selection: &SE,
+        _: PhantomData<A>,
+    ) -> Result<SE>
+    where
+        EX: Executor<'a, Database = Self::DB>,
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+        A: IntoArguments<'a, Self::DB> + 'a + Default,
+    {
+        let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, Default::default());
+        let result: <Self::DB as Database>::Row = query.fetch_one(ex).await?;
+        Ok(SE::select_from_row(selection, result)?)
     }
 
     // 9. generic_fetch_option      (ex, stmt, selection, args) -> Result<Option<SE>>
@@ -248,6 +339,26 @@ pub trait SqlGenericExecutor {
         }
     }
 
+    async fn generic_fetch_option_<'a, EX, SE, A>(
+        ex: EX,
+        stmt: &'a str,
+        selection: &SE,
+        args: A,
+    ) -> Result<Option<SE>>
+    where
+        EX: Executor<'a, Database = Self::DB>,
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+        A: IntoArguments<'a, Self::DB> + 'a + Default,
+    {
+        let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, args);
+        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(ex).await?;
+        if let Some(result) = result_opt {
+            Ok(Some(SE::select_from_row(selection, result)?))
+        } else {
+            Ok(None)
+        }
+    }
+
     // 10. generic_fetch_option_plain(ex, stmt, selection, _   ) -> Result<Option<SE>>
     async fn generic_fetch_option_plain<'a, EX, SE, A>(
         ex: EX,
@@ -264,6 +375,26 @@ pub trait SqlGenericExecutor {
         let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(ex).await?;
         if let Some(result) = result_opt {
             Ok(Some(SE::from_row(selection, result)?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    async fn generic_fetch_option_plain_<'a, EX, SE, A>(
+        ex: EX,
+        stmt: &'a str,
+        selection: &SE,
+        _: PhantomData<A>,
+    ) -> Result<Option<SE>>
+    where
+        EX: Executor<'a, Database = Self::DB>,
+        SE: SelectedEntity<Self::DB> + Send + Unpin,
+        A: IntoArguments<'a, Self::DB> + 'a + Default,
+    {
+        let query: Query<'a, Self::DB, A> = sqlx::query_with(stmt, Default::default());
+        let result_opt: Option<<Self::DB as Database>::Row> = query.fetch_optional(ex).await?;
+        if let Some(result) = result_opt {
+            Ok(Some(SE::select_from_row(selection, result)?))
         } else {
             Ok(None)
         }

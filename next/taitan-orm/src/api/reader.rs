@@ -53,6 +53,24 @@ pub trait ReaderApi: SqlExecutor + SqlGeneratorContainer + Extractor {
         Ok(result)
     }
 
+    // async fn select_<SE, M>(
+    //     &mut self,
+    //     selection: &SE,
+    //     unique: &dyn Unique<Mutation = M>,
+    // ) -> Result<Option<SE>>
+    // where
+    //     M: Mutation,
+    //     SE: SelectedEntity<Self::DB> + Send + Unpin,
+    // {
+    //     tracing::debug!(target: "taitan_orm", command = "select", primary = ?unique, selection = ?selection);
+    //     let sql = self.get_generator().get_select_sql(selection, unique);
+    //     tracing::debug!(target: "taitan_orm", command = "select", sql = sql);
+    //     let args = Self::extract_unique_arguments(unique)?;
+    //     let result: Option<SE> = self.fetch_option_(&sql, selection, args).await?;
+    //     tracing::debug!(target: "taitan_orm", command = "select", result = ?result);
+    //     Ok(result)
+    // }
+
     async fn search<SE>(
         &mut self,
         selection: &SE::Selection,

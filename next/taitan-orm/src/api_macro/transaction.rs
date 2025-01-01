@@ -59,6 +59,19 @@ macro_rules! transaction_impl {
             Self::generic_fetch_option(&mut *self.transaction, stmt, selection, args).await
         }
 
+        async fn fetch_option_<'a, SE>(
+            &'a mut self,
+            stmt: &'a str,
+            selection: &'a SE,
+            args: <Self::DB as sqlx::Database>::Arguments<'a>,
+        ) -> crate::Result<Option<SE>>
+        where
+            SE: taitan_orm_trait::SelectedEntity<Self::DB> + Send + Unpin,
+        {
+            Self::generic_fetch_option_(&mut *self.transaction, stmt, selection, args).await
+        }
+
+
         async fn fetch_option_plain<'a, SE>(
             &'a mut self,
             stmt: &'a str,
@@ -70,6 +83,19 @@ macro_rules! transaction_impl {
             let args: std::marker::PhantomData<<Self::DB as sqlx::Database>::Arguments<'a>> =
                 std::marker::PhantomData::default();
             Self::generic_fetch_option_plain(&mut *self.transaction, stmt, selection, args).await
+        }
+
+        async fn fetch_option_plain_<'a, SE>(
+            &'a mut self,
+            stmt: &'a str,
+            selection: &'a SE,
+        ) -> crate::Result<Option<SE>>
+        where
+            SE: taitan_orm_trait::SelectedEntity<Self::DB> + Send + Unpin,
+        {
+            let args: std::marker::PhantomData<<Self::DB as sqlx::Database>::Arguments<'a>> =
+                std::marker::PhantomData::default();
+            Self::generic_fetch_option_plain_(&mut *self.transaction, stmt, selection, args).await
         }
 
         async fn fetch_all<'a, SE>(
@@ -84,6 +110,18 @@ macro_rules! transaction_impl {
             Self::generic_fetch_all(&mut *self.transaction, stmt, selection, args).await
         }
 
+        async fn fetch_all_<'a, SE>(
+            &'a mut self,
+            stmt: &'a str,
+            selection: &'a SE,
+            args: <Self::DB as sqlx::Database>::Arguments<'a>,
+        ) -> crate::Result<Vec<SE>>
+        where
+            SE: taitan_orm_trait::SelectedEntity<Self::DB> + Send + Unpin,
+        {
+            Self::generic_fetch_all_(&mut *self.transaction, stmt, selection, args).await
+        }
+
         async fn fetch_all_plain<'a, SE>(
             &'a mut self,
             stmt: &'a str,
@@ -95,6 +133,19 @@ macro_rules! transaction_impl {
             let args: std::marker::PhantomData<<Self::DB as sqlx::Database>::Arguments<'a>> =
                 std::marker::PhantomData::default();
             Self::generic_fetch_all_plain(&mut *self.transaction, stmt, selection, args).await
+        }
+
+        async fn fetch_all_plain_<'a, SE>(
+            &'a mut self,
+            stmt: &'a str,
+            selection: &'a SE,
+        ) -> crate::Result<Vec<SE>>
+        where
+            SE: taitan_orm_trait::SelectedEntity<Self::DB> + Send + Unpin,
+        {
+            let args: std::marker::PhantomData<<Self::DB as sqlx::Database>::Arguments<'a>> =
+                std::marker::PhantomData::default();
+            Self::generic_fetch_all_plain_(&mut *self.transaction, stmt, selection, args).await
         }
 
         async fn fetch_one_full<'a, SE>(

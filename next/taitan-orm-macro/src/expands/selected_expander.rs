@@ -1,9 +1,11 @@
+use crate::attrs::{AttrParser, DefaultAttrParser};
+use crate::fields::{
+    FieldsParser, NamesConstructor, RowConstructor, RowGetConstructor, StructConstructor,
+};
 use case::CaseExt;
 use proc_macro2::{Ident, Span, TokenStream};
-use syn::{Attribute, FieldsNamed};
-use crate::attrs::{AttrParser, DefaultAttrParser};
-use crate::fields::{FieldsParser, StructConstructor, RowConstructor, RowGetConstructor};
 use quote::quote;
+use syn::{Attribute, FieldsNamed};
 pub fn generate_selected_struct_and_impl(
     ident: &Ident,
     attrs: &Vec<Attribute>,
@@ -21,10 +23,17 @@ pub fn generate_selected_struct_and_impl(
     let sqlite_ident = Ident::new("Sqlite", Span::call_site());
     let mysql_ident = Ident::new("MySql", Span::call_site());
     let postgres_ident = Ident::new("Postgres", Span::call_site());
+    let table_name = DefaultAttrParser::extract_table_name(ident, attrs);
 
-    let sqlite_impl = generate_selected_and_impl(fields, &selected_ident, &selection_ident, &sqlite_ident);
-    let mysql_impl = generate_selected_and_impl(fields, &selected_ident, &selection_ident, &mysql_ident);
-    let postgres_impl = generate_selected_and_impl(fields, &selected_ident, &selection_ident, &postgres_ident);
+    let sqlite_impl =
+        generate_selected_and_impl(fields, &selected_ident, &selection_ident, &sqlite_ident);
+    let mysql_impl =
+        generate_selected_and_impl(fields, &selected_ident, &selection_ident, &mysql_ident);
+    let postgres_impl =
+        generate_selected_and_impl(fields, &selected_ident, &selection_ident, &postgres_ident);
+
+    let bool_names_vec = parser.of_self_optional_names_vec();
+    let full_fields_stream = parser.of_optional_selected();
 
     let output = quote! {
         #struct_stream
@@ -34,13 +43,35 @@ pub fn generate_selected_struct_and_impl(
         #mysql_impl
 
         #postgres_impl
+
+        impl taitan_orm::traits::Selection for #selected_ident {
+
+            fn get_table_name(&self) -> &'static str {
+                #table_name
+            }
+
+
+            fn get_selected_fields(&self) -> Vec<String> {
+                #bool_names_vec
+            }
+
+            fn full_fields() -> Self
+                where Self: Sized,
+            {
+                #full_fields_stream
+            }
+        }
     };
 
     output
 }
 
-fn generate_selected_and_impl(fields: &FieldsNamed, selected_ident: &Ident, selection_ident: &Ident, db_ident: &Ident) -> TokenStream {
-
+fn generate_selected_and_impl(
+    fields: &FieldsNamed,
+    selected_ident: &Ident,
+    selection_ident: &Ident,
+    db_ident: &Ident,
+) -> TokenStream {
     let parser = FieldsParser::from_named(fields);
 
     let selected_row_construct = parser.gen_selected_row();
@@ -80,4 +111,3 @@ fn generate_selected_and_impl(fields: &FieldsNamed, selected_ident: &Ident, sele
     };
     output
 }
-

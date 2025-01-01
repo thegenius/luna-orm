@@ -1236,6 +1236,42 @@ impl taitan_orm::traits::SelectedEntity<sqlx::Postgres> for UserSelectedEntity {
         Ok(selected)
     }
 }
+impl taitan_orm::traits::Selection for UserSelectedEntity {
+    fn get_table_name(&self) -> &'static str {
+        "user"
+    }
+    fn get_selected_fields(&self) -> Vec<String> {
+        let mut fields = Vec::new();
+        if self.id.is_null() {
+            fields.push("id".to_string());
+        };
+        if self.request_id.is_null() {
+            fields.push("r_id".to_string());
+        };
+        if self.age.is_null() {
+            fields.push("age".to_string());
+        };
+        if self.name.is_null() {
+            fields.push("name".to_string());
+        };
+        if self.birthday.is_null() {
+            fields.push("birthday".to_string());
+        };
+        return fields;
+    }
+    fn full_fields() -> Self
+    where
+        Self: Sized,
+    {
+        Self {
+            id: taitan_orm::Optional::Selected,
+            request_id: taitan_orm::Optional::Selected,
+            age: taitan_orm::Optional::Selected,
+            name: taitan_orm::Optional::Selected,
+            birthday: taitan_orm::Optional::Selected,
+        }
+    }
+}
 #[derive(Debug, Default)]
 pub struct UserOrdering<'a> {
     fields: Vec<std::borrow::Cow<'a, str>>,
