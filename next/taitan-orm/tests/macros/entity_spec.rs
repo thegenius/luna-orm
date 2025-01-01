@@ -12,14 +12,14 @@ use taitan_orm_trait::Optional;
 pub struct UserEntity {
     #[primary_key]
     #[auto_increment]
-    id: Optional<i64>,
+    pub id: Optional<i64>,
 
     #[field_name = "r_id"]
     pub request_id: Uuid,
 
-    age: Optional<i32>,
+    pub age: Optional<i32>,
 
-    name: String,
+    pub name: String,
 
     pub birthday: Optional<PrimitiveDateTime>,
 }

@@ -11,12 +11,12 @@ pub trait StructFieldConstructor {
         if DefaultTypeChecker::type_is_option(&field.ty) {
             let inner_type = DefaultTypeExtractor::get_option_inner_type(&field.ty).unwrap();
             quote! {
-                #field_ident: #inner_type
+                pub #field_ident: #inner_type
             }
         } else {
             let field_ty = field.ty;
             quote!{
-                #field_ident: #field_ty
+                pub #field_ident: #field_ty
             }
         }
     }
@@ -31,11 +31,11 @@ pub trait StructFieldConstructor {
             //     #field_ident: #field_ty
             // }
             quote! {
-                #field_ident: taitan_orm::Optional<#inner_type>
+                pub #field_ident: taitan_orm::Optional<#inner_type>
             }
         } else {
             quote! {
-                #field_ident: taitan_orm::Optional<#field_ty>
+                pub #field_ident: taitan_orm::Optional<#field_ty>
             }
         }
     }
@@ -47,11 +47,11 @@ pub trait StructFieldConstructor {
         if DefaultTypeChecker::type_is_option(&field_ty) {
             let inner_type = DefaultTypeExtractor::get_option_inner_type(&field_ty).unwrap();
             quote! {
-                #field_ident: taitan_orm::Optional<taitan_orm::traits::LocationExpr<#inner_type>>
+                pub #field_ident: taitan_orm::Optional<taitan_orm::traits::LocationExpr<#inner_type>>
             }
         } else {
             quote! {
-                #field_ident: taitan_orm::Optional<taitan_orm::traits::LocationExpr<#field_ty>>
+                pub #field_ident: taitan_orm::Optional<taitan_orm::traits::LocationExpr<#field_ty>>
             }
         }
     }
@@ -60,7 +60,7 @@ pub trait StructFieldConstructor {
     fn get_bool_field(field: Field) -> TokenStream {
         let field_ident = field.ident;
         quote!{
-            #field_ident: bool
+            pub #field_ident: bool
         }
     }
 

@@ -133,12 +133,12 @@ impl FieldsParser {
                         <DefaultTypeExtractor as TypeExtractor>::get_option_inner_type(&field.ty)
                             .unwrap();
                     quote!(
-                        #field_ident: #inner_type
+                        pub #field_ident: #inner_type
                     )
                 } else {
                     let field_ty = field.ty;
                     quote!(
-                        #field_ident: #field_ty
+                        pub #field_ident: #field_ty
                     )
                 }
             });
@@ -153,11 +153,11 @@ impl FieldsParser {
                 let field_ty = field.ty;
                 if <DefaultTypeChecker as TypeChecker>::type_is_option(&field_ty) {
                     quote!(
-                        #field_ident: #field_ty
+                        pub #field_ident: #field_ty
                     )
                 } else {
                     quote!(
-                        #field_ident: Option<#field_ty>
+                        pub #field_ident: Option<#field_ty>
                     )
                 }
             });

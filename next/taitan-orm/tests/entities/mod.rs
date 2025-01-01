@@ -1,3 +1,3 @@
 pub mod user;
-mod user2;
-mod user3;
+pub mod user2;
+pub mod user3;

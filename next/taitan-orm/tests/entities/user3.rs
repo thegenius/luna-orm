@@ -6,13 +6,13 @@ use uuid::Uuid;
 
 #[derive(Clone, Debug)]
 pub struct UserEntity {
-    id: Optional<i64>,
+    pub id: Optional<i64>,
 
     pub request_id: Uuid,
 
-    age: Optional<i32>,
+    pub age: Optional<i32>,
 
-    name: String,
+    pub name: String,
 
     pub birthday: Optional<PrimitiveDateTime>,
 }
@@ -185,7 +185,7 @@ impl taitan_orm::traits::Entity for UserEntity {
 }
 #[derive(Debug, Clone)]
 pub struct UserPrimary {
-    id: i64,
+    pub id: i64,
 }
 impl taitan_orm::traits::Unique for UserPrimary {
     type Mutation = UserMutation;
@@ -279,7 +279,7 @@ impl taitan_orm::traits::Unique for UserPrimary {
 }
 #[derive(Debug, Clone)]
 pub struct UserAgeUnique {
-    age: i32,
+    pub age: i32,
 }
 impl taitan_orm::traits::Unique for UserAgeUnique {
     type Mutation = UserMutation;
@@ -373,8 +373,8 @@ impl taitan_orm::traits::Unique for UserAgeUnique {
 }
 #[derive(Debug, Clone)]
 pub struct UserNameBirthdayUnique {
-    name: String,
-    birthday: PrimitiveDateTime,
+    pub name: String,
+    pub birthday: PrimitiveDateTime,
 }
 impl taitan_orm::traits::Unique for UserNameBirthdayUnique {
     type Mutation = UserMutation;
@@ -474,11 +474,11 @@ impl taitan_orm::traits::Unique for UserNameBirthdayUnique {
 }
 #[derive(Default, Debug, Clone)]
 pub struct UserLocation {
-    id: taitan_orm::Optional<taitan_orm::traits::LocationExpr<i64>>,
-    request_id: taitan_orm::Optional<taitan_orm::traits::LocationExpr<Uuid>>,
-    age: taitan_orm::Optional<taitan_orm::traits::LocationExpr<i32>>,
-    name: taitan_orm::Optional<taitan_orm::traits::LocationExpr<String>>,
-    birthday: taitan_orm::Optional<taitan_orm::traits::LocationExpr<PrimitiveDateTime>>,
+    pub id: taitan_orm::Optional<taitan_orm::traits::LocationExpr<i64>>,
+    pub request_id: taitan_orm::Optional<taitan_orm::traits::LocationExpr<Uuid>>,
+    pub age: taitan_orm::Optional<taitan_orm::traits::LocationExpr<i32>>,
+    pub name: taitan_orm::Optional<taitan_orm::traits::LocationExpr<String>>,
+    pub birthday: taitan_orm::Optional<taitan_orm::traits::LocationExpr<PrimitiveDateTime>>,
 }
 impl taitan_orm::traits::Location for UserLocation {
     fn get_table_name(&self) -> &'static str {
@@ -683,10 +683,10 @@ impl taitan_orm::traits::Location for UserLocation {
 }
 #[derive(Default, Debug, Clone)]
 pub struct UserMutation {
-    request_id: taitan_orm::Optional<Uuid>,
-    age: taitan_orm::Optional<i32>,
-    name: taitan_orm::Optional<String>,
-    birthday: taitan_orm::Optional<PrimitiveDateTime>,
+    pub request_id: taitan_orm::Optional<Uuid>,
+    pub age: taitan_orm::Optional<i32>,
+    pub name: taitan_orm::Optional<String>,
+    pub birthday: taitan_orm::Optional<PrimitiveDateTime>,
 }
 impl taitan_orm::traits::Mutation for UserMutation {
     type Location = UserLocation;
@@ -835,11 +835,11 @@ impl taitan_orm::traits::Mutation for UserMutation {
 }
 #[derive(Default, Debug, Clone)]
 pub struct UserSelection {
-    id: bool,
-    request_id: bool,
-    age: bool,
-    name: bool,
-    birthday: bool,
+    pub id: bool,
+    pub request_id: bool,
+    pub age: bool,
+    pub name: bool,
+    pub birthday: bool,
 }
 impl taitan_orm::traits::Selection for UserSelection {
     fn get_table_name(&self) -> &'static str {
@@ -888,11 +888,11 @@ impl taitan_orm::traits::Selection for UserSelection {
 }
 #[derive(Default, Debug, Clone)]
 pub struct UserSelectedEntity {
-    id: taitan_orm::Optional<i64>,
-    request_id: taitan_orm::Optional<Uuid>,
-    age: taitan_orm::Optional<i32>,
-    name: taitan_orm::Optional<String>,
-    birthday: taitan_orm::Optional<PrimitiveDateTime>,
+    pub id: taitan_orm::Optional<i64>,
+    pub request_id: taitan_orm::Optional<Uuid>,
+    pub age: taitan_orm::Optional<i32>,
+    pub name: taitan_orm::Optional<String>,
+    pub birthday: taitan_orm::Optional<PrimitiveDateTime>,
 }
 impl taitan_orm::traits::SelectedEntity<sqlx::Sqlite> for UserSelectedEntity {
     type Selection = UserSelection;
